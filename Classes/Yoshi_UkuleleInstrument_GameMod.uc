@@ -5,18 +5,13 @@ class Yoshi_UkuleleInstrument_GameMod extends GameMod
 //
 // TODO
 //
-// Set up text for HUD properly
 // dyeable ukulele
 // new icon
 // trailer
 // Metronome time???
 // more instruments - saxophone, drums, trumpet, maybe more?
-// Press shift to start recording without doing an immediate note
-// Ability to cancel recording with button
-// No playing notes when unpaused
 
 var config int RecordingMode; //0 = Playback mode, 1 = Record Layer, 2 = Reset Layers
-var config int RecordingLength; //0 = 10 seconds, 1 = 30 seconds, 2 = 1 minute, 3 = 2 minutes, 4 = 3 minutes, 5 = 5 minutes, 6 = 10 minutes
 var config int SongIndex; //You can have up to 25 different songs saved!
 var config int KeyboardLayout; //The keyboard layout being used ex. QWERTY, AZERTY, etc.
 var config int OnlineNotes; //Should we receive individual notes from online players
@@ -29,8 +24,10 @@ var int PitchShift;
 
 const OnlineSongNoteLimit = 250; //This limit is due to constraints on the max string length
 const MaxSongs = 25;
+const MaxRecordingLength = 600; //10 minutes
 const SavedSongsPath = "MusicalInstruments/EmoteSong.Song";
 const NumWesternNotes = 12;
+const SongFormatVersion = 2;
 
 const DelimiterLayer = "&";
 const DelimiterInstrument = "=";
@@ -127,20 +124,6 @@ event OnModLoaded() {
     HookActorSpawn(class'Hat_GhostPartyPlayer', 'Hat_GhostPartyPlayer');
 
     RecordingLayer = PlayerSong.Layers.Length;
-}
-
-function float GetMaxRecordingTime() {
-    switch(RecordingLength) {
-        case 0: return 10.0;
-        case 1: return 30.0;
-        case 2: return 60.0;
-        case 3: return 120.0;
-        case 4: return 180.0;
-        case 5: return 300.0;
-        case 6: return 600.0;
-        
-        default: return 30.0;
-    }
 }
 
 event OnConfigChanged(Name ConfigName) {
@@ -359,26 +342,17 @@ function float GetFurthestSongTimestamp(SongPlaybackStatus Song) {
 event Tick(float delta) {
     local Hat_HUD MyHUD;
     local int i;
-    local SongLayer NewLayer;
 
     if(PlayingState != PS_IdleMode) {
         PlayerSong = TickSong(PlayerSong, delta);
 
-        if(PlayerSong.Time >= GetMaxRecordingTime() || (PlayerSong.Time >= GetFurthestSongTimestamp(PlayerSong) && PlayingState == PS_PlaybackMode)) {
-            if(PlayingState == PS_RecordMode) {
-
-                while(PlayerSong.Layers.Length <= RecordingLayer) {
-                    PlayerSong.Layers.AddItem(NewLayer);
-                }
-
-                PlayerSong.Layers[RecordingLayer] = RecordLayer;
-                RecordLayer.Notes.Length = 0;
-
-                SaveSongs(SongIndex);
-                class'GameMod'.static.SaveConfigValue(class'Yoshi_UkuleleInstrument_GameMod', 'RecordingMode', 0);
-            }
+        if(PlayingState == PS_RecordMode && PlayerSong.Time >= MaxRecordingLength) {
+            StopRecording();
             SetPlayingState(PS_IdleMode);
-        }    
+        }
+        else if(PlayingState == PS_PlaybackMode && PlayerSong.Time >= GetFurthestSongTimestamp(PlayerSong)) {
+            SetPlayingState(PS_IdleMode);
+        }
     }
 
     for(i = 0; i < OPSongs.Length; i++) {
@@ -412,6 +386,8 @@ function SongPlaybackStatus TickSong(SongPlaybackStatus Song, float Delta) {
 
     for(i = 0; i < Song.Layers.Length; i++) {
         while(Song.Layers[i].LastPlayedNoteIndex < Song.Layers[i].Notes.Length && Song.Time >= Song.Layers[i].Notes[Song.Layers[i].LastPlayedNoteIndex].Timestamp) {
+
+
             PlayNote(Song.Player, Song.Layers[i].Notes[Song.Layers[i].LastPlayedNoteIndex].Pitch, Song.Layers[i].InstrumentName);
             Song.Layers[i].LastPlayedNoteIndex++;
         }
@@ -467,15 +443,7 @@ function PlayPlayerNote(String Note) {
         if(PlayingState == PS_PlaybackMode) return; //We're listening back at the moment so NO
 
         if(PlayingState == PS_IdleMode) {
-            SetPlayingState(PS_RecordMode);
-
-            //Reset this layer
-            if(RecordingLayer < PlayerSong.Layers.Length) {
-                PlayerSong.Layers[RecordingLayer].Notes.Length = 0;
-            }
-
-            RecordLayer.InstrumentName = CurrentInstrument.InstrumentName;
-            RecordLayer.Notes.Length = 0;
+            StartRecording();
         }
 
         NotePlayed.Pitch = Note;
@@ -487,6 +455,8 @@ function PlayPlayerNote(String Note) {
 
 function PlayNote(Actor NotePlayer, string Note, string InstrumentName) {
     local int i;
+
+    if(InputPack.PlyCon.IsPaused()) return; //Don't play notes while paused
 
     for(i = 0; i < AllInstruments.Length; i++) {
         if(AllInstruments[i].default.InstrumentName == InstrumentName) {
@@ -543,26 +513,57 @@ function SetRecordingLayer(int NewRecordingLayer) {
     RecordingLayer = NewRecordingLayer;
 }
 
+function StartRecording() {
+    if(PlayingState != PS_IdleMode) return;
+
+    SetPlayingState(PS_RecordMode);
+
+    if(RecordingLayer < PlayerSong.Layers.Length) {
+        PlayerSong.Layers[RecordingLayer].Notes.Length = 0;
+    }
+
+    RecordLayer.InstrumentName = CurrentInstrument.InstrumentName;
+    RecordLayer.Notes.Length = 0;
+}
+
+function StopRecording() {
+    local SongLayer NewLayer;
+
+    if(PlayingState != PS_RecordMode) return;
+
+    while(PlayerSong.Layers.Length <= RecordingLayer) {
+        PlayerSong.Layers.AddItem(NewLayer);
+    }
+
+    PlayerSong.Layers[RecordingLayer] = RecordLayer;
+    RecordLayer.Notes.Length = 0;
+
+    SaveSongs(SongIndex);
+    class'GameMod'.static.SaveConfigValue(class'Yoshi_UkuleleInstrument_GameMod', 'RecordingMode', 0);
+
+    SetPlayingState(PS_IdleMode);
+}
+
 function SaveSongs(optional int SaveSongIndex = -1) {
     if(SaveSongIndex > -1 && SaveSongIndex < MaxSongs) {
         StoredSongs.Songs[SaveSongIndex].Layers = PlayerSong.Layers;
     }
     
-    class'Engine'.static.BasicSaveObject(StoredSongs, SavedSongsPath, false, 2);
+    class'Engine'.static.BasicSaveObject(StoredSongs, SavedSongsPath, false, SongFormatVersion);
 }
 
 function LoadSongs() {
     if(StoredSongs == None) {
         StoredSongs = new class'Yoshi_MusicalSong_Storage';
     }
-    class'Engine'.static.BasicLoadObject(StoredSongs, SavedSongsPath, false, 2);
+    class'Engine'.static.BasicLoadObject(StoredSongs, SavedSongsPath, false, SongFormatVersion);
     PlayerSong.Layers = StoredSongs.Songs[SongIndex].Layers;
 }
 
 function DeleteSong(int RemoveSongIndex) {
     PlayerSong.Layers.Length = 0;
     StoredSongs.Songs[RemoveSongIndex].Layers.Length = 0;
-    class'Engine'.static.BasicSaveObject(StoredSongs, SavedSongsPath, false, 2);
+    class'Engine'.static.BasicSaveObject(StoredSongs, SavedSongsPath, false, SongFormatVersion);
 }
 
 function bool ReceivedNativeInputKey(int ControllerId, name Key, EInputEvent EventType, float AmountDepressed, bool bGamepad) {
@@ -572,16 +573,6 @@ function bool ReceivedNativeInputKey(int ControllerId, name Key, EInputEvent Eve
     if(InputPack.PlyCon.IsPaused()) return false;
 
     //Print(`ShowVar(Key) @ `ShowVar(EventType) @ `ShowVar(bGamepad));
-
-    if(Key == 'Hat_Player_Attack' && EventType == IE_Pressed) {
-        if(PlayingState == PS_PlaybackMode) {
-            //Eat the input, we shouldn't be attacking right now
-            return true;
-        }
-        else {
-            InstrumentManager.RemovePlayerInstrument();
-        }
-    }
 
     if (Key == 'LeftShift' || (!bGamepad && Key == 'Hat_Player_Ability'))
 	{
@@ -595,6 +586,27 @@ function bool ReceivedNativeInputKey(int ControllerId, name Key, EInputEvent Eve
 	}
 
     if(EventType != IE_Pressed) return false;
+
+    if(Key == 'LeftControl' || Key == 'RightControl') {
+        if(PlayingState == PS_IdleMode && RecordingMode == 1) {
+            StartRecording();
+            return true; //Eat thy input
+        }
+        else if(PlayingState == PS_RecordMode) {
+            StopRecording();
+            return true; //Eat thy input
+        }
+    }
+
+    if(Key == 'Hat_Player_Attack') {
+        if(PlayingState == PS_PlaybackMode) {
+            //Eat the input, we shouldn't be attacking right now
+            return true;
+        }
+        else {
+            InstrumentManager.RemovePlayerInstrument();
+        }
+    }
 
     HoldingShiftKey = (IsHoldingLeftShift || IsHoldingRightShift);
 
