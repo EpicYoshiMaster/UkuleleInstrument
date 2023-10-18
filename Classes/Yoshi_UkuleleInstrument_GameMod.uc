@@ -12,6 +12,8 @@ class Yoshi_UkuleleInstrument_GameMod extends GameMod
 // Metronome time???
 // more instruments - saxophone, drums, trumpet, maybe more?
 // Press shift to start recording without doing an immediate note
+// Ability to cancel recording with button
+// No playing notes when unpaused
 
 var config int RecordingMode; //0 = Playback mode, 1 = Record Layer, 2 = Reset Layers
 var config int RecordingLength; //0 = 10 seconds, 1 = 30 seconds, 2 = 1 minute, 3 = 2 minutes, 4 = 3 minutes, 5 = 5 minutes, 6 = 10 minutes
@@ -20,12 +22,15 @@ var config int KeyboardLayout; //The keyboard layout being used ex. QWERTY, AZER
 var config int OnlineNotes; //Should we receive individual notes from online players
 var config int OnlineSongs; //Should we receive the emote songs from online players
 var config int Instrument; //Which instrument sound should we use?
+var config int Scale; //Which kind of scale (major, minor, etc.) should our keys be based off of
 
 var int Octave; //Certain instruments have more than one set of ranges
+var int PitchShift;
 
 const OnlineSongNoteLimit = 250; //This limit is due to constraints on the max string length
 const MaxSongs = 25;
 const SavedSongsPath = "MusicalInstruments/EmoteSong.Song";
+const NumWesternNotes = 12;
 
 const DelimiterLayer = "&";
 const DelimiterInstrument = "=";
@@ -36,6 +41,8 @@ struct InstrumentKeyboardLayout {
     var array<Name> Notes;
     var Name OctaveUp;
     var Name OctaveDown;
+    var Name PitchUp;
+    var Name PitchDown;
 };
 
 //One note consists of a certain Pitch and Timestamp
@@ -61,6 +68,10 @@ struct SongPlaybackStatus {
 //Song format for Yoshi_MusicalSong_Storage
 struct SavedSong {
     var array<SongLayer> Layers;
+};
+
+struct NoteScale {
+    var array<int> NoteOffsets;
 };
 
 enum PlayingMode {
@@ -90,6 +101,7 @@ var Hat_Player Player;
 var int LastSongIndex; //Saved in case this config value is attempted to be changed mid-song
 
 var array<InstrumentKeyboardLayout> InstrumentKeys;
+var array<NoteScale> Scales;
 var bool IsHoldingLeftShift;
 var bool IsHoldingRightShift;
 
@@ -183,6 +195,7 @@ function AssignPlayerInstrument() {
         if(AllInstruments[i].default.InstrumentID == Instrument) {
             CurrentInstrument = new AllInstruments[i];
             ChangeOctave(CurrentInstrument.DefaultOctave);
+            ChangePitchShift(0);
             return;
         }
     }
@@ -482,6 +495,38 @@ function PlayNote(Actor NotePlayer, string Note, string InstrumentName) {
     }
 }
 
+//Octave min is 2, Octave is 2, new pitch shift -1
+//make no change
+function ChangePitchShift(int NewPitchShift) {
+    local int OldOctave;
+
+    OldOctave = Octave;
+
+    if(NewPitchShift < 0) {
+        Octave = FClamp(Octave - 1, CurrentInstrument.MinOctave, CurrentInstrument.MaxOctave);
+
+        if(OldOctave != Octave) {
+            NewPitchShift += NumWesternNotes;
+        }
+        else {
+            NewPitchShift = PitchShift;
+        }
+    }
+
+    if(NewPitchShift >= NumWesternNotes) {
+        Octave = FClamp(Octave + 1, CurrentInstrument.MinOctave, CurrentInstrument.MaxOctave);
+
+        if(OldOctave != Octave) {
+            NewPitchShift -= NumWesternNotes;
+        }
+        else {
+            NewPitchShift = PitchShift;
+        }
+    }
+
+    PitchShift = NewPitchShift;
+}
+
 function ChangeOctave(int NewOctave) {
     Octave = FClamp(NewOctave, CurrentInstrument.MinOctave, CurrentInstrument.MaxOctave);
 }
@@ -553,6 +598,14 @@ function bool ReceivedNativeInputKey(int ControllerId, name Key, EInputEvent Eve
 
     HoldingShiftKey = (IsHoldingLeftShift || IsHoldingRightShift);
 
+    if(InstrumentKeys[KeyboardLayout].PitchDown == Key) {
+        ChangePitchShift(PitchShift - 1);
+    }
+
+    if(InstrumentKeys[KeyboardLayout].PitchUp == Key) {
+        ChangePitchShift(PitchShift + 1);
+    }
+
     if(InstrumentKeys[KeyboardLayout].OctaveUp == Key) {
         ChangeOctave(Octave + 1);
     }
@@ -562,32 +615,43 @@ function bool ReceivedNativeInputKey(int ControllerId, name Key, EInputEvent Eve
     }
 
     for(i = 0; i < InstrumentKeys[KeyboardLayout].Notes.Length; i++) {
-        if(InstrumentKeys[KeyboardLayout].Notes[i] == Key) {
-            PlayPlayerNote(GetNoteName(i, HoldingShiftKey));
+        if(InstrumentKeys[KeyboardLayout].Notes[i] == Key && Scale < Scales.Length) {
+            PlayPlayerNote(GetNoteName(Scales[Scale].NoteOffsets[i] + (HoldingShiftKey ? -1 : 0) + PitchShift));
         }
     }
 
     return false;
 }
 
-//C Db D Eb E F Gb G Ab A Bb B C
-function string GetNoteName(int KeyIndex, bool HoldingShiftKey) {
+function string GetNoteName(int NoteOffset) {
     local string NoteName;
     local int OctaveOffset;
 
     OctaveOffset = 0;
 
-    switch(KeyIndex) {
-        case 0: NoteName = HoldingShiftKey ? "B" : "C"; if(HoldingShiftKey) OctaveOffset = -1; break;
-        case 1: NoteName = HoldingShiftKey ? "Db" : "D"; break;
-        case 2: NoteName = HoldingShiftKey ? "Eb" : "E"; break;
-        case 3: NoteName = HoldingShiftKey ? "E" : "F"; break;
-        case 4: NoteName = HoldingShiftKey ? "Gb" : "G"; break;
-        case 5: NoteName = HoldingShiftKey ? "Ab" : "A"; break;
-        case 6: NoteName = HoldingShiftKey ? "Bb" : "B"; break;
-        case 7: NoteName = HoldingShiftKey ? "B" : "C"; if(!HoldingShiftKey) OctaveOffset = 1; break;
-        case 8: NoteName = HoldingShiftKey ? "Db" : "D"; OctaveOffset = 1; break;
-        case 9: NoteName = HoldingShiftKey ? "Eb" : "E"; OctaveOffset = 1; break;
+    while(NoteOffset < 0) {
+        OctaveOffset -= 1;
+        NoteOffset += NumWesternNotes;
+    }
+
+    while(NoteOffset >= NumWesternNotes) {
+        OctaveOffset += 1;
+        NoteOffset -= NumWesternNotes;
+    }
+
+    switch(NoteOffset) {
+        case 0: NoteName = "C"; break;
+        case 1: NoteName = "Db"; break;
+        case 2: NoteName = "D"; break;
+        case 3: NoteName = "Eb"; break;
+        case 4: NoteName = "E"; break;
+        case 5: NoteName = "F"; break;
+        case 6: NoteName = "Gb"; break;
+        case 7: NoteName = "G"; break;
+        case 8: NoteName = "Ab"; break;
+        case 9: NoteName = "A"; break;
+        case 10: NoteName = "Bb"; break;
+        case 11: NoteName = "B"; break;
     }
 
     return NoteName $ (Octave + OctaveOffset);
@@ -636,7 +700,23 @@ defaultproperties
     PlayingState=PS_IdleMode
     Octave=3;
 
-    InstrumentKeys.Add((Notes=("Z","X","C","V","B","N","M","comma","period","slash"),OctaveDown="K",OctaveUp="L")); //QWERTY
-    InstrumentKeys.Add((Notes=("Y","X","C","V","B","N","M","comma","period","underscore"),OctaveDown="K",OctaveUp="L")); //QWERTZ
-    InstrumentKeys.Add((Notes=("W","X","C","V","B","N","comma","period","slash"),OctaveDown="K",OctaveUp="L")); //AZERTY (Limited to 9 keys as ! does not have any input event)
+    InstrumentKeys.Add((Notes=("Z","X","C","V","B","N","M","comma","period","slash"),OctaveDown="J",OctaveUp="K",PitchDown="L",PitchUp="semicolon")); //QWERTY
+    InstrumentKeys.Add((Notes=("Y","X","C","V","B","N","M","comma","period","underscore"),OctaveDown="J",OctaveUp="K",PitchDown="L",PitchUp="semicolon")); //QWERTZ
+    InstrumentKeys.Add((Notes=("W","X","C","V","B","N","comma","period","slash"),OctaveDown="J",OctaveUp="K",PitchDown="L",PitchUp="M")); //AZERTY (Limited to 9 keys as ! does not have any input event)
+
+    Scales.Add((NoteOffsets=(0, 2, 4, 5, 7, 9, 11, 12, 14, 16))); //Major
+    Scales.Add((NoteOffsets=(0, 2, 4, 7, 9, 12, 14, 16, 19, 21))); //Major Pentatonic
+    Scales.Add((NoteOffsets=(0, 2, 3, 4, 7, 9, 12, 14, 15, 16))); //Major Blues
+    Scales.Add((NoteOffsets=(0, 2, 4, 5, 7, 9, 10, 12, 14, 16))); //Mixolydian
+    
+    Scales.Add((NoteOffsets=(0, 2, 3, 5, 7, 8, 10, 12, 14, 15))); //Minor
+    Scales.Add((NoteOffsets=(0, 3, 5, 7, 10, 12, 15, 17, 19, 22))); //Minor Pentatonic
+    Scales.Add((NoteOffsets=(0, 3, 5, 6, 7, 10, 12, 15, 17, 18))); //Minor Blues
+    Scales.Add((NoteOffsets=(0, 2, 3, 5, 7, 8, 11, 12, 14, 15))); //Harmonic Minor
+
+    Scales.Add((NoteOffsets=(0, 2, 3, 5, 7, 9, 10, 12, 14, 15))); //Dorian
+    Scales.Add((NoteOffsets=(0, 1, 4, 5, 7, 8, 10, 12, 13, 16))); //Klezmer
+    Scales.Add((NoteOffsets=(0, 1, 5, 7, 8, 12, 13, 17, 19, 20))); //Japanese
+    Scales.Add((NoteOffsets=(0, 1, 3, 7, 8, 12, 13, 15, 19, 20))); //South-East Asian
+    Scales.Add((NoteOffsets=(0, 2, 4, 6, 8, 10, 12, 14, 16, 18))); //Whole Tone
 }
