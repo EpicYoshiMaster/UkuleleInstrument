@@ -1,42 +1,57 @@
-class Yoshi_HUDElement_RecordingMode extends Hat_HUDElement;
+class Yoshi_HUDElement_RecordingMode extends Hat_HUDElement
+	dependsOn(Yoshi_UkuleleInstrument_GameMod);
+
 var string RecordingModeString;
 var string StatsString;
 var Yoshi_UkuleleInstrument_GameMod GM;
 
-function OnOpenHUD(HUD H, optional String command)
-{
-	RecordingModeString = "Ready to Record for Layer " $ command;
-}
-
 function bool Tick(HUD H, float d)
 {
-	local int PlayingSongStatus;
-	local int RecordingMode;
-	local int NotesRecorded;
-    if (!Super.Tick(H, d)) return false;
+    if(!Super.Tick(H, d)) return false;
 	if(GM == None) GM = class'Yoshi_UkuleleInstrument_GameMod'.static.GetGameMod();
+	if(GM == None) return true;
 
-	if(GM != None) {
-		PlayingSongStatus = GM.GetPlayingSong();
-		RecordingMode = class'GameMod'.static.GetConfigValue(class'Yoshi_UkuleleInstrument_GameMod', 'RecordingMode');
-		NotesRecorded = GM.GetSongNoteCount();
-		if(RecordingMode == 0) return false;
-		if(PlayingSongStatus == 0) {
-			RecordingModeString = "Cannot Record during Emote Playback";
-			StatsString = "";
-		}
-		else if(PlayingSongStatus == -1) {
-			RecordingModeString = "Ready to Record for Layer " $ RecordingMode;
-			StatsString = "";
-		}
-		else {
-			RecordingModeString = "Now Recording for Layer " $ RecordingMode;
-			StatsString = "Total Song Notes: " $ NotesRecorded $ " | Time Remaining: " $ string(int(class'Yoshi_UkuleleInstrument_GameMod'.const.MaxRecordingTime - GM.TimePassed));
-		}
+	if(GM.RecordingMode == 0) return false; //We are not recording
 
-	}	
+	switch(GM.PlayingState) {
+		case PS_PlaybackMode: 
+			RecordingModeString = "Cannot Record during Emote Playback"; 
+			StatsString = ""; 
+			break;
+		case PS_IdleMode: 
+			RecordingModeString = "Ready to Record for Layer " $ (GM.RecordingLayer + 1); 
+			StatsString = ""; 
+			break;
+		case PS_RecordMode: 
+			RecordingModeString = "Now Recording for Layer " $ (GM.RecordingLayer + 1);
+			StatsString = "Total Song Notes: " $ GM.GetPlayerSongNoteCount() $ " | Time Remaining: " $ FormatTime(int(GM.GetMaxRecordingTime() - GM.PlayerSong.Time));
+			break;
+	}
 
 	return true;
+}
+
+function bool OnPressLeft(HUD H, bool menu, bool release)
+{
+	GM.SetRecordingLayer(GM.RecordingLayer - 1);
+
+	return true;
+}
+
+function bool OnPressRight(HUD H, bool menu, bool release)
+{
+	GM.SetRecordingLayer(GM.RecordingLayer + 1);
+
+	return true;
+}
+
+static function string FormatTime(int Seconds) {
+	local int Minutes;
+
+	Minutes = Seconds / 60;
+	Seconds = Seconds % 60;
+
+	return Minutes $ ":" $ ((Seconds < 10) ? "0" : "") $ Seconds;
 }
 
 function bool Render(HUD H)

@@ -1,164 +1,312 @@
 class Yoshi_UkuleleInstrument_GameMod extends GameMod
-    dependsOn(Yoshi_MusicalInstrument);
+    dependsOn(Yoshi_MusicalInstrument)
+    dependsOn(Yoshi_InputPack);
 
-var config int RecordingMode; //We can record a song and play it back as an emote!
+//
+// TODO
+//
+// Set up text for HUD properly
+// dyeable ukulele
+// new icon
+// trailer
+// Metronome time???
+// more instruments - saxophone, drums, trumpet, maybe more?
+// Press shift to start recording without doing an immediate note
+
+var config int RecordingMode; //0 = Playback mode, 1 = Record Layer, 2 = Reset Layers
+var config int RecordingLength; //0 = 10 seconds, 1 = 30 seconds, 2 = 1 minute, 3 = 2 minutes, 4 = 3 minutes, 5 = 5 minutes, 6 = 10 minutes
+var config int SongIndex; //You can have up to 25 different songs saved!
+var config int KeyboardLayout; //The keyboard layout being used ex. QWERTY, AZERTY, etc.
 var config int OnlineNotes; //Should we receive individual notes from online players
 var config int OnlineSongs; //Should we receive the emote songs from online players
-//var config int Instrument; 
-//0 = Playback mode, 1 = Track 1 Recording, 2 = Track 2 Recording
+var config int Instrument; //Which instrument sound should we use?
 
-const MaxRecordingTime = 30.0;
+var int Octave; //Certain instruments have more than one set of ranges
+
 const OnlineSongNoteLimit = 250; //This limit is due to constraints on the max string length
+const MaxSongs = 25;
+const SavedSongsPath = "MusicalInstruments/EmoteSong.Song";
 
+const DelimiterLayer = "&";
+const DelimiterInstrument = "=";
+const DelimiterNote = "/";
+const DelimiterPitch = "|";
+
+struct InstrumentKeyboardLayout {
+    var array<Name> Notes;
+    var Name OctaveUp;
+    var Name OctaveDown;
+};
+
+//One note consists of a certain Pitch and Timestamp
 struct SingleNote {
     var string Pitch;
     var float Timestamp;
 };
 
-struct MusicalSong {
-    var int InstrumentID; //only used in Online Party songs
-    var array<SingleNote> Layer1;
-    var array<SingleNote> Layer2;
+//One layer consists of several notes assigned to a specific instrument
+struct SongLayer {
+    var string InstrumentName;
+    var int LastPlayedNoteIndex;
+    var array<SingleNote> Notes;
 };
 
-struct OnlineMusicalSong {
-    var float EmoteTimePassed;
-    var int LastPlayedNoteIndexLayer1;
-    var int LastPlayedNoteIndexLayer2;
-    var Hat_GhostPartyPlayer GPP;
-    var MusicalSong EmoteSong;
+//Holds Song Data + Playback Information
+struct SongPlaybackStatus {
+    var float Time;
+    var Actor Player;
+    var array<SongLayer> Layers;
 };
 
-struct ActiveUkulele {
-    var Hat_GhostPartyPlayer GPP;
-    var SkeletalMeshComponent Ukulele;
-    var bool isActive;
+//Song format for Yoshi_MusicalSong_Storage
+struct SavedSong {
+    var array<SongLayer> Layers;
 };
 
-var Yoshi_MusicalInstrument CurrentInstrument; //Updates on config change but not relevant yet
+enum PlayingMode {
+    PS_IdleMode, //We are not playing a song or recording anything
+    PS_PlaybackMode, //We are playing back our song
+    PS_RecordMode //We are recording a layer for our song
+};
 
-var MusicalSong SavedSong; //Holds the player's saved song
-var array<OnlineMusicalSong> OPSongs; //Holds all active Emote Songs being played
-var array<ActiveUkulele> OPUkuleles; //Ensures we know what mesh goes with who and all that stuff
-var Yoshi_MusicalSong_Storage StoredSong; //Serialized Song Class
-var int isPlayingSong; //-1 for not playing, 0 for all layers, 1 or 2 for specific layer of playback
-var float TimePassed; //Time since the first note of recording began
-var int LastPlayedNoteIndexLayer1; //Helps track where we are when doing song playback
-var int LastPlayedNoteIndexLayer2;
+var Yoshi_InstrumentManager InstrumentManager;
+
+var array< class<Yoshi_MusicalInstrument> > AllInstruments;
+var Yoshi_MusicalInstrument CurrentInstrument; //The instrument the player currently has
+
+var SongPlaybackStatus PlayerSong; //Holds the player's saved song
+var array<SongPlaybackStatus> OPSongs; //Holds all active Emote Songs being played
+var Yoshi_MusicalSong_Storage StoredSongs;
+
+var PlayingMode PlayingState;
+var SongLayer RecordLayer;
+var int RecordingLayer;
+
 var Yoshi_HUDElement_RecordingMode RecordingHUD;
 
-var Interaction KeyCaptureInteraction;
-var Hat_PlayerController PC;
+var InputPack InputPack;
+var Hat_Player Player;
+
+var int LastSongIndex; //Saved in case this config value is attempted to be changed mid-song
+
+var array<InstrumentKeyboardLayout> InstrumentKeys;
 var bool IsHoldingLeftShift;
 var bool IsHoldingRightShift;
 
+function Sync(string CommandString, Name CommandChannel, optional Pawn SendingPlayer, optional Hat_GhostPartyPlayerStateBase Receiver) {
+    SendOnlinePartyCommand(CommandString, CommandChannel, SendingPlayer, Receiver);
+    Print("OPSend:" @ CommandString $ "," @ CommandChannel $ "," @ SendingPlayer $ "," @ Receiver);
+}
+
 event OnModLoaded() {
-    LoadSong();
     if(`GameManager.GetCurrentMapFilename() == `GameManager.TitlescreenMapName) return;
-    CurrentInstrument = class'Yoshi_MusicalInstrument'.static.ReturnByID(0);
+
+    InstrumentManager = new class'Yoshi_InstrumentManager';
+    InstrumentManager.GameMod = self;
+
+    LoadSongs();
+
+    LastSongIndex = SongIndex;
+
+    AllInstruments = class'Yoshi_MusicalInstrument'.static.GetAllInstruments();
+    AssignPlayerInstrument();
+
     HookActorSpawn(class'Hat_PlayerController', 'Hat_PlayerController');
     HookActorSpawn(class'Hat_GhostPartyPlayer', 'Hat_GhostPartyPlayer');
+
+    RecordingLayer = PlayerSong.Layers.Length;
+}
+
+function float GetMaxRecordingTime() {
+    switch(RecordingLength) {
+        case 0: return 10.0;
+        case 1: return 30.0;
+        case 2: return 60.0;
+        case 3: return 120.0;
+        case 4: return 180.0;
+        case 5: return 300.0;
+        case 6: return 600.0;
+        
+        default: return 30.0;
+    }
 }
 
 event OnConfigChanged(Name ConfigName) {
     if(ConfigName == 'RecordingMode') {
+        if(RecordingMode == 0 && PlayingState != PS_IdleMode) {
+            SetPlayingState(PS_IdleMode);
+        }
 
-        if(RecordingMode == 0 && GetPlayingSong() > 0) {
-            SetPlayingSong(-1);
+        if(RecordingMode == 1) {
+            RecordingLayer = PlayerSong.Layers.Length;
         }
         
-        if(RecordingMode == 3) {
-            DeleteSong();
+        if(RecordingMode == 2) {
+            DeleteSong(SongIndex);
             class'GameMod'.static.SaveConfigValue(class'Yoshi_UkuleleInstrument_GameMod', 'RecordingMode', 0);
         }
         
     }
+
+    if(ConfigName == 'Instrument') {
+        AssignPlayerInstrument();
+    }
+
+    if(ConfigName == 'SongIndex') {
+        if(StoredSongs == None) {
+            LoadSongs();
+        }
+
+        if(PlayingState != PS_IdleMode) {
+            if(LastSongIndex == SongIndex) return; //oops no infinite loop pls
+
+            //Do not allow changing the song index while in playback or recording
+            class'GameMod'.static.SaveConfigValue(class'Yoshi_UkuleleInstrument_GameMod', 'SongIndex', LastSongIndex);
+        }
+        else {
+            PlayerSong.Layers = StoredSongs.Songs[SongIndex].Layers;
+
+            //Make sure to update the relevant recording layer
+            if(RecordingMode == 1) {
+                RecordingLayer = PlayerSong.Layers.Length;
+            }
+        }
+
+        LastSongIndex = SongIndex;
+    }
+}
+
+function AssignPlayerInstrument() {
+    local int i;
+
+    for(i = 0; i < AllInstruments.Length; i++) {
+        if(AllInstruments[i].default.InstrumentID == Instrument) {
+            CurrentInstrument = new AllInstruments[i];
+            ChangeOctave(CurrentInstrument.DefaultOctave);
+            return;
+        }
+    }
+
+    //We should never get here
+    CurrentInstrument = new class'Yoshi_MusicalInstrument_Ukulele';
+}
+
+function OnTauntEnd(Pawn p) {
+    //InstrumentManager.RemovePlayerInstrument();
 }
 
 function OnHookedActorSpawn(Object NewActor, Name Identifier) {
-    if(Identifier == 'Hat_PlayerController' && PC == None) {
-        AttachPlayer(Hat_PlayerController(NewActor));
+    if(Identifier == 'Hat_PlayerController' && InputPack.PlyCon == None) {
+        SetTimer(0.001, false, NameOf(HookPlayerInput), self, Hat_PlayerController(NewActor));
     }
 
     if(Identifier == 'Hat_GhostPartyPlayer') {
-        Hat_GhostPartyPlayer(NewActor).SkeletalMeshComponent.AnimSets.AddItem(AnimSet'Ctm_Ukulele.Ukulele_playing');
-        Hat_GhostPartyPlayer(NewActor).SkeletalMeshComponent.UpdateAnimations();
-        if(PC != None || Hat_Player(PC.Pawn).HasStatusEffect(class'Yoshi_StatusEffect_Ukulele')) {
-            SendOnlinePartyCommand("ThisDoesntMatter", class'YoshiPrivate_MusicalInstruments_Commands'.const.YoshiAddUkulele,,Hat_GhostPartyPlayerBase(NewActor).PlayerState);
-        }
+        SetTimer(0.001, false, NameOf(HookOnlinePlayerSpawn), self, Hat_GhostPartyPlayer(NewActor));
+    }
+}
+
+function HookPlayerInput(Hat_PlayerController PlyCon) {
+    class'Yoshi_InputPack'.static.AttachController(ReceivedNativeInputKey, PlyCon, InputPack);
+    Player = Hat_Player(PlyCon.Pawn);
+    PlayerSong.Player = Player;
+
+    Hat_HUD(PlyCon.MyHUD).OpenHUD(class'Yoshi_HUDElement_DebugMode');
+}
+
+function HookOnlinePlayerSpawn(Hat_GhostPartyPlayer GPP) {
+    //We haven't seen this player before and we have an instrument, let them know!
+    if(InstrumentManager.IsPlayerInstrumentEquipped()) {
+        Sync(CurrentInstrument.InstrumentName $ "|true", class'YoshiPrivate_MusicalInstruments_Commands'.const.YoshiAddInstrument,,GPP.PlayerState);
     }
 }
 
 event OnModUnloaded() {
-    DetachPlayer();
+    class'Yoshi_InputPack'.static.DetachController(InputPack);
+    Player = None;
 }
 
-function PrepareOnlineSongPackage() {
+function SendOnlineSongPackage() {
     local string SongPackage;
-    local int i;
+    local int i, j, NoteCount;
 
-    if(GetSongNoteCount() > OnlineSongNoteLimit) return;
-    if(OnlineSongs != 0 || (SavedSong.Layer1.Length == 0 && SavedSong.Layer2.Length == 0)) return;
+    NoteCount = GetPlayerSongNoteCount();
 
-    SongPackage $= CurrentInstrument.default.InstrumentID $ "+";
-    for(i = 0; i < SavedSong.Layer1.Length; i++) {
-        SongPackage $= SavedSong.Layer1[i].Pitch $ "|" $ int(SavedSong.Layer1[i].Timestamp * 1000) $ "/";
+    if(OnlineSongs != 0) return;
+    if(NoteCount > OnlineSongNoteLimit || NoteCount <= 0) return;
+
+    for(i = 0; i < PlayerSong.Layers.Length; i++) {
+        if(i > 0) {
+            SongPackage $= DelimiterLayer;
+        }
+
+        SongPackage $= PlayerSong.Layers[i].InstrumentName $ DelimiterInstrument;
+
+        for(j = 0; j < PlayerSong.Layers[i].Notes.Length; j++) {
+            if(j > 0) {
+                SongPackage $= DelimiterNote;
+            }
+
+            SongPackage $= PlayerSong.Layers[i].Notes[j].Pitch $ DelimiterPitch $ int(PlayerSong.Layers[i].Notes[j].Timestamp * 1000);
+        }
     }
-    SongPackage $= "+";
-    for(i = 0; i < SavedSong.Layer2.Length; i++) {
-        SongPackage $= SavedSong.Layer2[i].Pitch $ "|" $ int(SavedSong.Layer2[i].Timestamp * 1000) $ "/";
-    }
 
-    SendOnlinePartyCommand(SongPackage, class'YoshiPrivate_MusicalInstruments_Commands'.const.YoshiMusicSong);
+    Sync(SongPackage, class'YoshiPrivate_MusicalInstruments_Commands'.const.YoshiMusicSong);
 }
 
-function OnlineMusicalSong DecodeOnlineSongPackage(string SongPackage, Hat_GhostPartyPlayer GhostPlayer) {
-    local OnlineMusicalSong PreparedSong;
-    local MusicalSong ReceivedSong;
-    local SingleNote ReceivedNote;
-    local array<string> OuterLayer;
-    local array<string> SongLayer;
-    local array<string> NoteLayer;
-    local int i;
+function SongPlaybackStatus DecodeOnlineSongPackage(string SongPackage, Hat_GhostPartyPlayer GhostPlayer) {
+    local SongPlaybackStatus Song;
+    local SongLayer NewLayer;
+    local SingleNote Note;
+    local array<string> SongLayers;
+    local array<string> SongInstrumentSplit;
+    local array<string> SongNotes;
+    local array<string> SongNote;
+    local int i, j;
 
-    OuterLayer = SplitString(SongPackage, "+");
-    if(OuterLayer.Length >= 3 && GhostPlayer != None) {
-        ReceivedSong.InstrumentID = int(OuterLayer[0]);
-        SongLayer = SplitString(OuterLayer[1], "/");
-        for(i = 0; i < SongLayer.Length; i++) {
-            NoteLayer = SplitString(SongLayer[i], "|");
-            if(NoteLayer.Length == 2) {
-                ReceivedNote.Pitch = NoteLayer[0];
-                ReceivedNote.Timestamp = float(NoteLayer[1]) / 1000;
-                ReceivedSong.Layer1.AddItem(ReceivedNote);
-            }
+    SongLayers = SplitString(SongPackage, DelimiterLayer);
+
+    if(SongLayers.Length <= 0 || GhostPlayer == None) return Song;
+
+    for(i = 0; i < SongLayers.Length; i++) {
+        SongInstrumentSplit = SplitString(SongLayers[i], DelimiterInstrument);
+        if(SongInstrumentSplit.Length != 2) continue;
+
+        NewLayer.InstrumentName = SongInstrumentSplit[0];
+        SongNotes = SplitString(SongInstrumentSplit[1], DelimiterNote);
+
+        for(j = 0; j < SongNotes.Length; j++) {
+            SongNote = SplitString(SongNotes[j], DelimiterPitch);
+            if(SongNote.Length != 2) continue;
+
+            Note.Pitch = SongNote[0];
+            Note.Timestamp = float(SongNote[1]) / 1000;
+            NewLayer.Notes.AddItem(Note);
         }
-        SongLayer = SplitString(OuterLayer[2], "/");
-        for(i = 0; i < SongLayer.Length; i++) {
-            NoteLayer = SplitString(SongLayer[i], "|");
-            if(NoteLayer.Length == 2) {
-                ReceivedNote.Pitch = NoteLayer[0];
-                ReceivedNote.Timestamp = float(NoteLayer[1]) / 1000;
-                ReceivedSong.Layer2.AddItem(ReceivedNote);
-            }
-        }
-        PreparedSong.EmoteSong = ReceivedSong;
-        PreparedSong.GPP = GhostPlayer;
+
+        Song.Layers.AddItem(NewLayer);
     }
 
-    //Print("Decoded Song with a Layer 1 of " $ ReceivedSong.Layer1.Length $ " notes and a Layer 2 of " $ ReceivedSong.Layer2.Length $ " notes!");
-    return PreparedSong;
+    Song.Player = GhostPlayer;
+    return Song;
 }
 
 event OnOnlinePartyCommand(string Command, Name CommandChannel, Hat_GhostPartyPlayerStateBase Sender) {
     local Hat_GhostPartyPlayer GhostPlayer;
-    local OnlineMusicalSong OPSong;
+    local SongPlaybackStatus OPSong;
+    local array<string> args;
+
     GhostPlayer = Hat_GhostPartyPlayer(Sender.GhostActor);
 	if (GhostPlayer == None) return;
 
+    Print("OPGet:" @ Command $ "," @ CommandChannel $ "," @ Hat_GhostPartyPlayer(Sender.GhostActor).UserName);
+
     if(CommandChannel == class'YoshiPrivate_MusicalInstruments_Commands'.const.YoshiMusicNote && OnlineNotes == 0) {
-        PlayOnlineStrumAnim(Hat_GhostPartyPlayer(Sender.GhostActor), true);
-        class'Yoshi_MusicalInstrument_Ukulele'.static.PlayOnlineNote(GhostPlayer, Command);
+        args = SplitString(Command, "|");
+        if(args.Length < 2) return;
+
+        InstrumentManager.AddOPInstrument(GhostPlayer, GetInstrumentClassByName(args[1])); //Just in case
+        InstrumentManager.PlayStrumAnim(Hat_GhostPartyPlayer(Sender.GhostActor).SkeletalMeshComponent);
+        PlayNote(GhostPlayer, args[0], args[1]);
     }
 
     if(CommandChannel == class'YoshiPrivate_MusicalInstruments_Commands'.const.YoshiMusicSong && OnlineSongs == 0) {
@@ -166,123 +314,72 @@ event OnOnlinePartyCommand(string Command, Name CommandChannel, Hat_GhostPartyPl
         OPSongs.AddItem(OPSong);
     }
 
-    if(CommandChannel == class'YoshiPrivate_MusicalInstruments_Commands'.const.YoshiAddUkulele) {
-        AddOPUkulele(Hat_GhostPartyPlayer(Sender.GhostActor));
+    if(CommandChannel == class'YoshiPrivate_MusicalInstruments_Commands'.const.YoshiAddInstrument) {
+        args = SplitString(Command, "|");
+        if(args.Length < 2) return;
+
+        InstrumentManager.AddOPInstrument(Hat_GhostPartyPlayer(Sender.GhostActor), GetInstrumentClassByName(args[0]), bool(args[1]));
     }
 
-    if(CommandChannel == class'YoshiPrivate_MusicalInstruments_Commands'.const.YoshiRemoveUkulele) {
-        RemoveOPUkulele(Hat_GhostPartyPlayer(Sender.GhostActor));
+    if(CommandChannel == class'YoshiPrivate_MusicalInstruments_Commands'.const.YoshiRemoveInstrument) {
+        InstrumentManager.RemoveOPInstrument(Hat_GhostPartyPlayer(Sender.GhostActor));
     }
 }
 
-function AddOPUkulele(Hat_GhostPartyPlayer GPP) {
+function float GetFurthestSongTimestamp(SongPlaybackStatus Song) {
     local int i;
-    local ActiveUkulele NewUser;
-    local SkeletalMeshComponent UkuleleMesh;
+    local float FurthestTimestamp;
 
-    if (GPP.SkeletalMeshComponent.AnimSets.Find(AnimSet'Ctm_Ukulele.Ukulele_playing') == INDEX_NONE) {
-        GPP.SkeletalMeshComponent.AnimSets.AddItem(AnimSet'Ctm_Ukulele.Ukulele_playing');
-        GPP.SkeletalMeshComponent.UpdateAnimations();
-    }
+    FurthestTimestamp = 0.0;
 
-    for(i = 0; i < OPUkuleles.Length; i++) {
-        //This player already has a Ukulele but it needs to be attached again
-        if(OPUkuleles[i].GPP == GPP && OPUkuleles[i].Ukulele != None && !OPUkuleles[i].isActive) {
-            GPP.SkeletalMeshComponent.AttachComponentToSocket(OPUkuleles[i].Ukulele, 'Umbrella');
-            OPUkuleles[i].isActive = true;
-            return;
-        } 
-    }
+    for(i = 0; i < Song.Layers.Length; i++) {
+        if(Song.Layers[i].Notes.Length <= 0) continue;
 
-    NewUser.GPP = GPP;
-    UkuleleMesh = new class'SkeletalMeshComponent';
-    UkuleleMesh.SetSkeletalMesh(class'Yoshi_StatusEffect_Ukulele'.default.instrumentMesh);
-    UkuleleMesh.SetLightEnvironment(GPP.SkeletalMeshComponent.LightEnvironment);
-    GPP.SkeletalMeshComponent.AttachComponentToSocket(UkuleleMesh, 'Umbrella');
-    NewUser.Ukulele = UkuleleMesh;
-    NewUser.isActive = true;
-    OPUkuleles.AddItem(NewUser);
-}
-
-function RemoveOPUkulele(Hat_GhostPartyPlayer GPP) {
-    local int i;
-    for(i = 0; i < OPUkuleles.Length; i++) {
-        if(OPUkuleles[i].GPP == GPP && OPUkuleles[i].isActive) {
-            OPUkuleles[i].isActive = false;
-            if(OPUkuleles[i].Ukulele != None) {
-                GPP.SkeletalMeshComponent.DetachComponent(OPUkuleles[i].Ukulele);
-            }
+        if(Song.Layers[i].Notes[Song.Layers[i].Notes.Length - 1].Timestamp > FurthestTimestamp) {
+            FurthestTimestamp = Song.Layers[i].Notes[Song.Layers[i].Notes.Length - 1].Timestamp;
         }
     }
-}
 
-function PlayOnlineStrumAnim(Hat_GhostPartyPlayer GPP, optional bool play = true) {
-	local AnimNodeBlendBase anim;
-	if (GPP == None) return;
-
-    if (GPP.SkeletalMeshComponent.AnimSets.Find(AnimSet'Ctm_Ukulele.Ukulele_playing') == INDEX_NONE) {
-        GPP.SkeletalMeshComponent.AnimSets.AddItem(AnimSet'Ctm_Ukulele.Ukulele_playing');
-        GPP.SkeletalMeshComponent.UpdateAnimations();
-    }
-
-	anim = AnimNodeBlend(GPP.SkeletalMeshComponent.FindAnimNode('TicketScan'));
-	if (anim != None)
-	{
-		AnimNodeBlend(anim).SetBlendTarget(play ? 1 : 0, play ? 0.3f : 0.0f); // Need blend time of 0 when removing, otherwise the real TicketScan anim is visible for a few frames. Sharp blend looks kinda bad though.
-		if (play) anim.Children[1].Anim.PlayAnim(false, 2.0, 0.0); // Using a rate of 2.0 because original animation is slightly too slow.
-	}
-}
-
-function float GetFurthestSongTimestamp() {
-    local float Timestamp;
-    Timestamp = GetFurthestSongTimestampForLayer1();
-    Timestamp = GetFurthestSongTimeStampForLayer2() > Timestamp ? GetFurthestSongTimeStampForLayer2() : Timestamp;
-
-    return FClamp(Timestamp, 1.5, MaxRecordingTime);
-}
-
-function float GetFurthestSongTimestampForLayer1() {
-    if(SavedSong.Layer1.Length > 0) {
-        return SavedSong.Layer1[SavedSong.Layer1.Length - 1].Timestamp;
-    }
-    return 0.0;
-}
-
-function float GetFurthestSongTimestampForLayer2() {
-    if(SavedSong.Layer2.Length > 0) {
-        return SavedSong.Layer2[SavedSong.Layer2.Length - 1].Timestamp;
-    }
-    return 0.0;
+    return FMax(FurthestTimestamp, 1.5);
 }
 
 event Tick(float delta) {
     local Hat_HUD MyHUD;
     local int i;
+    local SongLayer NewLayer;
 
-    if(isPlayingSong > -1) {
-        TimePassed += delta;
-        TickSong();
-        if(TimePassed >= MaxRecordingTime || (TimePassed >= GetFurthestSongTimestamp() && isPlayingSong == 0)) {
-            if(isPlayingSong > 0) {
-                SaveSong();
+    if(PlayingState != PS_IdleMode) {
+        PlayerSong = TickSong(PlayerSong, delta);
+
+        if(PlayerSong.Time >= GetMaxRecordingTime() || (PlayerSong.Time >= GetFurthestSongTimestamp(PlayerSong) && PlayingState == PS_PlaybackMode)) {
+            if(PlayingState == PS_RecordMode) {
+
+                while(PlayerSong.Layers.Length <= RecordingLayer) {
+                    PlayerSong.Layers.AddItem(NewLayer);
+                }
+
+                PlayerSong.Layers[RecordingLayer] = RecordLayer;
+                RecordLayer.Notes.Length = 0;
+
+                SaveSongs(SongIndex);
                 class'GameMod'.static.SaveConfigValue(class'Yoshi_UkuleleInstrument_GameMod', 'RecordingMode', 0);
             }
-            SetPlayingSong(-1);
+            SetPlayingState(PS_IdleMode);
         }    
     }
 
     for(i = 0; i < OPSongs.Length; i++) {
-        OPSongs[i].EmoteTimePassed += delta;
-        OPSongs[i] = TickOnlineSong(OPSongs[i]);
-        if(OPSongs[i].EmoteTimePassed >= MaxRecordingTime) {
+        OPSongs[i] = TickSong(OPSongs[i], delta);
+        if(OPSongs[i].Time >= GetFurthestSongTimestamp(OPSongs[i])) {
             OPSongs.Remove(i, 1);
             i--;
         }
     }
 
+    if(InputPack.PlyCon == None) return;
+    MyHUD = Hat_HUD(InputPack.PlyCon.MyHUD);
 
-    if(PC == None) return;
-    MyHUD = Hat_HUD(PC.MyHUD);
+    InstrumentManager.PlayerTickInstrument();
 
     if(RecordingMode == 0 && RecordingHUD != None)  {
         MyHUD.CloseHUD(class'Yoshi_HUDElement_RecordingMode');
@@ -294,185 +391,151 @@ event Tick(float delta) {
     }
 }
 
-function TickSong() {
+//Updates for the current tick, plays all associated notes, and updates the last played index for each layer
+function SongPlaybackStatus TickSong(SongPlaybackStatus Song, float Delta) {
     local int i;
 
-    if(isPlayingSong == 0 || isPlayingSong == 2) {
-        for(i = LastPlayedNoteIndexLayer1; i < SavedSong.Layer1.Length; i++) {
-            if(TimePassed >= SavedSong.Layer1[i].TimeStamp) {
-                CurrentInstrument.PlayNote(PC, SavedSong.Layer1[i].Pitch);
-                LastPlayedNoteIndexLayer1++;
-            }
+    Song.Time += Delta;
+
+    for(i = 0; i < Song.Layers.Length; i++) {
+        while(Song.Layers[i].LastPlayedNoteIndex < Song.Layers[i].Notes.Length && Song.Time >= Song.Layers[i].Notes[Song.Layers[i].LastPlayedNoteIndex].Timestamp) {
+            PlayNote(Song.Player, Song.Layers[i].Notes[Song.Layers[i].LastPlayedNoteIndex].Pitch, Song.Layers[i].InstrumentName);
+            Song.Layers[i].LastPlayedNoteIndex++;
         }
     }
 
-    if(isPlayingSong == 0 || isPlayingSong == 1) {
-        for(i = LastPlayedNoteIndexLayer2; i < SavedSong.Layer2.Length; i++) {
-            if(TimePassed >= SavedSong.Layer2[i].TimeStamp) {
-                CurrentInstrument.PlayNote(PC, SavedSong.Layer2[i].Pitch);
-                LastPlayedNoteIndexLayer2++;
-            }
-        }
-    }
-    
+    return Song;
 }
 
-function OnlineMusicalSong TickOnlineSong(OnlineMusicalSong OMS) {
+function SetPlayingState(PlayingMode SongState) {
     local int i;
-    for(i = OMS.LastPlayedNoteIndexLayer1; i < OMS.EmoteSong.Layer1.Length; i++) {
-        if(OMS.EmoteTimePassed >= OMS.EmoteSong.Layer1[i].TimeStamp) {
-            class'Yoshi_MusicalInstrument_Ukulele'.static.PlayOnlineNote(OMS.GPP, OMS.EmoteSong.Layer1[i].Pitch);
-            OMS.LastPlayedNoteIndexLayer1++;
-        }
+    PlayingState = SongState;
+    PlayerSong.Time = 0.0;
+
+    for(i = 0; i < PlayerSong.Layers.Length; i++) {
+        PlayerSong.Layers[i].LastPlayedNoteIndex = 0;
+    }
+}
+
+function int GetPlayerSongNoteCount() {
+    local int NoteCount;
+    local int i;
+
+    NoteCount = 0;
+
+    for(i = 0; i < PlayerSong.Layers.Length; i++) {
+        NoteCount += PlayerSong.Layers[i].Notes.Length;
     }
 
-    for(i = OMS.LastPlayedNoteIndexLayer2; i < OMS.EmoteSong.Layer2.Length; i++) {
-        if(OMS.EmoteTimePassed >= OMS.EmoteSong.Layer2[i].TimeStamp) {
-            class'Yoshi_MusicalInstrument_Ukulele'.static.PlayOnlineNote(OMS.GPP, OMS.EmoteSong.Layer2[i].Pitch);
-            OMS.LastPlayedNoteIndexLayer2++;
-        }
+    if(RecordingMode == 1) {
+        NoteCount += RecordLayer.Notes.Length;
     }
 
-    return OMS;
+    return NoteCount;
 }
 
-
-function SetPlayingSong(int SongStatus) {
-    isPlayingSong = SongStatus;
-    TimePassed = 0.0;
-    LastPlayedNoteIndexLayer1 = 0;
-    LastPlayedNoteIndexLayer2 = 0;
-}
-
-function int GetPlayingSong() {
-    return isPlayingSong;
-}
-
-function int GetSongNoteCount() {
-    return SavedSong.Layer1.Length + SavedSong.Layer2.Length;
-}
-
-function PlayNote(String Note) {
+function PlayPlayerNote(String Note) {
     local SingleNote NotePlayed;
-    local Yoshi_StatusEffect_Ukulele statusUkulele;
 
     if(CurrentInstrument != None) {
-        if(OnlineNotes == 0) SendOnlinePartyCommand(Note, class'YoshiPrivate_MusicalInstruments_Commands'.const.YoshiMusicNote);
+        if(Player != None) {
+            Player.PutAwayWeapon();
 
-        CurrentInstrument.PlayNote(PC, Note);
+            InstrumentManager.AddPlayerInstrument(Player, CurrentInstrument.class);
+            InstrumentManager.PlayStrumAnim(Player.Mesh);
+        }
 
-        statusUkulele = Yoshi_StatusEffect_Ukulele(Hat_Player(PC.Pawn).GiveStatusEffect(class'Yoshi_StatusEffect_Ukulele'));
-        statusUkulele.PlayStrumAnim();
+        if(OnlineNotes == 0) Sync(Note $ "|" $ CurrentInstrument.InstrumentName, class'YoshiPrivate_MusicalInstruments_Commands'.const.YoshiMusicNote);
+
+        CurrentInstrument.PlayNote(Player, Note);
     }
 
-    if(RecordingMode > 0 && RecordingMode < 3) {
-        if(isPlayingSong == 0) return; //We're listening back at the moment so NO
+    if(RecordingMode == 1) {
+        if(PlayingState == PS_PlaybackMode) return; //We're listening back at the moment so NO
 
-        if(isPlayingSong == -1) {
-            //Print("Recording for Layer " $ RecordingMode);
-            SetPlayingSong(RecordingMode);
-            if(RecordingMode == 1) SavedSong.Layer1.Length = 0;
-            if(RecordingMode == 2) SavedSong.Layer2.Length = 0;
+        if(PlayingState == PS_IdleMode) {
+            SetPlayingState(PS_RecordMode);
 
+            //Reset this layer
+            if(RecordingLayer < PlayerSong.Layers.Length) {
+                PlayerSong.Layers[RecordingLayer].Notes.Length = 0;
+            }
+
+            RecordLayer.InstrumentName = CurrentInstrument.InstrumentName;
+            RecordLayer.Notes.Length = 0;
         }
+
         NotePlayed.Pitch = Note;
-        NotePlayed.Timestamp = TimePassed;
+        NotePlayed.Timestamp = PlayerSong.Time;
 
-        if(RecordingMode == 1) SavedSong.Layer1.AddItem(NotePlayed);
-        if(RecordingMode == 2) SavedSong.Layer2.AddItem(NotePlayed);
+        RecordLayer.Notes.AddItem(NotePlayed);
     }
 }
 
-function SaveSong() {
-    StoredSong.Song = SavedSong;
-    //Print("Saved Song with a Layer 1 of " $ SavedSong.Layer1.Length $ " notes and a Layer 2 of " $ SavedSong.Layer2.Length $ " notes!");
-    class'Engine'.static.BasicSaveObject(StoredSong, "MusicalInstruments/EmoteSong.Song", false, 1);
-}
+function PlayNote(Actor NotePlayer, string Note, string InstrumentName) {
+    local int i;
 
-function LoadSong() {
-    if(StoredSong == None) {
-        StoredSong = new class'Yoshi_MusicalSong_Storage';
-    }
-    class'Engine'.static.BasicLoadObject(StoredSong, "MusicalInstruments/EmoteSong.Song", false, 1);
-    SavedSong = StoredSong.Song;
-}
-
-function DeleteSong() {
-    SavedSong.Layer1.Length = 0;
-    SavedSong.Layer2.Length = 0;
-    StoredSong.Song = SavedSong;
-    class'Engine'.static.BasicSaveObject(StoredSong, "MusicalInstruments/EmoteSong.Song", false, 1);
-}
-/*
-function ChangeUkuleleRotation(string Direction, optional bool Negative) {
-    local Yoshi_StatusEffect_Ukulele statusUkulele;
-    local Rotator NewOffset;
-
-    statusUkulele = Yoshi_StatusEffect_Ukulele(Hat_Player(PC.Pawn).GetStatusEffect(class'Yoshi_StatusEffect_Ukulele'));
-    if(statusUkulele != None) {
-        switch(Direction) {
-            case "Pitch": NewOffset.Pitch = 4096; break;
-            case "Yaw": NewOffset.Yaw = 4096; break;
-            case "Roll": NewOffset.Roll = 4096; break;
+    for(i = 0; i < AllInstruments.Length; i++) {
+        if(AllInstruments[i].default.InstrumentName == InstrumentName) {
+            AllInstruments[i].static.PlayNote(NotePlayer, Note);
         }
-        
-        if(Negative) NewOffset *= -1;
-
-        NewOffset = statusUkulele.SetUkeRot(NewOffset);
-
-        //Print("Ukelele Rotation is: Pitch " $ NewOffset.Pitch $ " Yaw " $ NewOffset.Yaw $ " Roll " $ NewOffset.Roll);
     }
 }
 
-function ChangeUkuleleLocation(string Direction, optional bool Negative) {
-    local Yoshi_StatusEffect_Ukulele statusUkulele;
-    local Vector NewOffset;
+function ChangeOctave(int NewOctave) {
+    Octave = FClamp(NewOctave, CurrentInstrument.MinOctave, CurrentInstrument.MaxOctave);
+}
 
-    statusUkulele = Yoshi_StatusEffect_Ukulele(Hat_Player(PC.Pawn).GetStatusEffect(class'Yoshi_StatusEffect_Ukulele'));
-    if(statusUkulele != None) {
-        switch(Direction) {
-            case "X": NewOffset.X = 1; break;
-            case "Y": NewOffset.Y = 1; break;
-            case "Z": NewOffset.Z = 1; break;
-        }
-
-        if(Negative) NewOffset *= -1;
-
-        NewOffset = statusUkulele.SetUkeLot(NewOffset);
-
-        //Print("Ukelele Location is: X " $ NewOffset.X $ " Y " $ NewOffset.Y $ " Z " $ NewOffset.Z);
+function SetRecordingLayer(int NewRecordingLayer) {
+    if(NewRecordingLayer < 0) {
+        NewRecordingLayer = PlayerSong.Layers.Length;
     }
-}*/
 
-//This will insert our key capture interaction into the playercontroller
-function AttachPlayer(Hat_PlayerController player)
-{
-    local int iInput;
-    PC = player;
-    KeyCaptureInteraction = new(PC) class'Interaction';
-    //Set the functions for received keys and axis data to our own
-    KeyCaptureInteraction.OnReceivedNativeInputKey = ReceivedNativeInputKey;
-    KeyCaptureInteraction.OnReceivedNativeInputAxis = ReceivedNativeInputAxis;
- 
-    iInput = PC.Interactions.Find(PC.PlayerInput);
-    PC.Interactions.InsertItem(Max(iInput, 0), KeyCaptureInteraction);
-}
- 
-function DetachPlayer()
-{
-    PC.Interactions.RemoveItem(KeyCaptureInteraction);
-    KeyCaptureInteraction = none;
-    PC = none;
+    if(NewRecordingLayer > PlayerSong.Layers.Length) {
+        NewRecordingLayer = 0;
+    }
+
+    RecordingLayer = NewRecordingLayer;
 }
 
-//IE_Pressed, IE_Released, IE_Repeat, IE_DoubleClick, IE_Axis
-//Return true to stop the keypress from getting further (like to the player pawn, effectively "eating" the input), return false for not.
-function bool ReceivedNativeInputKey(int ControllerId, name Key, EInputEvent EventType, float AmountDepressed, bool bGamepad)
-{
+function SaveSongs(optional int SaveSongIndex = -1) {
+    if(SaveSongIndex > -1 && SaveSongIndex < MaxSongs) {
+        StoredSongs.Songs[SaveSongIndex].Layers = PlayerSong.Layers;
+    }
+    
+    class'Engine'.static.BasicSaveObject(StoredSongs, SavedSongsPath, false, 2);
+}
+
+function LoadSongs() {
+    if(StoredSongs == None) {
+        StoredSongs = new class'Yoshi_MusicalSong_Storage';
+    }
+    class'Engine'.static.BasicLoadObject(StoredSongs, SavedSongsPath, false, 2);
+    PlayerSong.Layers = StoredSongs.Songs[SongIndex].Layers;
+}
+
+function DeleteSong(int RemoveSongIndex) {
+    PlayerSong.Layers.Length = 0;
+    StoredSongs.Songs[RemoveSongIndex].Layers.Length = 0;
+    class'Engine'.static.BasicSaveObject(StoredSongs, SavedSongsPath, false, 2);
+}
+
+function bool ReceivedNativeInputKey(int ControllerId, name Key, EInputEvent EventType, float AmountDepressed, bool bGamepad) {
+    local int i;
     local bool HoldingShiftKey;
 
-    if(Key == 'Hat_Player_Attack' && EventType == IE_Pressed && isPlayingSong == 0) {
-        return true;
+    if(InputPack.PlyCon.IsPaused()) return false;
+
+    //Print(`ShowVar(Key) @ `ShowVar(EventType) @ `ShowVar(bGamepad));
+
+    if(Key == 'Hat_Player_Attack' && EventType == IE_Pressed) {
+        if(PlayingState == PS_PlaybackMode) {
+            //Eat the input, we shouldn't be attacking right now
+            return true;
+        }
+        else {
+            InstrumentManager.RemovePlayerInstrument();
+        }
     }
 
     if (Key == 'LeftShift' || (!bGamepad && Key == 'Hat_Player_Ability'))
@@ -490,49 +553,56 @@ function bool ReceivedNativeInputKey(int ControllerId, name Key, EInputEvent Eve
 
     HoldingShiftKey = (IsHoldingLeftShift || IsHoldingRightShift);
 
-    switch(Key)
-    {
-        //case 'T': ChangeUkuleleLocation("X"); break; //ChangeUkuleleRotation("Pitch"); break;
-        //case 'Y': ChangeUkuleleLocation("Y"); break;//ChangeUkuleleRotation("Yaw"); break;
-        //case 'U': ChangeUkuleleLocation("Z"); break;//ChangeUkuleleRotation("Roll"); break;
-        //case 'G': ChangeUkuleleLocation("X", true); break;//ChangeUkuleleRotation("Pitch", true); break;
-        //case 'H': ChangeUkuleleLocation("Y", true); break;//ChangeUkuleleRotation("Yaw", true); break;
-        //case 'J': ChangeUkuleleLocation("Z", true); break;//ChangeUkuleleRotation("Roll", true); break;
-
-        case 'Z': PlayNote("C3"); break;
-        case 'X': PlayNote(HoldingShiftKey ? "Db3" : "D3"); break;
-        case 'C': PlayNote(HoldingShiftKey ? "Eb3" : "E3"); break;
-        case 'V': PlayNote(HoldingShiftKey ? "E3" : "F3"); break;
-        case 'B': PlayNote(HoldingShiftKey ? "Gb3" : "G3"); break;
-        case 'N': PlayNote(HoldingShiftKey ? "Ab3" : "A3"); break;
-        case 'M': PlayNote(HoldingShiftKey ? "Bb3" : "B3"); break;
-        case 'comma': PlayNote(HoldingShiftKey ? "B3" : "C4"); break;
-        case 'period': PlayNote(HoldingShiftKey ? "Db4" : "D4"); break;
-        case 'Slash': PlayNote(HoldingShiftKey ? "Eb4" : "E4"); break;
+    if(InstrumentKeys[KeyboardLayout].OctaveUp == Key) {
+        ChangeOctave(Octave + 1);
     }
+
+    if(InstrumentKeys[KeyboardLayout].OctaveDown == Key) {
+        ChangeOctave(Octave - 1);
+    }
+
+    for(i = 0; i < InstrumentKeys[KeyboardLayout].Notes.Length; i++) {
+        if(InstrumentKeys[KeyboardLayout].Notes[i] == Key) {
+            PlayPlayerNote(GetNoteName(i, HoldingShiftKey));
+        }
+    }
+
     return false;
 }
- 
-function bool ReceivedNativeInputAxis( int ControllerId, name Key, float Delta, float DeltaTime, optional bool bGamepad )
-{
- 
-    if(Key == 'Hat_Player_MoveX')
-    {
-        //Delta is left stick/WASD X axis from -1.0 to 1.0
+
+//C Db D Eb E F Gb G Ab A Bb B C
+function string GetNoteName(int KeyIndex, bool HoldingShiftKey) {
+    local string NoteName;
+    local int OctaveOffset;
+
+    OctaveOffset = 0;
+
+    switch(KeyIndex) {
+        case 0: NoteName = HoldingShiftKey ? "B" : "C"; if(HoldingShiftKey) OctaveOffset = -1; break;
+        case 1: NoteName = HoldingShiftKey ? "Db" : "D"; break;
+        case 2: NoteName = HoldingShiftKey ? "Eb" : "E"; break;
+        case 3: NoteName = HoldingShiftKey ? "E" : "F"; break;
+        case 4: NoteName = HoldingShiftKey ? "Gb" : "G"; break;
+        case 5: NoteName = HoldingShiftKey ? "Ab" : "A"; break;
+        case 6: NoteName = HoldingShiftKey ? "Bb" : "B"; break;
+        case 7: NoteName = HoldingShiftKey ? "B" : "C"; if(!HoldingShiftKey) OctaveOffset = 1; break;
+        case 8: NoteName = HoldingShiftKey ? "Db" : "D"; OctaveOffset = 1; break;
+        case 9: NoteName = HoldingShiftKey ? "Eb" : "E"; OctaveOffset = 1; break;
     }
-    else if(Key == 'Hat_Player_MoveY')
-    {
-        //Delta is left stick/WASD Y axis from -1.0 to 1.0
+
+    return NoteName $ (Octave + OctaveOffset);
+}
+
+function class<Yoshi_MusicalInstrument> GetInstrumentClassByName(string InstrumentName) {
+    local int i;
+
+    for(i = 0; i < AllInstruments.Length; i++) {
+        if(AllInstruments[i].default.InstrumentName == InstrumentName) {
+            return AllInstruments[i];
+        }
     }
-    else if(Key == 'Hat_Player_LookX')
-    {
-        //Delta is right stick/mouse X axis from -1.0 to 1.0
-    }
-    else if(Key == 'Hat_Player_LookY')
-    {
-        //Delta is right stick/mouse Y axis from -1.0 to 1.0
-    }
-    return false;
+
+    return None;
 }
 
 static function Yoshi_UkuleleInstrument_GameMod GetGameMod() {
@@ -545,12 +615,28 @@ static function Yoshi_UkuleleInstrument_GameMod GetGameMod() {
     return GM;
 }
 
-static function Print(string s)
+static function Print(coerce string msg)
 {
-	//class'WorldInfo'.static.GetWorldInfo().Game.Broadcast(class'WorldInfo'.static.GetWorldInfo(), s);
+    local WorldInfo wi;
+
+	msg = "[Ukulele] " $ msg;
+
+    wi = class'WorldInfo'.static.GetWorldInfo();
+    if (wi != None)
+    {
+        if (wi.GetALocalPlayerController() != None)
+            wi.GetALocalPlayerController().TeamMessage(None, msg, 'Event', 6);
+        else
+            wi.Game.Broadcast(wi, msg);
+    }
 }
 
 defaultproperties
 {
-    isPlayingSong=-1;
+    PlayingState=PS_IdleMode
+    Octave=3;
+
+    InstrumentKeys.Add((Notes=("Z","X","C","V","B","N","M","comma","period","slash"),OctaveDown="K",OctaveUp="L")); //QWERTY
+    InstrumentKeys.Add((Notes=("Y","X","C","V","B","N","M","comma","period","underscore"),OctaveDown="K",OctaveUp="L")); //QWERTZ
+    InstrumentKeys.Add((Notes=("W","X","C","V","B","N","comma","period","slash"),OctaveDown="K",OctaveUp="L")); //AZERTY (Limited to 9 keys as ! does not have any input event)
 }

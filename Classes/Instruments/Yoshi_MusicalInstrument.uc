@@ -10,42 +10,48 @@ var const string InstrumentName;
 var array<InstrumentPitchSet> Pitches;
 var const int InstrumentID; //Corresponds with Configs
 
-function PlayNote(Hat_PlayerController PC, String Note) {
-    local int i;
-    for(i = 0; i < Pitches.Length; i++) {
-        if(Pitches[i].Name ~= Note) {
-            Hat_Pawn(PC.Pawn).PlayVoice(Pitches[i].Sound,,true);
-            return;
-        }
-    }
-}
+var AnimSet AnimSet;
+var SkeletalMesh Mesh;
 
-static function PlayOnlineNote(Hat_GhostPartyPlayer GhostPlayer, String Note) {
+var int MinOctave;
+var int MaxOctave;
+var int DefaultOctave;
+
+static function PlayNote(Actor Player, String Note) {
     local int i;
     for(i = 0; i < default.Pitches.Length; i++) {
         if(default.Pitches[i].Name ~= Note) {
-            GhostPlayer.PlaySound(default.Pitches[i].Sound,,true);
+            if(Hat_Pawn(Player) != None) {
+                Hat_Pawn(Player).PlayVoice(default.Pitches[i].Sound,,true);
+            }
+            else {
+                Player.PlaySound(default.Pitches[i].Sound,,true);
+            }
+
             return;
         }
-    }   
+    }
 }
 
-static function Yoshi_MusicalInstrument ReturnByID(int ID) {
-    local int i;
+static function array< class<Yoshi_MusicalInstrument> > GetAllInstruments() {
+    local array< class<Yoshi_MusicalInstrument> > ActualInstruments;
     local array< class<Object> > AllInstruments;
-    local Yoshi_MusicalInstrument YMI;
-    AllInstruments = GetAllInstruments();
-
+    local int i;
+    AllInstruments = class'Hat_ClassHelper'.static.GetAllScriptClasses("Yoshi_MusicalInstrument");
     for(i = 0; i < AllInstruments.Length; i++) {
-        if(class<Yoshi_MusicalInstrument>(AllInstruments[i]).default.InstrumentID == ID) {
-            YMI = new class<Yoshi_MusicalInstrument>(AllInstruments[i]);
+        if(class<Yoshi_MusicalInstrument>(AllInstruments[i]) != None) {
+            ActualInstruments.AddItem(class<Yoshi_MusicalInstrument>(AllInstruments[i]));
         }
     }
-    return YMI;
+    return ActualInstruments;
 }
 
-static function array< class<Object> > GetAllInstruments() {
-    local array< class<Object> > AllInstruments;
-    AllInstruments = class'Hat_ClassHelper'.static.GetAllScriptClasses("Yoshi_MusicalInstrument");
-    return AllInstruments;
+defaultproperties
+{
+    MinOctave=3
+    MaxOctave=3
+    DefaultOctave=3
+
+    AnimSet=AnimSet'Ctm_Ukulele.Ukulele_playing'
+	Mesh=SkeletalMesh'Ctm_Ukulele.Ukulele'
 }
