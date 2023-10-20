@@ -12,3 +12,4 @@ const YoshiAddInstrument = 'AddInstrument';
 const YoshiRemoveInstrument = 'RemoveInstrument';
 const YoshiMusicNote = 'MusicNote';
 const YoshiMusicSong = 'MusicSong';
+const YoshiUpdatePlayerInstrumentColors = 'InstrumentColors';

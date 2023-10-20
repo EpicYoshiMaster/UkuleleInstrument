@@ -126,6 +126,16 @@ event OnModLoaded() {
     RecordingLayer = PlayerSong.Layers.Length;
 }
 
+function OnLoadoutChanged(PlayerController Controller, Object Loadout, Object BackpackItem) {
+    local class<Hat_Collectible_Skin> PlayerSkin;
+
+    if(InstrumentManager.Player == None) return;
+
+    PlayerSkin = class<Hat_Collectible_Skin>(Hat_PlayerController(InstrumentManager.Player.Controller).GetLoadout().MyLoadout.Skin.BackpackClass);
+
+    InstrumentManager.UpdateInstrumentColors(InstrumentManager.InstrumentMesh, PlayerSkin);
+}
+
 event OnConfigChanged(Name ConfigName) {
     if(ConfigName == 'RecordingMode') {
         if(RecordingMode == 0 && PlayingState != PS_IdleMode) {

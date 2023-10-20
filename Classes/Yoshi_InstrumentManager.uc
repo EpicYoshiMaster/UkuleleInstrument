@@ -6,6 +6,8 @@ var class<Yoshi_MusicalInstrument> EquippedClass;
 var SkeletalMeshComponent InstrumentMesh;
 var bool IsPlayerEquipped;
 
+var SkeletalMeshComponent InstrumentTemplate;
+
 struct OPInstrument {
     var Hat_GhostPartyPlayer GPP;
     var class<Yoshi_MusicalInstrument> EquippedClass;
@@ -29,6 +31,7 @@ function AddPlayerInstrument(Hat_Player Ply, class<Yoshi_MusicalInstrument> Inst
 
     if(!WasPlayerEquipped && IsPlayerEquipped) {
         GameMod.Sync(InstrumentClass.default.InstrumentName $ "|false", class'YoshiPrivate_MusicalInstruments_Commands'.const.YoshiAddInstrument);
+        UpdateInstrumentColors(InstrumentMesh, class<Hat_Collectible_Skin>(Hat_PlayerController(Player.Controller).GetLoadout().MyLoadout.Skin.BackpackClass));
     }
 
     if(IsPlayerEquipped) return;
@@ -39,6 +42,8 @@ function AddPlayerInstrument(Hat_Player Ply, class<Yoshi_MusicalInstrument> Inst
     IsPlayerEquipped = true;
     InstrumentMesh = AttachInstrument(Player.Mesh, InstrumentClass.default.Mesh);
     GameMod.Sync(InstrumentClass.default.InstrumentName $ "|false", class'YoshiPrivate_MusicalInstruments_Commands'.const.YoshiAddInstrument);
+
+    UpdateInstrumentColors(InstrumentMesh, class<Hat_Collectible_Skin>(Hat_PlayerController(Player.Controller).GetLoadout().MyLoadout.Skin.BackpackClass));
 }
 
 function RemovePlayerInstrument() {
@@ -93,6 +98,7 @@ function AddOPInstrument(Hat_GhostPartyPlayer GPP, class<Yoshi_MusicalInstrument
 
             if(OPInstruments[i].IsEquipped) {
                 if(ForceAnim) PlayStrumAnim(GPP.SkeletalMeshComponent, true);
+                UpdateInstrumentColors(OPInstruments[i].InstrumentMesh, GPP.CurrentSkin);
                 return;
             }
 
@@ -109,6 +115,8 @@ function AddOPInstrument(Hat_GhostPartyPlayer GPP, class<Yoshi_MusicalInstrument
     NewUser.IsEquipped = true;
 
     if(ForceAnim) PlayStrumAnim(GPP.SkeletalMeshComponent, true);
+
+    UpdateInstrumentColors(NewUser.InstrumentMesh, GPP.CurrentSkin);
 
     OPInstruments.AddItem(NewUser);
 }
@@ -132,6 +140,59 @@ function RemoveOPInstrument(Hat_GhostPartyPlayer GPP) {
             i--;
         }
     }
+}
+
+function UpdateInstrumentColors(SkeletalMeshComponent MeshComp, class<Hat_Collectible_Skin> Skin) {
+    local array<Texture2D> TextureSlots;
+    local LinearColor LinearSkinColor;
+	local Color SkinColor;
+    local SkinColors iSkinColor;
+    local Texture2D Tex;
+    local Name ParameterName;
+    local int i;
+
+    GameMod.Print("UpdateInstrumentColors" @ MeshComp.Name $ "," @ Skin);
+
+    if(MeshComp == None) return;
+    if(Skin == None) return;
+
+    Skin.static.GetTextureSlotList(TextureSlots);
+    SetTextureSlots(MeshComp, Skin, TextureSlots);
+
+    for(i = 0; i < class'Hat_Collectible_Skin'.const.SkinColorNum; i++) {
+        iSkinColor = SkinColors(i);
+
+        ParameterName = Name(Skin.static.GetSkinColorName(iSkinColor));
+
+        SkinColor = Skin.default.SkinColor[iSkinColor];
+        Tex = Skin.default.SkinTextureInfo[iSkinColor].Texture;
+
+        
+
+        if(Skin.static.IsSlotEmpty(SkinColor, Tex)) {
+            ClearMaterialVectorValueMesh(InstrumentMesh, ParameterName);
+        }
+        else {
+            if(Tex != None) {
+                LinearSkinColor.R = Skin.default.SkinTextureInfo[iSkinColor].UVScale * (Skin.default.SkinTextureInfo[iSkinColor].DisableNormalMap ? -1 : 1);
+				LinearSkinColor.G = Skin.default.SkinTextureInfo[iSkinColor].Angle;
+				LinearSkinColor.B = 0;
+				LinearSkinColor.A = TextureSlots.Find(Tex);
+            }
+            else {
+                LinearSkinColor.R = (float(SkinColor.R)/255.f) ** 2;
+				LinearSkinColor.G = (float(SkinColor.G)/255.f) ** 2;
+				LinearSkinColor.B = (float(SkinColor.B)/255.f) ** 2;
+				LinearSkinColor.A = -1;
+            }
+
+            SetMaterialVectorValueMesh(MeshComp, ParameterName, LinearSkinColor);
+        }
+
+        GameMod.Print("[" $ i $ "]" @ ParameterName $ ", (R=" $ SkinColor.R $ ", G=" $ SkinColor.G $ ", B=" $ SkinColor.B $ ", A=" $ SkinColor.A $ ")," @ Tex.Name $ "," @ LinearSkinColor.R);
+    }
+
+    GameMod.Sync("ColorsWeaveIntoASpiralOfFlame", class'YoshiPrivate_MusicalInstruments_Commands'.const.YoshiUpdatePlayerInstrumentColors);
 }
 
 function CleanUpInstruments() {
@@ -198,7 +259,7 @@ function StopStrumAnim(SkeletalMeshComponent Comp) {
 static function SkeletalMeshComponent AttachInstrument(SkeletalMeshComponent Comp, SkeletalMesh Instrument) {
     local SkeletalMeshComponent InstrumentMeshComp;
 
-    InstrumentMeshComp = new class'SkeletalMeshComponent';
+    InstrumentMeshComp = new class'SkeletalMeshComponent'(default.InstrumentTemplate);
     InstrumentMeshComp.SetSkeletalMesh(Instrument);
     InstrumentMeshComp.SetLightEnvironment(Comp.LightEnvironment);
     Comp.AttachComponentToSocket(InstrumentMeshComp, 'Umbrella');
@@ -228,4 +289,106 @@ static function UpdateAnimSet(SkeletalMeshComponent Comp, AnimSet CurrAnimSet, b
 	}
 
 	Comp.UpdateAnimations();
+}
+
+function SetTextureSlots(MeshComponent MeshComp, class<Hat_Collectible_Skin> Skin, Array<Texture2D> TextureSlots)
+{
+	local Name ParameterName;
+	local int i;
+	for (i = 0; i < Min(TextureSlots.Length, class'Hat_MaterialExpressionDynamicLUT'.const.SupportedTextureSlots); i++)
+	{
+		ParameterName = Name(Skin.static.GetTextureSlotName(i));
+		SetMaterialTextureValueMesh(MeshComp, ParameterName, TextureSlots[i]);
+	}
+}
+
+function SetMaterialTextureValueMesh(MeshComponent MeshComp, Name ParameterName, Texture Tex)
+{
+    local int i;
+    local MaterialInstance Mat;
+
+	if (Tex == None) {
+		ClearMaterialTextureValueMesh(MeshComp, ParameterName);
+		return;
+	}
+
+    for (i = 0; i < MeshComp.GetNumElements(); i++)
+    {
+        Mat = MaterialInstance(MeshComp.GetMaterial(i));
+        if (Mat != None) Mat.SetTextureParameterValue(ParameterName, Tex);
+    }
+}
+
+function ClearMaterialTextureValueMesh(MeshComponent MeshComp, Name ParameterName)
+{
+    local int i;
+    local MaterialInstance Mat;
+
+  	if (MeshComp == None) return;
+
+    for (i = 0; i < MeshComp.GetNumElements(); i++)
+    {
+        Mat = MaterialInstance(MeshComp.GetMaterial(i));
+        if (Mat != None)
+        {
+            Mat.ClearTextureParameterValue(ParameterName);
+        }
+    }
+}
+
+function ClearMaterialVectorValueMesh(MeshComponent MeshComp, Name ParameterName)
+{
+    local int i;
+    local MaterialInstance Mat;
+
+  	if (MeshComp == None) return;
+
+    for (i = 0; i < MeshComp.GetNumElements(); i++)
+    {
+        Mat = MaterialInstance(MeshComp.GetMaterial(i));
+        if (Mat != None)
+        {
+            Mat.ClearVectorParameterValue(ParameterName);
+        }
+    }
+}
+
+function SetMaterialVectorValueMesh(MeshComponent MeshComp, Name ParameterName, LinearColor LinearColorValue)
+{
+    local int i;
+    local MaterialInstance Mat;
+
+	if (MeshComp == None) return;
+
+    for (i = 0; i < MeshComp.GetNumElements(); i++)
+    {
+        Mat = MaterialInstance(MeshComp.GetMaterial(i));
+        if (Mat == None) continue;
+
+		Mat.SetVectorParameterValue(ParameterName, LinearColorValue);
+    }
+}
+
+function SetMaterialScalarValueMesh(MeshComponent MeshComp, Name ParameterName, float ScalarValue)
+{
+    local int i;
+    local MaterialInstance Mat;
+
+	if (MeshComp == None) return;
+
+    for (i = 0; i < MeshComp.GetNumElements(); i++)
+    {
+        Mat = MaterialInstance(MeshComp.GetMaterial(i));
+        if (Mat == None) continue;
+
+		Mat.SetScalarParameterValue(ParameterName, ScalarValue);
+    }
+}
+
+defaultproperties
+{
+    Begin Object Class=SkeletalMeshComponent Name=InstrTemplate
+        bUsePrecomputedShadows=false
+    End Object 
+    InstrumentTemplate=InstrTemplate
 }
