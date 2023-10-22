@@ -9,10 +9,10 @@ class Yoshi_UkuleleInstrument_GameMod extends GameMod
 // trailer
 // Metronome time???
 // More Instruments:
-// Strings - Violin, Guitar, maybe Electric Guitar
+// Strings - Violin, Electric Guitar
 // Wind - Flute, Saxophone
 // Brass - Trumpet, Trombone
-// Percussion - Drums, Marimba, something goofy like triangle
+// Percussion - Drum Set, Marimba, something goofy like triangle
 
 var config int Instrument; //Which instrument sound should we use?
 var config int Scale; //Which kind of scale (major, minor, etc.) should our keys be based off of
@@ -22,7 +22,6 @@ var config int KeyboardLayout; //The keyboard layout being used ex. QWERTY, AZER
 var config int UseShiftlessMode; //Whether or not to use Shift to access flattened notes
 var config int OnlineNotes; //Should we receive individual notes from online players
 var config int OnlineSongs; //Should we receive the emote songs from online players
-
 
 var int Octave; //Certain instruments have more than one set of ranges
 var int PitchShift;
@@ -594,7 +593,7 @@ function bool ReceivedNativeInputKey(int ControllerId, name Key, EInputEvent Eve
 
     if(InputPack.PlyCon.IsPaused()) return false;
 
-    Print(`ShowVar(Key) @ `ShowVar(EventType) @ `ShowVar(bGamepad));
+    //Print(`ShowVar(Key) @ `ShowVar(EventType) @ `ShowVar(bGamepad));
 
     if (Key == 'LeftShift')
 	{
