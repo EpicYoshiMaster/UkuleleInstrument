@@ -5,14 +5,15 @@ class Yoshi_UkuleleInstrument_GameMod extends GameMod
 //
 // TODO
 //
+// address config menu issues :<
+// fix in coop
 // fullbody material support
-// trailer
-// Metronome time???
 // More Instruments:
 // Strings - Violin, Electric Guitar
 // Wind - Flute, Saxophone
 // Brass - Trumpet, Trombone
 // Percussion - Drum Set, Marimba, something goofy like triangle
+// trailer
 
 var config int Instrument; //Which instrument sound should we use?
 var config int Scale; //Which kind of scale (major, minor, etc.) should our keys be based off of
@@ -20,6 +21,9 @@ var config int RecordingMode; //0 = Playback mode, 1 = Record Layer, 2 = Reset L
 var config int SongIndex; //You can have up to 25 different songs saved!
 var config int KeyboardLayout; //The keyboard layout being used ex. QWERTY, AZERTY, etc.
 var config int UseShiftlessMode; //Whether or not to use Shift to access flattened notes
+var config int MetronomeBPM; //What tempo should the metronome use
+var config int MetronomeBeatsInMeasure; //The number of beats in each measure for the metronome
+var config int MetronomeMode; //0 - enabled, 1 enable + count-in, 2 always, 3 always + count-in, 4 disabled
 var config int OnlineNotes; //Should we receive individual notes from online players
 var config int OnlineSongs; //Should we receive the emote songs from online players
 
@@ -113,6 +117,8 @@ var array<NoteScale> Scales;
 var bool IsHoldingLeftShift;
 var bool IsHoldingRightShift;
 
+var Yoshi_Metronome Metronome;
+
 function Sync(string CommandString, Name CommandChannel, optional Pawn SendingPlayer, optional Hat_GhostPartyPlayerStateBase Receiver) {
     SendOnlinePartyCommand(CommandString, CommandChannel, SendingPlayer, Receiver);
     Print("OPSend:" @ CommandString $ "," @ CommandChannel $ "," @ SendingPlayer $ "," @ Receiver);
@@ -123,6 +129,9 @@ event OnModLoaded() {
 
     InstrumentManager = new class'Yoshi_InstrumentManager';
     InstrumentManager.GameMod = self;
+
+    Metronome = new class'Yoshi_Metronome';
+    Metronome.SetBeatLength(GetConfigBPM(MetronomeBPM), MetronomeBeatsInMeasure + 1);
 
     LoadSongs();
 
@@ -155,6 +164,10 @@ event OnConfigChanged(Name ConfigName) {
 
         if(RecordingMode == 1) {
             RecordingLayer = PlayerSong.Layers.Length;
+
+            if(Metronome.IsUpdating()) {
+                Metronome.Stop(); //don't play the metronome until the count-in (if needed)
+            }
         }
         
         if(RecordingMode == 2) {
@@ -190,6 +203,28 @@ event OnConfigChanged(Name ConfigName) {
 
         LastSongIndex = SongIndex;
     }
+
+    if(ConfigName == 'MetronomeBPM' || ConfigName == 'MetronomeBeatsInMeasure') {
+        Metronome.SetBeatLength(GetConfigBPM(MetronomeBPM), MetronomeBeatsInMeasure + 1);
+    }
+
+    if(ConfigName == 'MetronomeMode') {
+        if((MetronomeMode == 0 || MetronomeMode == 1) && PlayingState != PS_RecordMode && Metronome.IsUpdating()) {
+            Metronome.Stop();
+        }
+
+        if((MetronomeMode == 2 || MetronomeMode == 3) && !Metronome.IsUpdating()) {
+            Metronome.Start();
+        }
+
+        if(MetronomeMode == 4) {
+            Metronome.Stop();
+        }
+    }
+}
+
+function float GetConfigBPM(int Value) {
+    return 30 + (10 * Value);
 }
 
 function AssignPlayerInstrument() {
@@ -228,6 +263,12 @@ function HookPlayerInput(Hat_PlayerController PlyCon) {
     PlayerSong.Player = Player;
 
     Hat_HUD(PlyCon.MyHUD).OpenHUD(class'Yoshi_HUDElement_DebugMode');
+
+    Metronome.SetPlayer(Player);
+
+    if(RecordingMode != 1 && (MetronomeMode == 2 || MetronomeMode == 3)) {
+        Metronome.Start();
+    }
 }
 
 function HookOnlinePlayerSpawn(Hat_GhostPartyPlayer GPP) {
@@ -376,6 +417,16 @@ event Tick(float delta) {
         }
     }
 
+    if(Metronome != None) {
+        Metronome.TickMetronome();
+
+        if(RecordingMode == 1 && PlayingState == PS_IdleMode && (MetronomeMode == 1 || MetronomeMode == 3)) {
+            if(Metronome.IsUpdating() && Metronome.MeasureNumber > 1) {
+                StartRecording();
+            }
+        }
+    }
+
     for(i = 0; i < OPSongs.Length; i++) {
         OPSongs[i] = TickSong(OPSongs[i], delta);
         if(OPSongs[i].Time >= GetFurthestSongTimestamp(OPSongs[i])) {
@@ -394,7 +445,7 @@ event Tick(float delta) {
         RecordingHUD = None;
     }
 
-    if((RecordingMode == 1 || RecordingMode == 2) && RecordingHUD == None) {
+    if(RecordingMode == 1 && RecordingHUD == None) {
         RecordingHUD = Yoshi_HUDElement_RecordingMode(MyHUD.OpenHUD(class'Yoshi_HUDElement_RecordingMode', string(RecordingMode)));
     }
 }
@@ -407,8 +458,6 @@ function SongPlaybackStatus TickSong(SongPlaybackStatus Song, float Delta) {
 
     for(i = 0; i < Song.Layers.Length; i++) {
         while(Song.Layers[i].LastPlayedNoteIndex < Song.Layers[i].Notes.Length && Song.Time >= Song.Layers[i].Notes[Song.Layers[i].LastPlayedNoteIndex].Timestamp) {
-
-
             PlayNote(Song.Player, Song.Layers[i].Notes[Song.Layers[i].LastPlayedNoteIndex].Pitch, Song.Layers[i].InstrumentName);
             Song.Layers[i].LastPlayedNoteIndex++;
         }
@@ -447,6 +496,27 @@ function int GetPlayerSongNoteCount() {
 function PlayPlayerNote(String Note) {
     local SingleNote NotePlayed;
 
+    if(RecordingMode == 1 && PlayingState != PS_PlaybackMode) {
+        if(PlayingState == PS_IdleMode) {
+
+            //Start the count-in
+            if((MetronomeMode == 1 || MetronomeMode == 3)) {
+                if(!Metronome.IsUpdating()) {
+                    Metronome.Start();
+                }
+                return;
+            }
+            else {
+                StartRecording();
+            }
+        }
+
+        NotePlayed.Pitch = Note;
+        NotePlayed.Timestamp = PlayerSong.Time;
+
+        RecordLayer.Notes.AddItem(NotePlayed);
+    }
+
     if(CurrentInstrument != None) {
         if(Player != None) {
             Player.PutAwayWeapon();
@@ -458,19 +528,6 @@ function PlayPlayerNote(String Note) {
         if(OnlineNotes == 0) Sync(Note $ "|" $ CurrentInstrument.InstrumentName, class'YoshiPrivate_MusicalInstruments_Commands'.const.YoshiMusicNote);
 
         CurrentInstrument.PlayNote(Player, Note);
-    }
-
-    if(RecordingMode == 1) {
-        if(PlayingState == PS_PlaybackMode) return; //We're listening back at the moment so NO
-
-        if(PlayingState == PS_IdleMode) {
-            StartRecording();
-        }
-
-        NotePlayed.Pitch = Note;
-        NotePlayed.Timestamp = PlayerSong.Time;
-
-        RecordLayer.Notes.AddItem(NotePlayed);
     }
 }
 
@@ -545,6 +602,10 @@ function StartRecording() {
 
     RecordLayer.InstrumentName = CurrentInstrument.InstrumentName;
     RecordLayer.Notes.Length = 0;
+
+    if((MetronomeMode == 0 || MetronomeMode == 2) && !Metronome.IsUpdating()) {
+        Metronome.Start();
+    }
 }
 
 function StopRecording() {
@@ -563,6 +624,10 @@ function StopRecording() {
     class'GameMod'.static.SaveConfigValue(class'Yoshi_UkuleleInstrument_GameMod', 'RecordingMode', 0);
 
     SetPlayingState(PS_IdleMode);
+
+    if(MetronomeMode == 0 || MetronomeMode == 1) {
+        Metronome.Stop();
+    }
 }
 
 function SaveSongs(optional int SaveSongIndex = -1) {
@@ -610,7 +675,13 @@ function bool ReceivedNativeInputKey(int ControllerId, name Key, EInputEvent Eve
 
     if(Key == 'LeftControl' || Key == 'RightControl') {
         if(PlayingState == PS_IdleMode && RecordingMode == 1) {
-            StartRecording();
+
+            if((MetronomeMode == 1 || MetronomeMode == 3)) {
+                Metronome.Start();
+            }
+            else {
+                StartRecording();
+            }
             return true; //Eat thy input
         }
         else if(PlayingState == PS_RecordMode) {

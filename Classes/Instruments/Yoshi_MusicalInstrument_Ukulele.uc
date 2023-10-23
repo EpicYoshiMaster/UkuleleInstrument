@@ -4,6 +4,7 @@ defaultproperties
 {
     InstrumentID=0
     InstrumentName="Ukulele"
+
     Pitches.Add((Name = "C3", Sound = SoundCue'Yoshi_MusicalUkulele_Content.SoundCues.Ukulele_c3_5'));
     Pitches.Add((Name = "Db3", Sound = SoundCue'Yoshi_MusicalUkulele_Content.SoundCues.Ukulele_db3_5'));
     Pitches.Add((Name = "D3", Sound = SoundCue'Yoshi_MusicalUkulele_Content.SoundCues.Ukulele_d3_5'));
@@ -16,6 +17,7 @@ defaultproperties
     Pitches.Add((Name = "A3", Sound = SoundCue'Yoshi_MusicalUkulele_Content.SoundCues.Ukulele_a3_5'));
     Pitches.Add((Name = "Bb3", Sound = SoundCue'Yoshi_MusicalUkulele_Content.SoundCues.Ukulele_bb_5'));
     Pitches.Add((Name = "B3", Sound = SoundCue'Yoshi_MusicalUkulele_Content.SoundCues.Ukulele_b3_5'));
+    
     Pitches.Add((Name = "C4", Sound = SoundCue'Yoshi_MusicalUkulele_Content.SoundCues.Ukulele_c4_5'));
     Pitches.Add((Name = "Db4", Sound = SoundCue'Yoshi_MusicalUkulele_Content.SoundCues.Ukulele_db4_4'));
     Pitches.Add((Name = "D4", Sound = SoundCue'Yoshi_MusicalUkulele_Content.SoundCues.Ukulele_d4_5'));

@@ -62,7 +62,15 @@ function bool Render(HUD H)
 
 		DisplayStrings.AddItem(s); 
 		DisplayStrings.AddItem("Press Left or Right to change Recording Layer");
-		DisplayStrings.AddItem("Press Ctrl or a Note Key to Begin Recording");
+
+		if((GM.MetronomeMode == 1 || GM.MetronomeMode == 3)) {
+			if(!GM.Metronome.IsUpdating()) {
+				DisplayStrings.AddItem("Press Ctrl or a Note Key to Begin the Metronome Count-In");
+			}
+		}
+		else {
+			DisplayStrings.AddItem("Press Ctrl or a Note Key to Begin Recording");
+		}
 	}
 	else if(GM.PlayingState == PS_PlaybackMode) {
 		DisplayStrings.AddItem("Cannot Record during Emote Playback");
