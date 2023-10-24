@@ -5,14 +5,19 @@ class Yoshi_UkuleleInstrument_GameMod extends GameMod
 //
 // TODO
 //
+
+// Script:
 // address config menu issues :<
 // fix in coop
 // fullbody material support
+// visual instrument effects
+
 // More Instruments:
 // Strings - Violin, Electric Guitar
 // Wind - Flute, Saxophone
 // Brass - Trumpet, Trombone
-// Percussion - Drum Set, Marimba, something goofy like triangle
+// Percussion - Drum Set, something goofy like triangle
+
 // trailer
 
 var config int Instrument; //Which instrument sound should we use?

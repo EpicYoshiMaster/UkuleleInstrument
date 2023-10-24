@@ -167,8 +167,6 @@ function UpdateInstrumentColors(SkeletalMeshComponent MeshComp, class<Hat_Collec
         SkinColor = Skin.default.SkinColor[iSkinColor];
         Tex = Skin.default.SkinTextureInfo[iSkinColor].Texture;
 
-        
-
         if(Skin.static.IsSlotEmpty(SkinColor, Tex)) {
             ClearMaterialVectorValueMesh(InstrumentMesh, ParameterName);
         }
