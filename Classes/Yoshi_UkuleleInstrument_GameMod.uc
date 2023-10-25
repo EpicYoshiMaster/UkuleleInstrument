@@ -11,11 +11,11 @@ class Yoshi_UkuleleInstrument_GameMod extends GameMod
 // fix in coop
 // fullbody material support
 // visual instrument effects
+// Build system for releasing notes
 
 // More Instruments:
 // Strings - Violin, Electric Guitar
-// Wind - Flute, Saxophone
-// Brass - Trumpet, Trombone
+// Wind - Flute, Saxophone, Update Recorder
 // Percussion - Drum Set, something goofy like triangle
 
 // trailer
@@ -62,6 +62,11 @@ struct InstrumentKeyboardLayout {
     var ModifierKeyLayout ShiftlessModifiers;
 };
 
+struct NotePlayback {
+    var Name Key;
+    var AudioComponent Comp;
+};
+
 //One note consists of a certain Pitch and Timestamp
 struct SingleNote {
     var string Pitch;
@@ -105,6 +110,8 @@ var Yoshi_MusicalInstrument CurrentInstrument; //The instrument the player curre
 var SongPlaybackStatus PlayerSong; //Holds the player's saved song
 var array<SongPlaybackStatus> OPSongs; //Holds all active Emote Songs being played
 var Yoshi_MusicalSong_Storage StoredSongs;
+
+var array<NotePlayback> PlayerNotes;
 
 var PlayingMode PlayingState;
 var SongLayer RecordLayer;
@@ -440,6 +447,13 @@ event Tick(float delta) {
         }
     }
 
+    for(i = 0; i < PlayerNotes.Length; i++) {
+        if(PlayerNotes[i].Comp == None || !PlayerNotes[i].Comp.IsPlaying()) {
+            PlayerNotes.Remove(i, 1);
+            i--;
+        }
+    }
+
     if(InputPack.PlyCon == None) return;
     MyHUD = Hat_HUD(InputPack.PlyCon.MyHUD);
 
@@ -498,8 +512,10 @@ function int GetPlayerSongNoteCount() {
     return NoteCount;
 }
 
-function PlayPlayerNote(String Note) {
+function PlayPlayerNote(String Note, Name Key) {
     local SingleNote NotePlayed;
+    local NotePlayback Playback;
+    local AudioComponent NoteComponent;
 
     if(RecordingMode == 1 && PlayingState != PS_PlaybackMode) {
         if(PlayingState == PS_IdleMode) {
@@ -532,7 +548,29 @@ function PlayPlayerNote(String Note) {
 
         if(OnlineNotes == 0) Sync(Note $ "|" $ CurrentInstrument.InstrumentName, class'YoshiPrivate_MusicalInstruments_Commands'.const.YoshiMusicNote);
 
-        CurrentInstrument.PlayNote(Player, Note);
+        NoteComponent = CurrentInstrument.PlayNote(Player, Note);
+
+        if(NoteComponent != None && CurrentInstrument.CanReleaseNote) {
+            Playback.Comp = NoteComponent;
+            Playback.Key = Key;
+            PlayerNotes.AddItem(Playback);
+        }
+    }
+}
+
+function StopPlayerNote(Name Key) {
+    local int i;
+
+    for(i = 0; i < PlayerNotes.Length; i++) {
+        if(PlayerNotes[i].Key == Key) {
+
+            if(PlayerNotes[i].Comp != None) {
+                PlayerNotes[i].Comp.FadeOut(0.15, 0.0);
+            }
+
+            PlayerNotes.Remove(i, 1);
+            return;
+        }
     }
 }
 
@@ -676,6 +714,22 @@ function bool ReceivedNativeInputKey(int ControllerId, name Key, EInputEvent Eve
 		else if (EventType == IE_Pressed || EventType == IE_Repeat) IsHoldingRightShift = true;
 	}
 
+    if(EventType == IE_Released) {
+        for(i = 0; i < InstrumentKeys[KeyboardLayout].Notes.Length; i++) {
+            if(InstrumentKeys[KeyboardLayout].Notes[i] == Key) {
+               StopPlayerNote(Key);
+            }
+        }
+
+        if(UseShiftlessMode != 1) return false;
+
+        for(i = 0; i < InstrumentKeys[KeyboardLayout].FlatNotes.Length; i++) {
+            if(InstrumentKeys[KeyboardLayout].FlatNotes[i] == Key) {
+                StopPlayerNote(Key);
+            }
+        }
+    }
+
     if(EventType != IE_Pressed) return false;
 
     if(Key == 'LeftControl' || Key == 'RightControl') {
@@ -746,14 +800,14 @@ function bool ReceivedNativeInputKey(int ControllerId, name Key, EInputEvent Eve
 
         for(i = 0; i < InstrumentKeys[KeyboardLayout].FlatNotes.Length; i++) {
             if(InstrumentKeys[KeyboardLayout].FlatNotes[i] == Key && Scale < Scales.Length) {
-                PlayPlayerNote(GetNoteName((Scales[Scale].NoteOffsets[i] - 1) + PitchShift));
+                PlayPlayerNote(GetNoteName((Scales[Scale].NoteOffsets[i] - 1) + PitchShift), Key);
             }
         }
     }
 
     for(i = 0; i < InstrumentKeys[KeyboardLayout].Notes.Length; i++) {
         if(InstrumentKeys[KeyboardLayout].Notes[i] == Key && Scale < Scales.Length) {
-            PlayPlayerNote(GetNoteName(Scales[Scale].NoteOffsets[i] + (HoldingShiftKey ? -1 : 0) + PitchShift));
+            PlayPlayerNote(GetNoteName(Scales[Scale].NoteOffsets[i] + (HoldingShiftKey ? -1 : 0) + PitchShift), Key);
         }
     }
 

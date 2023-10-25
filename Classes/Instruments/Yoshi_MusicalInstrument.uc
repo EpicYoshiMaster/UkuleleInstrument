@@ -10,6 +10,8 @@ var const string InstrumentName;
 var array<InstrumentPitchSet> Pitches;
 var const int InstrumentID; //Corresponds with Configs
 
+var bool CanReleaseNote;
+
 var AnimSet AnimSet;
 var SkeletalMesh Mesh;
 
@@ -17,20 +19,20 @@ var int MinOctave;
 var int MaxOctave;
 var int DefaultOctave;
 
-static function PlayNote(Actor Player, String Note) {
+static function AudioComponent PlayNote(Actor Player, String Note) {
     local int i;
     for(i = 0; i < default.Pitches.Length; i++) {
         if(default.Pitches[i].Name ~= Note) {
             if(Hat_Pawn(Player) != None) {
-                Hat_Pawn(Player).PlayVoice(default.Pitches[i].Sound,,true);
+                return Hat_Pawn(Player).PlayVoice(default.Pitches[i].Sound,,true);
             }
             else {
-                Player.PlaySound(default.Pitches[i].Sound,,true);
+                return Player.CreateAudioComponent(default.Pitches[i].Sound,true,true);
             }
-
-            return;
         }
     }
+
+    return None;
 }
 
 static function array< class<Yoshi_MusicalInstrument> > GetAllInstruments() {
@@ -54,4 +56,6 @@ defaultproperties
 
     AnimSet=AnimSet'Ctm_Ukulele.Ukulele_playing'
 	Mesh=SkeletalMesh'Ctm_Ukulele.Ukulele'
+
+    CanReleaseNote=false
 }
