@@ -11,6 +11,7 @@ var array<InstrumentPitchSet> Pitches;
 var const int InstrumentID; //Corresponds with Configs
 
 var bool CanReleaseNote;
+var float FadeOutTime;
 
 var AnimSet AnimSet;
 var SkeletalMesh Mesh;
@@ -53,6 +54,7 @@ defaultproperties
     MinOctave=3
     MaxOctave=3
     DefaultOctave=3
+    FadeOutTime=0.15
 
     AnimSet=AnimSet'Ctm_Ukulele.Ukulele_playing'
 	Mesh=SkeletalMesh'Ctm_Ukulele.Ukulele'

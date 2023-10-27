@@ -15,7 +15,7 @@ class Yoshi_UkuleleInstrument_GameMod extends GameMod
 
 // More Instruments:
 // Strings - Violin, Electric Guitar
-// Wind - Flute, Saxophone, Update Recorder
+// Wind - Saxophone, Update Recorder
 // Percussion - Drum Set, something goofy like triangle
 
 // trailer
@@ -558,14 +558,14 @@ function PlayPlayerNote(String Note, Name Key) {
     }
 }
 
-function StopPlayerNote(Name Key) {
+function StopPlayerNote(Name Key, float FadeOutTime) {
     local int i;
 
     for(i = 0; i < PlayerNotes.Length; i++) {
         if(PlayerNotes[i].Key == Key) {
 
             if(PlayerNotes[i].Comp != None) {
-                PlayerNotes[i].Comp.FadeOut(0.15, 0.0);
+                PlayerNotes[i].Comp.FadeOut(FadeOutTime, 0.0);
             }
 
             PlayerNotes.Remove(i, 1);
@@ -717,7 +717,7 @@ function bool ReceivedNativeInputKey(int ControllerId, name Key, EInputEvent Eve
     if(EventType == IE_Released) {
         for(i = 0; i < InstrumentKeys[KeyboardLayout].Notes.Length; i++) {
             if(InstrumentKeys[KeyboardLayout].Notes[i] == Key) {
-               StopPlayerNote(Key);
+               StopPlayerNote(Key, CurrentInstrument.FadeOutTime);
             }
         }
 
@@ -725,7 +725,7 @@ function bool ReceivedNativeInputKey(int ControllerId, name Key, EInputEvent Eve
 
         for(i = 0; i < InstrumentKeys[KeyboardLayout].FlatNotes.Length; i++) {
             if(InstrumentKeys[KeyboardLayout].FlatNotes[i] == Key) {
-                StopPlayerNote(Key);
+                StopPlayerNote(Key, CurrentInstrument.FadeOutTime);
             }
         }
     }

@@ -6,6 +6,7 @@ defaultproperties
     InstrumentName="Euphonium"
 
     CanReleaseNote=true
+    FadeOutTime=0.3
 
     MinOctave=2 //B1
     MaxOctave=4 //E5
