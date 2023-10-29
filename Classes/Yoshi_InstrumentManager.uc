@@ -1,4 +1,4 @@
-class Yoshi_InstrumentManager extends Object;
+class Yoshi_InstrumentManager extends Yoshi_InstrumentManager_Base;
 
 var Hat_Player Player;
 var Yoshi_UkuleleInstrument_GameMod GameMod;
@@ -17,6 +17,11 @@ struct OPInstrument {
 
 var array<OPInstrument> OPInstruments;
 
+struct MaterialCount {
+    var int Count;
+    var MaterialInterface Mat;
+};
+
 function AddPlayerInstrument(Hat_Player Ply, class<Yoshi_MusicalInstrument> InstrumentClass) {
     local bool WasPlayerEquipped;
 
@@ -31,7 +36,7 @@ function AddPlayerInstrument(Hat_Player Ply, class<Yoshi_MusicalInstrument> Inst
 
     if(!WasPlayerEquipped && IsPlayerEquipped) {
         GameMod.Sync(InstrumentClass.default.InstrumentName $ "|false", class'YoshiPrivate_MusicalInstruments_Commands'.const.YoshiAddInstrument);
-        UpdateInstrumentColors(InstrumentMesh, class<Hat_Collectible_Skin>(Hat_PlayerController(Player.Controller).GetLoadout().MyLoadout.Skin.BackpackClass));
+        UpdateInstrumentColors(ply, InstrumentMesh, class<Hat_Collectible_Skin>(Hat_PlayerController(Player.Controller).GetLoadout().MyLoadout.Skin.BackpackClass), InstrumentClass);
     }
 
     if(IsPlayerEquipped) return;
@@ -43,7 +48,7 @@ function AddPlayerInstrument(Hat_Player Ply, class<Yoshi_MusicalInstrument> Inst
     InstrumentMesh = AttachInstrument(Player.Mesh, InstrumentClass.default.Mesh);
     GameMod.Sync(InstrumentClass.default.InstrumentName $ "|false", class'YoshiPrivate_MusicalInstruments_Commands'.const.YoshiAddInstrument);
 
-    UpdateInstrumentColors(InstrumentMesh, class<Hat_Collectible_Skin>(Hat_PlayerController(Player.Controller).GetLoadout().MyLoadout.Skin.BackpackClass));
+    UpdateInstrumentColors(ply, InstrumentMesh, class<Hat_Collectible_Skin>(Hat_PlayerController(Player.Controller).GetLoadout().MyLoadout.Skin.BackpackClass), InstrumentClass);
 }
 
 function RemovePlayerInstrument() {
@@ -78,10 +83,6 @@ function PlayerTickInstrument() {
 	}
 }
 
-//for each player we need to be checking
-//Do they have this instrument class (ignore that there's only the ukulele mesh I want to future proof)
-//If it is a different class, we should remove
-
 function AddOPInstrument(Hat_GhostPartyPlayer GPP, class<Yoshi_MusicalInstrument> InstrumentClass, optional bool ForceAnim = false) {
     local int i;
     local OPInstrument NewUser;
@@ -98,7 +99,7 @@ function AddOPInstrument(Hat_GhostPartyPlayer GPP, class<Yoshi_MusicalInstrument
 
             if(OPInstruments[i].IsEquipped) {
                 if(ForceAnim) PlayStrumAnim(GPP.SkeletalMeshComponent, true);
-                UpdateInstrumentColors(OPInstruments[i].InstrumentMesh, GPP.CurrentSkin);
+                UpdateInstrumentColors(GPP, OPInstruments[i].InstrumentMesh, GPP.CurrentSkin, InstrumentClass);
                 return;
             }
 
@@ -116,7 +117,7 @@ function AddOPInstrument(Hat_GhostPartyPlayer GPP, class<Yoshi_MusicalInstrument
 
     if(ForceAnim) PlayStrumAnim(GPP.SkeletalMeshComponent, true);
 
-    UpdateInstrumentColors(NewUser.InstrumentMesh, GPP.CurrentSkin);
+    UpdateInstrumentColors(GPP, NewUser.InstrumentMesh, GPP.CurrentSkin, InstrumentClass);
 
     OPInstruments.AddItem(NewUser);
 }
@@ -142,8 +143,9 @@ function RemoveOPInstrument(Hat_GhostPartyPlayer GPP) {
     }
 }
 
-function UpdateInstrumentColors(SkeletalMeshComponent MeshComp, class<Hat_Collectible_Skin> Skin) {
+function UpdateInstrumentColors(Actor a, SkeletalMeshComponent MeshComp, class<Hat_Collectible_Skin> Skin, class<Yoshi_MusicalInstrument> InstrumentClass) {
     local array<Texture2D> TextureSlots;
+    local MaterialInterface FullBodyMaterial;
     local LinearColor LinearSkinColor;
 	local Color SkinColor;
     local SkinColors iSkinColor;
@@ -155,6 +157,10 @@ function UpdateInstrumentColors(SkeletalMeshComponent MeshComp, class<Hat_Collec
 
     if(MeshComp == None) return;
     if(Skin == None) return;
+
+    FullBodyMaterial = GetFullBodyMaterial(a, Skin);
+
+    SetFullbodyMaterial(MeshComp, InstrumentClass, FullBodyMaterial);
 
     Skin.static.GetTextureSlotList(TextureSlots);
     SetTextureSlots(MeshComp, Skin, TextureSlots);
@@ -191,6 +197,52 @@ function UpdateInstrumentColors(SkeletalMeshComponent MeshComp, class<Hat_Collec
     }
 
     GameMod.Sync("ColorsWeaveIntoASpiralOfFlame", class'YoshiPrivate_MusicalInstruments_Commands'.const.YoshiUpdatePlayerInstrumentColors);
+}
+
+static function InitMaterialInstancesMesh(Meshcomponent MeshComp) {
+	local int i;
+	local MaterialInstance Mat;
+
+	if (MeshComp == None) return;
+
+	for (i = 0; i < MeshComp.GetNumElements(); i++)
+	{
+		if (MaterialInstanceTimeVarying(MeshComp.GetMaterial(i)) != None || Material(MeshComp.GetMaterial(i)) != None)
+			Mat = MeshComp.CreateAndSetMaterialInstanceTimeVarying(i);
+
+		else if (MaterialInstanceConstant(MeshComp.GetMaterial(i)) != None)
+			Mat = MeshComp.CreateAndSetMaterialInstanceConstant(i);
+
+		else
+			continue;
+
+		MeshComp.SetMaterial(i, Mat);
+	}
+}
+
+static function SetFullbodyMaterial(SkeletalMeshComponent InstrumentComp, class<Yoshi_MusicalInstrument> InstrumentClass, optional MaterialInterface Mat) {
+    local int i;
+
+    //Apply
+    if(Mat != None) {
+        for(i = 0; i < InstrumentComp.GetNumElements(); i++) {
+            if(InstrumentComp.GetMaterial(i) == Material'HatInTime_Characters.Materials.Invisible') continue;
+
+            InstrumentComp.SetMaterial(i, Mat);
+
+            InitMaterialInstancesMesh(InstrumentComp);
+        }
+    }
+    //Remove
+    else {
+        InitMaterialInstancesMesh(InstrumentComp);
+
+        for(i = 0; i < InstrumentComp.GetNumElements(); i++) {
+            InstrumentComp.SetMaterial(i, default.InstrumentTemplate.GetMaterial(i));
+        }
+
+        InitMaterialInstancesMesh(InstrumentComp);
+    }
 }
 
 function CleanUpInstruments() {
@@ -289,104 +341,84 @@ static function UpdateAnimSet(SkeletalMeshComponent Comp, AnimSet CurrAnimSet, b
 	Comp.UpdateAnimations();
 }
 
-function SetTextureSlots(MeshComponent MeshComp, class<Hat_Collectible_Skin> Skin, Array<Texture2D> TextureSlots)
-{
-	local Name ParameterName;
-	local int i;
-	for (i = 0; i < Min(TextureSlots.Length, class'Hat_MaterialExpressionDynamicLUT'.const.SupportedTextureSlots); i++)
-	{
-		ParameterName = Name(Skin.static.GetTextureSlotName(i));
-		SetMaterialTextureValueMesh(MeshComp, ParameterName, TextureSlots[i]);
-	}
-}
+// Function to approximate determining the fullbody material of a given skin, if present
+// - The material must be used more than 3 times
+// - The material cannot be the Invisible material or Badge Metal Back material
+// - The material cannot be a default material for the player's meshes, ex. HatKidBody
+// - If more than one material is used more than 3 times, the material is the highest counted one
+function MaterialInterface GetFullbodyMaterial(Actor a, class<Hat_Collectible_Skin> SkinClass) {
+    local int i, j, MatCountIndex, HighestCount, HighestIndex;
+    local MaterialCount NewCount;
+    local array<MaterialCount> MatCounts;
+    local array<MeshComponent> AllMeshComponents;
+    local array<MaterialInterface> DefaultMaterials;
+    local MaterialInterface CurrMat;
+    
+    if(a == None || SkinClass == None || SkinClass == class'Hat_Collectible_Skin') return None;
+    
+    if(Hat_Player(a) != None) {
+        AllMeshComponents = Hat_Player(a).GetMyMaterialMeshComponents();
 
-function SetMaterialTextureValueMesh(MeshComponent MeshComp, Name ParameterName, Texture Tex)
-{
-    local int i;
-    local MaterialInstance Mat;
-
-	if (Tex == None) {
-		ClearMaterialTextureValueMesh(MeshComp, ParameterName);
-		return;
-	}
-
-    for (i = 0; i < MeshComp.GetNumElements(); i++)
-    {
-        Mat = MaterialInstance(MeshComp.GetMaterial(i));
-        if (Mat != None) Mat.SetTextureParameterValue(ParameterName, Tex);
+        //Remove head mesh, gets false positives for bow kid
+        AllMeshComponents.RemoveItem(Hat_Player(a).Mesh);
     }
-}
+    else if(Hat_GhostPartyPlayer(a) != None) {
+        AllMeshComponents = Hat_GhostPartyPlayer(a).GetMyMaterialMeshComponents();
+    }
 
-function ClearMaterialTextureValueMesh(MeshComponent MeshComp, Name ParameterName)
-{
-    local int i;
-    local MaterialInstance Mat;
+    if(AllMeshComponents.Length <= 0) return None;
 
-  	if (MeshComp == None) return;
+    //Gather default materials
+    DefaultMaterials = GetDefaultMaterials(AllMeshComponents);
 
-    for (i = 0; i < MeshComp.GetNumElements(); i++)
-    {
-        Mat = MaterialInstance(MeshComp.GetMaterial(i));
-        if (Mat != None)
-        {
-            Mat.ClearTextureParameterValue(ParameterName);
+    DefaultMaterials.AddItem(Material'HatInTime_Characters.Materials.Invisible'); //You shall not count on this day
+    DefaultMaterials.AddItem(Material'HatInTime_Items.Materials.Badges.badge_Metal_Back'); //You also shall not count on this day
+
+    for(i = 0; i < AllMeshComponents.Length; i++) {
+        for(j = 0; j < AllMeshComponents[i].GetNumElements(); j++) {
+
+            CurrMat = GetActualMaterial(AllMeshComponents[i].GetMaterial(j));
+
+            if(DefaultMaterials.Find(CurrMat) != INDEX_NONE) continue;
+
+            MatCountIndex = MatCounts.Find('Mat', CurrMat);
+
+            if(MatCountIndex != INDEX_NONE) {
+                MatCounts[MatCountIndex].Count += 1;
+            }
+            else {
+                NewCount.Count = 1;
+                NewCount.Mat = GetActualMaterial(AllMeshComponents[i].GetMaterial(j));
+
+                MatCounts.AddItem(NewCount);
+            }
         }
     }
-}
 
-function ClearMaterialVectorValueMesh(MeshComponent MeshComp, Name ParameterName)
-{
-    local int i;
-    local MaterialInstance Mat;
+    HighestCount = 0;
+    HighestIndex = -1;
 
-  	if (MeshComp == None) return;
+    //GameMod.Print("Material Count");
 
-    for (i = 0; i < MeshComp.GetNumElements(); i++)
-    {
-        Mat = MaterialInstance(MeshComp.GetMaterial(i));
-        if (Mat != None)
-        {
-            Mat.ClearVectorParameterValue(ParameterName);
+    for(i = 0; i < MatCounts.Length; i++) {
+        //GameMod.Print("[" $ i $ "]" @ MatCounts[i].Count $ "," @ MatCounts[i].Mat);
+
+        if(MatCounts[i].Count > HighestCount) {
+            HighestCount = MatCounts[i].Count;
+            HighestIndex = i;
         }
     }
-}
 
-function SetMaterialVectorValueMesh(MeshComponent MeshComp, Name ParameterName, LinearColor LinearColorValue)
-{
-    local int i;
-    local MaterialInstance Mat;
+    if(HighestIndex == INDEX_NONE || HighestCount <= 3) return None;
 
-	if (MeshComp == None) return;
-
-    for (i = 0; i < MeshComp.GetNumElements(); i++)
-    {
-        Mat = MaterialInstance(MeshComp.GetMaterial(i));
-        if (Mat == None) continue;
-
-		Mat.SetVectorParameterValue(ParameterName, LinearColorValue);
-    }
-}
-
-function SetMaterialScalarValueMesh(MeshComponent MeshComp, Name ParameterName, float ScalarValue)
-{
-    local int i;
-    local MaterialInstance Mat;
-
-	if (MeshComp == None) return;
-
-    for (i = 0; i < MeshComp.GetNumElements(); i++)
-    {
-        Mat = MaterialInstance(MeshComp.GetMaterial(i));
-        if (Mat == None) continue;
-
-		Mat.SetScalarParameterValue(ParameterName, ScalarValue);
-    }
+    return MatCounts[HighestIndex].Mat;
 }
 
 defaultproperties
 {
     Begin Object Class=SkeletalMeshComponent Name=InstrTemplate
         bUsePrecomputedShadows=false
+        SkeletalMesh=SkeletalMesh'Ctm_Ukulele.Ukulele'
     End Object 
     InstrumentTemplate=InstrTemplate
 }

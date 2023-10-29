@@ -9,7 +9,6 @@ class Yoshi_UkuleleInstrument_GameMod extends GameMod
 // Script:
 // address config menu issues :<
 // fix in coop
-// fullbody material support
 // visual instrument effects
 // Build system for releasing notes
 
@@ -165,7 +164,7 @@ function OnLoadoutChanged(PlayerController Controller, Object Loadout, Object Ba
 
     PlayerSkin = class<Hat_Collectible_Skin>(Hat_PlayerController(InstrumentManager.Player.Controller).GetLoadout().MyLoadout.Skin.BackpackClass);
 
-    InstrumentManager.UpdateInstrumentColors(InstrumentManager.InstrumentMesh, PlayerSkin);
+    InstrumentManager.UpdateInstrumentColors(InstrumentManager.Player, InstrumentManager.InstrumentMesh, PlayerSkin, CurrentInstrument.class);
 }
 
 event OnConfigChanged(Name ConfigName) {
