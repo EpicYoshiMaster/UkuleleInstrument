@@ -7,17 +7,27 @@ class Yoshi_UkuleleInstrument_GameMod extends GameMod
 //
 
 // Script:
-// address config menu issues :<
+// The New Config Menu :tm: :<
 // fix in coop
 // visual instrument effects
-// Build system for releasing notes
+// Finish buildihng system for releasing notes
 
 // More Instruments:
 // Strings - Violin
-// Wind - Saxophone, Update Recorder
-// Percussion - Drum Set, something goofy like triangle
+// Woodwinds - Saxophone
+// Keyboard - Something Something Synthesizer
+// Percussion - Drum Set
+// Something Random And Fun
 
 // trailer
+
+// BONUS IDEAS (not required but if there's extra time)
+// Strings - Harp, Bass
+// Woodwinds - Clarinet, Alto/Tenor/Bari Sax (whichever wasn't added)
+// Brass - Tuba, Flugelhorn
+// Keyboard - More Piano Flavors
+// Percussion - Handpan
+// Maybe more random chaotic ones
 
 var config int Instrument; //Which instrument sound should we use?
 var config int Scale; //Which kind of scale (major, minor, etc.) should our keys be based off of

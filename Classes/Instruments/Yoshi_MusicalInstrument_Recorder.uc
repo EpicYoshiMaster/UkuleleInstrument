@@ -5,6 +5,9 @@ defaultproperties
     InstrumentID=2
     InstrumentName="Recorder"
 
+    CanReleaseNote=true
+    FadeOutTime=0.3
+
     MinOctave=5
     MaxOctave=6
     DefaultOctave=5
