@@ -13,7 +13,7 @@ class Yoshi_UkuleleInstrument_GameMod extends GameMod
 // Build system for releasing notes
 
 // More Instruments:
-// Strings - Violin, Electric Guitar
+// Strings - Violin
 // Wind - Saxophone, Update Recorder
 // Percussion - Drum Set, something goofy like triangle
 

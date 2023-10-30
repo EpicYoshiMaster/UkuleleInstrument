@@ -5,6 +5,9 @@ defaultproperties
     InstrumentID=1
     InstrumentName="Piano"
 
+    CanReleaseNote=true
+    FadeOutTime=0.3
+
     MinOctave=2
     MaxOctave=6
     DefaultOctave=3

@@ -5,6 +5,9 @@ defaultproperties
     InstrumentID=4
     InstrumentName="Acoustic Guitar"
 
+    CanReleaseNote=true
+    FadeOutTime=0.3
+
     MinOctave=2 //B1
     MaxOctave=5 //E6
     DefaultOctave=3
