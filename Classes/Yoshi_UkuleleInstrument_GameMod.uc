@@ -13,7 +13,6 @@ class Yoshi_UkuleleInstrument_GameMod extends GameMod
 // Finish buildihng system for releasing notes
 
 // More Instruments:
-// Strings - Violin
 // Woodwinds - Saxophone
 // Keyboard - Something Something Synthesizer
 // Percussion - Drum Set
@@ -27,6 +26,7 @@ class Yoshi_UkuleleInstrument_GameMod extends GameMod
 // Brass - Tuba, Flugelhorn
 // Keyboard - More Piano Flavors
 // Percussion - Handpan
+// Accordion
 // Maybe more random chaotic ones
 
 var config int Instrument; //Which instrument sound should we use?

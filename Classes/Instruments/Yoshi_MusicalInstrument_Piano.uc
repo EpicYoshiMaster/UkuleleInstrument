@@ -1,3 +1,4 @@
+//Credit to Doka
 class Yoshi_MusicalInstrument_Piano extends Yoshi_MusicalInstrument;
 
 defaultproperties
@@ -8,8 +9,8 @@ defaultproperties
     CanReleaseNote=true
     FadeOutTime=0.3
 
-    MinOctave=2
-    MaxOctave=6
+    MinOctave=2 //C2
+    MaxOctave=6 //E7
     DefaultOctave=3
     
     Pitches.Add((Name = "C2", Sound = SoundCue'Yoshi_MusicalUkulele_Content.PianoSoundCues.Piano_c2'));

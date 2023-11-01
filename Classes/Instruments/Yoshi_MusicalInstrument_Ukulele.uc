@@ -1,3 +1,4 @@
+//Credit to u/mothk0 on Reddit
 class Yoshi_MusicalInstrument_Ukulele extends Yoshi_MusicalInstrument;
 
 defaultproperties

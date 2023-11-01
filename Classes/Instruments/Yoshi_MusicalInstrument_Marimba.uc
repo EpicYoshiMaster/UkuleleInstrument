@@ -1,3 +1,4 @@
+//Credit to Versilian Studios
 class Yoshi_MusicalInstrument_Marimba extends Yoshi_MusicalInstrument;
 
 defaultproperties
