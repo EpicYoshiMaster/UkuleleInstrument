@@ -13,6 +13,7 @@ var const int InstrumentID; //Corresponds with Configs
 var bool CanReleaseNote;
 var float FadeOutTime;
 
+var Texture2D Icon;
 var AnimSet AnimSet;
 var SkeletalMesh Mesh;
 
@@ -56,6 +57,7 @@ defaultproperties
     DefaultOctave=3
     FadeOutTime=0.15
 
+    Icon=Texture2D'HatInTime_Hud_Loadout.Loadout.backpack_icon'
     AnimSet=AnimSet'Ctm_Ukulele.Ukulele_playing'
 	Mesh=SkeletalMesh'Ctm_Ukulele.Ukulele'
 

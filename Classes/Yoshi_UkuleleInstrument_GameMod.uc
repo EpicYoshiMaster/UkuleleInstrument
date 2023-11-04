@@ -127,6 +127,7 @@ var SongLayer RecordLayer;
 var int RecordingLayer;
 
 var Yoshi_HUDElement_RecordingMode RecordingHUD;
+var Yoshi_HUDMenu_MusicMenu MenuHUD;
 
 var InputPack InputPack;
 var Hat_Player Player;
@@ -283,7 +284,7 @@ function HookPlayerInput(Hat_PlayerController PlyCon) {
     Player = Hat_Player(PlyCon.Pawn);
     PlayerSong.Player = Player;
 
-    Hat_HUD(PlyCon.MyHUD).OpenHUD(class'Yoshi_HUDElement_DebugMode');
+    //Hat_HUD(PlyCon.MyHUD).OpenHUD(class'Yoshi_HUDElement_DebugMode');
 
     Metronome.SetPlayer(Player);
 
@@ -740,6 +741,16 @@ function bool ReceivedNativeInputKey(int ControllerId, name Key, EInputEvent Eve
     }
 
     if(EventType != IE_Pressed) return false;
+
+    if(Key == 'G') {
+        if(MenuHUD == None) {
+            MenuHUD =  Yoshi_HUDMenu_MusicMenu(Hat_HUD(InputPack.PlyCon.MyHUD).OpenHUD(class'Yoshi_HUDMenu_MusicMenu'));
+        }
+        else {
+            Hat_HUD(InputPack.PlyCon.MyHUD).CloseHUD(class'Yoshi_HUDMenu_MusicMenu');
+            MenuHUD = None;
+        }
+    }
 
     if(Key == 'LeftControl' || Key == 'RightControl') {
         if(PlayingState == PS_IdleMode && RecordingMode == 1) {
