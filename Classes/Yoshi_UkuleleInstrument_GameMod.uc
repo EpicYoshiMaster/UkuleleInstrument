@@ -13,7 +13,6 @@ class Yoshi_UkuleleInstrument_GameMod extends GameMod
 // Finish buildihng system for releasing notes
 
 // More Instruments:
-// Woodwinds - Saxophone
 // Keyboard - Something Something Synthesizer
 // Percussion - Drum Set
 // Something Random And Fun
@@ -22,7 +21,7 @@ class Yoshi_UkuleleInstrument_GameMod extends GameMod
 
 // BONUS IDEAS (not required but if there's extra time)
 // Strings - Harp, Bass
-// Woodwinds - Clarinet, Alto/Tenor/Bari Sax (whichever wasn't added)
+// Woodwinds - Clarinet, Alto/Bari Sax
 // Brass - Tuba, Flugelhorn
 // Keyboard - More Piano Flavors
 // Percussion - Handpan
