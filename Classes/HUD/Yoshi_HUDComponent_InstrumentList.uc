@@ -23,7 +23,6 @@ var Material IconMaterial;
 var array< class<Yoshi_MusicalInstrument> > InstrumentClasses;
 var array<MaterialInstanceConstant> InstrumentMaterials;
 
-var bool FlagUpdateHover;
 var int HoverIndex;
 
 function Init(Yoshi_UkuleleInstrument_GameMod MyGameMod, Yoshi_HUDMenu_MusicMenu MyMenu, optional Yoshi_HUDComponent MyOwner) {
@@ -45,14 +44,6 @@ function Init(Yoshi_UkuleleInstrument_GameMod MyGameMod, Yoshi_HUDMenu_MusicMenu
     }
 }
 
-/*
-function Tick(HUD H, float delta) {
-    local int i;
-
-    Super.Tick(H, delta);
-
-}*/
-
 function float GetPulseSize(float BaseSize, float WorldTime, float RowOffset) {
     local float minSize, maxSize;
     local float alpha;
@@ -66,12 +57,8 @@ function float GetPulseSize(float BaseSize, float WorldTime, float RowOffset) {
     return Lerp(minSize, maxSize, 0.5 + 0.5 * Sin(2 * Pi * alpha));
 }
 
-function RenderUpdateHover(HUD H) {
-    FlagUpdateHover = true;
-}
-
 function RenderStopHover(HUD H) {
-    FlagUpdateHover = false;
+    Super.RenderStopHover(H);
 
     if(HoverIndex > INDEX_NONE) {
         InstrumentMaterials[HoverIndex].SetScalarParameterValue('Hover', 0.0);
@@ -122,7 +109,7 @@ function RenderInstrumentBox(WorldInfo wi, HUD H, int i, int rowIndex, float cen
 
     if(i < 0 || i >= InstrumentClasses.Length) return;
 
-    if(FlagUpdateHover) {
+    if(IsComponentHovered) {
         hoverSize = itemSize * (1 + PulseScaleAmount);
 
         if(IsPointInSpace(H, Menu.GetMousePos(H), centerX, centerY, hoverSize, hoverSize, false)) {

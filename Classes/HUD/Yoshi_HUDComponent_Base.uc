@@ -1,5 +1,7 @@
 class Yoshi_HUDComponent_Base extends Component;
 
+var const Font StandardFont;
+
 var Yoshi_UkuleleInstrument_GameMod GameMod;
 var Yoshi_HUDMenu_MusicMenu Menu;
 var Yoshi_HUDComponent Owner;
@@ -86,6 +88,7 @@ function bool OnAltClick(HUD H, bool release)
 defaultproperties
 {
 	PositionAbsolute=false
+	StandardFont=Font'Yoshi_UkuleleMats_Content.Fonts.LatoBlackStandard'
 
-	DebugMode=false
+	DebugMode=true
 }

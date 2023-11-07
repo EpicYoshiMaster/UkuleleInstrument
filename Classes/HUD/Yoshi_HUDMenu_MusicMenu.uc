@@ -1,5 +1,8 @@
 class Yoshi_HUDMenu_MusicMenu extends Hat_HUDMenu;
 
+var TextAlign TextAlignment;
+var Font TextFont;
+
 var array<string> PrintStrings;
 var Yoshi_UkuleleInstrument_GameMod GameMod;
 
@@ -79,7 +82,7 @@ function bool Render(HUD H)
     stepY = H.Canvas.ClipY*0.05;
 
     H.Canvas.SetDrawColor(255,255,255,255);
-    H.Canvas.Font = class'Hat_FontInfo'.static.GetDefaultFont("");
+    H.Canvas.Font = class'Yoshi_HUDComponent'.default.StandardFont;
 
     s = "Panel Hover:" @ HoveredPanel.class;
 
@@ -92,11 +95,35 @@ function bool Render(HUD H)
     }
 
     for(i = 0; i < PrintStrings.Length; i++) {
-        class'Hat_HUDMenu'.static.DrawBorderedText(H.Canvas, PrintStrings[i], scaleX, scaleY, scale, true, TextAlign_Left);
+        class'Hat_HUDMenu'.static.DrawText(H.Canvas, PrintStrings[i], scaleX, scaleY, scale, scale, TextAlign_Left);
         scaleY += stepY;
     }
 
+    /*
+    s = "{My Awesome Text}";
+
+    H.Canvas.Font = TextFont;
+
+    DrawTextBox(H, s, 0.01 * H.Canvas.ClipX, 0.5 * H.Canvas.ClipY, 0.5, 0.5);
+    DrawTextBox(H, s, 0.01 * H.Canvas.ClipX, 0.6 * H.Canvas.ClipY, 1, 1);
+    DrawTextBox(H, s, 0.01 * H.Canvas.ClipX, 0.7 * H.Canvas.ClipY, 2, 2);
+    DrawTextBox(H, s, 0.01 * H.Canvas.ClipX, 0.8 * H.Canvas.ClipY, 1, 0.5);
+    DrawTextBox(H, s, 0.01 * H.Canvas.ClipX, 0.9 * H.Canvas.ClipY, 2, 1);*/
+
     return true;
+}
+
+function DrawTextBox(HUD H, string Text, float posx, float posy, float textScaleX, float textScaleY) {
+    local float TextSizeX, TextSizeY;
+
+    H.Canvas.TextSize(Text, TextSizeX, TextSizeY, textScaleX, textScaleY);
+
+    H.Canvas.SetPos(posx, posy);
+    H.Canvas.SetDrawColor(255, 255, 255, 255);
+
+    H.Canvas.DrawBox(TextSizeX, TextSizeY);
+
+    class'Hat_HUDMenu'.static.DrawText(H.Canvas, Text, posx, posy, textScaleX, textScaleY, TextAlignment);
 }
 
 function bool OnClick(HUD H, bool release)
@@ -154,22 +181,26 @@ defaultproperties
         TopLeftX=0.1
         TopLeftY=0.3
         ScaleX=0.4
-        ScaleY=0.3
+        ScaleY=0.35
         TextScale=0.0007
     End Object
     Panels.Add(SelectInstrumentPanel)
 
-    Begin Object Class=Yoshi_HUDPanel Name=TestPanel2
-        Title="Test Panel 2"
+    Begin Object Class=Yoshi_HUDPanel_Metronome Name=MetronomePanel
+        Title="Metronome"
         TextColor=(R=0,G=255,B=0,A=255)
-        Background=Material'HatinTime_Levels_Boat_H2.Materials.Map'
+
         TopLeftX=0.7
         TopLeftY=0.3
         ScaleX=0.2
         ScaleY=0.4
         TextScale=0.0007
     End Object
-    Panels.Add(TestPanel2)
+    Panels.Add(MetronomePanel)
+
+    TextAlignment=TextAlign_TopLeft
 
     RequiresMouse=true
+
+    TextFont = Font'Yoshi_UkuleleMats_Content.Fonts.LatoBlackStandard'
 }

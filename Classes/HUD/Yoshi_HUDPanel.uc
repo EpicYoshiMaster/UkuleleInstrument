@@ -31,6 +31,8 @@ function Tick(HUD H, float delta) {
 function RenderUpdateHover(HUD H) {
     local int i;
     local Vector2D MousePos;
+
+    Super.RenderUpdateHover(H);
     
     MousePos = Menu.GetMousePos(H);
 
@@ -49,6 +51,8 @@ function RenderUpdateHover(HUD H) {
 }
 
 function RenderStopHover(HUD H) {
+    Super.RenderStopHover(H);
+
     if(HoveredComponent != None) {
         HoveredComponent.RenderStopHover(H);
     }
@@ -63,12 +67,16 @@ function Render(HUD H) {
 
     H.Canvas.SetDrawColor(255,255,255,255);
 
-    class'Hat_HUDMenu'.static.DrawTopLeft(H, CurTopLeftX * H.Canvas.ClipX, CurTopLeftY * H.Canvas.ClipY, CurScaleX * H.Canvas.ClipX, CurScaleY * H.Canvas.ClipY, Background);
+    if(Background != None) {
+        class'Hat_HUDMenu'.static.DrawTopLeft(H, CurTopLeftX * H.Canvas.ClipX, CurTopLeftY * H.Canvas.ClipY, CurScaleX * H.Canvas.ClipX, CurScaleY * H.Canvas.ClipY, Background);
+    }
 
     H.Canvas.SetDrawColorStruct(TextColor);
-    H.Canvas.Font = class'Hat_FontInfo'.static.GetDefaultFont("");
+    H.Canvas.Font = StandardFont;
 
-    class'Hat_HUDMenu'.static.DrawBorderedText(H.Canvas, Title, CurTopLeftX * H.Canvas.ClipX, CurTopLeftY * H.Canvas.ClipY, TextScale * H.Canvas.ClipY, true, TextAlign_BottomLeft);
+    if(Title != "") {
+        class'Hat_HUDMenu'.static.DrawText(H.Canvas, Title, CurTopLeftX * H.Canvas.ClipX, CurTopLeftY * H.Canvas.ClipY, TextScale * H.Canvas.ClipY, TextScale * H.Canvas.ClipY, TextAlign_BottomLeft);
+    }
 
     H.Canvas.SetDrawColor(255,255,255,255);
 
@@ -91,5 +99,5 @@ defaultproperties
     Title="I forgot to name my panel :(";
     TextColor=(R=255,G=255,B=255,A=255)
     TextScale=0.00045
-    Background=Material'HatInTime_Levels_Cruise_Meku.Materials.Skydome_Cruise'
+    Background=Material'Yoshi_UkuleleMats_Content.Materials.Instrument_Panel_Bg_Mat'
 }
