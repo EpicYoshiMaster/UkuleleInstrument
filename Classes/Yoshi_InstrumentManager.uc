@@ -1,10 +1,22 @@
 class Yoshi_InstrumentManager extends Yoshi_InstrumentManager_Base;
 
-var Hat_Player Player;
+var float ParticleRotationTime;
+var float ParticleRadius;
+var float ParticleHeightOffset;
+
+var SkeletalMesh InstrumentSkeletalMesh;
+var AnimSet InstrumentAnimSet;
+var MaterialInterface InstrumentParticleMat;
+var ParticleSystem InstrumentParticleSystem;
+
 var Yoshi_UkuleleInstrument_GameMod GameMod;
+
+var Hat_Player Player;
 var class<Yoshi_MusicalInstrument> EquippedClass;
 var SkeletalMeshComponent InstrumentMesh;
+var ParticleSystemComponent InstrumentParticle;
 var bool IsPlayerEquipped;
+var float ParticleOffsetTime;
 
 var SkeletalMeshComponent InstrumentTemplate;
 
@@ -12,7 +24,9 @@ struct OPInstrument {
     var Hat_GhostPartyPlayer GPP;
     var class<Yoshi_MusicalInstrument> EquippedClass;
     var SkeletalMeshComponent InstrumentMesh;
+    var ParticleSystemComponent InstrumentParticle;
     var bool IsEquipped;
+    var float ParticleOffsetTime;
 };
 
 var array<OPInstrument> OPInstruments;
@@ -21,6 +35,19 @@ struct MaterialCount {
     var int Count;
     var MaterialInterface Mat;
 };
+
+// Class is same
+// Is equipped? Do nothing
+// Is not equipped and available? Equip it. (Particle is inherent (maybe))
+// Is not equipped or available equip as new, new particle.
+
+// Class is different
+
+//
+// Does the player have an instrument?
+// Does the player have a particle? Is it the correct one for the class?
+//
+//
 
 function AddPlayerInstrument(Hat_Player Ply, class<Yoshi_MusicalInstrument> InstrumentClass) {
     local bool WasPlayerEquipped;
@@ -42,10 +69,19 @@ function AddPlayerInstrument(Hat_Player Ply, class<Yoshi_MusicalInstrument> Inst
     if(IsPlayerEquipped) return;
 
     //If we get this far, we are ready to add a new instrument
-    UpdateAnimSet(Player.Mesh, InstrumentClass.default.AnimSet, true);
+    UpdateAnimSet(Player.Mesh, InstrumentAnimSet, true);
     EquippedClass = InstrumentClass;
     IsPlayerEquipped = true;
-    InstrumentMesh = AttachInstrument(Player.Mesh, InstrumentClass.default.Mesh);
+    InstrumentMesh = AttachInstrument(Player.Mesh, InstrumentSkeletalMesh);
+
+    if(InstrumentParticle == None) {
+        InstrumentParticle = AttachParticle(InstrumentMesh, InstrumentClass);
+        ParticleOffsetTime = RandRange(0, ParticleRotationTime);
+    }
+    else {
+        UpdateParticle(InstrumentParticle, InstrumentClass);
+    }
+    
     GameMod.Sync(InstrumentClass.default.InstrumentName $ "|false", class'YoshiPrivate_MusicalInstruments_Commands'.const.YoshiAddInstrument);
 
     UpdateInstrumentColors(ply, InstrumentMesh, class<Hat_Collectible_Skin>(Hat_PlayerController(Player.Controller).GetLoadout().MyLoadout.Skin.BackpackClass), InstrumentClass);
@@ -61,7 +97,7 @@ function RemovePlayerInstrument() {
         DetachInstrument(Player.Mesh, InstrumentMesh);
     }
 
-    UpdateAnimSet(Player.Mesh, EquippedClass.default.AnimSet, false);
+    UpdateAnimSet(Player.Mesh, InstrumentAnimSet, false);
 
     IsPlayerEquipped = false;
 
@@ -72,16 +108,43 @@ function bool IsPlayerInstrumentEquipped() {
     return Player != None && IsPlayerEquipped;
 }
 
-function PlayerTickInstrument() {
+function Tick(float delta) {
     local Hat_AnimNodeRandomIdle Anim;
+    local WorldInfo wi;
+    local int i;
+    local float Angle;
+    local Vector v;
 
-    if(Player == None) return;
-    if(!IsPlayerEquipped) return;
+    wi = class'WorldInfo'.static.GetWorldInfo();
+    
+    if(InstrumentParticle != None) {
+        Angle = (ParticleOffsetTime + wi.TimeSeconds) / ParticleRotationTime;
+            
+        v.X = Sin(Angle) * ParticleRadius;
+        v.Y = Cos(Angle) * ParticleRadius;
+        v.Z = ParticleHeightOffset;
 
-	foreach Player.Mesh.AllAnimNodes(class'Hat_AnimNodeRandomIdle', Anim) {
-		Anim.CurrentCountdown = Anim.TimeUntilIdle;
-	}
-}
+        InstrumentParticle.SetTranslation(v);
+    }
+
+    for(i = 0; i < OPInstruments.Length; i++) {
+        if(OPInstruments[i].InstrumentParticle != None) {
+            Angle = (OPInstruments[i].ParticleOffsetTime + wi.TimeSeconds) / ParticleRotationTime;
+            
+            v.X = Sin(Angle) * ParticleRadius;
+            v.Y = Cos(Angle) * ParticleRadius;
+            v.Z = ParticleHeightOffset;
+
+            OPInstruments[i].InstrumentParticle.SetTranslation(v);
+        }
+    }
+
+    if(Player != None && IsPlayerEquipped) {
+        foreach Player.Mesh.AllAnimNodes(class'Hat_AnimNodeRandomIdle', Anim) {
+		    Anim.CurrentCountdown = Anim.TimeUntilIdle;
+	    }
+    }
+}  
 
 function AddOPInstrument(Hat_GhostPartyPlayer GPP, class<Yoshi_MusicalInstrument> InstrumentClass, optional bool ForceAnim = false) {
     local int i;
@@ -109,10 +172,10 @@ function AddOPInstrument(Hat_GhostPartyPlayer GPP, class<Yoshi_MusicalInstrument
         }
     }
     
-    UpdateAnimSet(GPP.SkeletalMeshComponent, InstrumentClass.default.AnimSet, true);
+    UpdateAnimSet(GPP.SkeletalMeshComponent, InstrumentAnimSet, true);
     NewUser.GPP = GPP;
     NewUser.EquippedClass = InstrumentClass;
-    NewUser.InstrumentMesh = AttachInstrument(GPP.SkeletalMeshComponent, InstrumentClass.default.Mesh);
+    NewUser.InstrumentMesh = AttachInstrument(GPP.SkeletalMeshComponent, InstrumentSkeletalMesh);
     NewUser.IsEquipped = true;
 
     if(ForceAnim) PlayStrumAnim(GPP.SkeletalMeshComponent, true);
@@ -131,7 +194,7 @@ function RemoveOPInstrument(Hat_GhostPartyPlayer GPP) {
         if(OPInstruments[i].GPP == GPP && OPInstruments[i].IsEquipped) {
             OPInstruments[i].IsEquipped = false;
             if(OPInstruments[i].InstrumentMesh != None) {
-                UpdateAnimSet(GPP.SkeletalMeshComponent, OPInstruments[i].EquippedClass.default.AnimSet, false);
+                UpdateAnimSet(GPP.SkeletalMeshComponent, InstrumentAnimSet, false);
                 DetachInstrument(GPP.SkeletalMeshComponent, OPInstruments[i].InstrumentMesh);
             }
         }
@@ -265,7 +328,6 @@ function bool CheckInstrumentStatus(SkeletalMeshComponent ActorComp, class<Yoshi
 
         if(MeshComp != None) {
             //We can reattach
-            UpdateAnimSet(ActorComp, CurrentClass.default.AnimSet, true);
             ReAttachInstrument(ActorComp, MeshComp);
             return true;
         }
@@ -274,7 +336,6 @@ function bool CheckInstrumentStatus(SkeletalMeshComponent ActorComp, class<Yoshi
         //Different class, we may need to remove
         if(IsPlayerEquipped && MeshComp != None) {
             DetachInstrument(ActorComp, MeshComp);
-            UpdateAnimSet(ActorComp, CurrentClass.default.AnimSet, false);
         }
     }
 
@@ -330,15 +391,43 @@ static function UpdateAnimSet(SkeletalMeshComponent Comp, AnimSet CurrAnimSet, b
 	if (bGive) {
 		if (Comp.AnimSets.Find(CurrAnimSet) == INDEX_NONE) {
 			Comp.AnimSets.AddItem(CurrAnimSet);
+            Comp.UpdateAnimations();
 		}
 	}
 	else {
 		if (Comp.AnimSets.Find(CurrAnimSet) != INDEX_NONE) {
 			Comp.AnimSets.RemoveItem(CurrAnimSet);
+            Comp.UpdateAnimations();
 		}
 	}
+}
 
-	Comp.UpdateAnimations();
+function ParticleSystemComponent AttachParticle(SkeletalMeshComponent InstrumentMeshComp, class<Yoshi_MusicalInstrument> InstrumentClass) {
+    local MaterialInstanceConstant MatInst;
+    local ParticleSystemComponent NewParticle;
+
+    MatInst = new class'MaterialInstanceConstant';
+    MatInst.SetParent(InstrumentParticleMat);
+    MatInst.SetTextureParameterValue('Texture', InstrumentClass.default.Icon);
+
+    NewParticle = new class'ParticleSystemComponent';
+    NewParticle.SetTemplate(InstrumentParticleSystem);
+    NewParticle.SetMaterialParameter('Override', MatInst);
+    NewParticle.SetScale(0.3);
+
+    InstrumentMeshComp.AttachComponent(NewParticle, 'Root', vect(0,0,0));
+
+    return NewParticle;
+}
+
+function UpdateParticle(ParticleSystemComponent Particle, class<Yoshi_MusicalInstrument> InstrumentClass) {
+    local MaterialInstanceConstant MatInst;
+
+    MatInst = new class'MaterialInstanceConstant';
+    MatInst.SetParent(InstrumentParticleMat);
+    MatInst.SetTextureParameterValue('Texture', InstrumentClass.default.Icon);
+
+    Particle.SetMaterialParameter('Override', MatInst);
 }
 
 // Function to approximate determining the fullbody material of a given skin, if present
@@ -421,4 +510,15 @@ defaultproperties
         SkeletalMesh=SkeletalMesh'Ctm_Ukulele.Ukulele'
     End Object 
     InstrumentTemplate=InstrTemplate
+
+    InstrumentAnimSet=AnimSet'Ctm_Ukulele.Ukulele_playing'
+	InstrumentSkeletalMesh=SkeletalMesh'Ctm_Ukulele.Ukulele'
+    InstrumentParticleMat=Material'Yoshi_UkuleleMats_Content.Materials.Instrument_Orb_Mat'
+
+    InstrumentParticleSystem=ParticleSystem'Yoshi_UkuleleMats_Content.ParticleSystems.Instrument_Icon_PS_Copy'
+    //InstrumentParticleSystem=ParticleSystem'HatInTime_HUB_Decorations.Particles.DreamBubble'
+
+    ParticleRotationTime=3.0
+    ParticleRadius=75.0
+    ParticleHeightOffset=10.0
 }

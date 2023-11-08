@@ -6,6 +6,8 @@ defaultproperties
     InstrumentID=1
     InstrumentName="Piano"
 
+    Icon=Texture2D'HatInTime_Hud_Loadout.Item_Icons.itemicon_badge_sprint'
+
     CanReleaseNote=true
     FadeOutTime=0.3
 

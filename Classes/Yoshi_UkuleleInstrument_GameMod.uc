@@ -6,14 +6,24 @@ class Yoshi_UkuleleInstrument_GameMod extends GameMod
 // TODO
 //
 
+
+//
 // Script:
-// The New Config Menu :tm: :<
-// fix in coop
-// visual instrument effects
-// Finish buildihng system for releasing notes
+//
+
+// Menu :3
+// - Scales
+// - Metronome
+// - Keybinds
+// - Settings
+// - Recording/Songs
+
+// Fix Coop Issues
+// Fix Animation Issues
+// Continue work on Instrument Visuals
+// Finish building system for releasing notes
 
 // More Instruments:
-// Keyboard - Something Something Synthesizer
 // Percussion - Drum Set
 // Something Random And Fun
 
@@ -463,10 +473,10 @@ event Tick(float delta) {
         }
     }
 
+    InstrumentManager.Tick(delta);
+
     if(InputPack.PlyCon == None) return;
     MyHUD = Hat_HUD(InputPack.PlyCon.MyHUD);
-
-    InstrumentManager.PlayerTickInstrument();
 
     if(RecordingMode == 0 && RecordingHUD != None)  {
         MyHUD.CloseHUD(class'Yoshi_HUDElement_RecordingMode');

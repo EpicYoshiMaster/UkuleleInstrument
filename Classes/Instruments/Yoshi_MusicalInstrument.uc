@@ -14,8 +14,7 @@ var bool CanReleaseNote;
 var float FadeOutTime;
 
 var Texture2D Icon;
-var AnimSet AnimSet;
-var SkeletalMesh Mesh;
+var bool ShouldUseParticle;
 
 var int MinOctave;
 var int MaxOctave;
@@ -58,8 +57,7 @@ defaultproperties
     FadeOutTime=0.15
 
     Icon=Texture2D'HatInTime_Hud_Loadout.Loadout.backpack_icon'
-    AnimSet=AnimSet'Ctm_Ukulele.Ukulele_playing'
-	Mesh=SkeletalMesh'Ctm_Ukulele.Ukulele'
 
     CanReleaseNote=false
+    ShouldUseParticle=true
 }

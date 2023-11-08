@@ -6,6 +6,8 @@ defaultproperties
     InstrumentID=5
     InstrumentName="Marimba"
 
+    Icon=Texture2D'HatInTime_Hud_Loadout.Overview.cloth_points'
+
     MinOctave=3 //B2
     MaxOctave=5 //E6
     DefaultOctave=4

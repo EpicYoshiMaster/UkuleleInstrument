@@ -5,6 +5,8 @@ defaultproperties
     InstrumentID=8
     InstrumentName="Pan Flute"
 
+    Icon=Texture2D'HatInTime_Hud_Loadout.Badges.fly01'
+
     CanReleaseNote=true
     FadeOutTime=0.3
 

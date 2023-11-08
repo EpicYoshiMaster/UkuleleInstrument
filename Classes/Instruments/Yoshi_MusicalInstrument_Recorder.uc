@@ -5,6 +5,8 @@ defaultproperties
     InstrumentID=2
     InstrumentName="Recorder"
 
+    Icon=Texture2D'HatInTime_Hud_ItemIcons3.MetroTicket_Green'
+
     CanReleaseNote=true
     FadeOutTime=0.3
 

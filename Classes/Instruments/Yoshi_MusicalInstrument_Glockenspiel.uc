@@ -5,6 +5,8 @@ defaultproperties
     InstrumentID=3
     InstrumentName="Glockenspiel"
 
+    Icon=Texture2D'HatInTime_Hud_ItemIcons3.DYE_obnoxious'
+
     MinOctave=5 //C5
     MaxOctave=7 //E8
     DefaultOctave=5

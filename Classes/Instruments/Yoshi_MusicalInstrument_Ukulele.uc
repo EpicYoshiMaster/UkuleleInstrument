@@ -6,6 +6,8 @@ defaultproperties
     InstrumentID=0
     InstrumentName="Ukulele"
 
+    ShouldUseParticle=false
+
     Pitches.Add((Name = "C3", Sound = SoundCue'Yoshi_MusicalUkulele_Content.SoundCues.Ukulele_c3_5'));
     Pitches.Add((Name = "Db3", Sound = SoundCue'Yoshi_MusicalUkulele_Content.SoundCues.Ukulele_db3_5'));
     Pitches.Add((Name = "D3", Sound = SoundCue'Yoshi_MusicalUkulele_Content.SoundCues.Ukulele_d3_5'));
