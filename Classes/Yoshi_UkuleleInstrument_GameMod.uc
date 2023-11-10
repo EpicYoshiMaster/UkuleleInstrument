@@ -24,18 +24,21 @@ class Yoshi_UkuleleInstrument_GameMod extends GameMod
 // Finish building system for releasing notes
 
 // More Instruments:
-// Percussion - Drum Set
-// Something Random And Fun
+// Accordion
 
 // trailer
 
-// BONUS IDEAS (not required but if there's extra time)
+// The Awesome Soundfont Offerings:
 // Strings - Harp, Bass
-// Woodwinds - Clarinet, Alto/Bari Sax
-// Brass - Tuba, Flugelhorn
+// Brass - French Horn
+// Woodwinds - Oboe, Bassoon, Alto Sax, Bari Sax
+// Percussion - Steel Drums
+
+// BONUS IDEAS (not required but if there's extra time)
+// Woodwinds - Clarinet, Flute
+// Brass - Tuba
 // Keyboard - More Piano Flavors
-// Percussion - Handpan
-// Accordion
+
 // Maybe more random chaotic ones
 
 var config int Instrument; //Which instrument sound should we use?
