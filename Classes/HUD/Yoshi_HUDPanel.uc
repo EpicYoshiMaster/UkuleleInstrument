@@ -75,6 +75,7 @@ function Render(HUD H) {
     H.Canvas.Font = StandardFont;
 
     if(Title != "") {
+        //DrawBorderedTextInBox(H, Title, )
         class'Hat_HUDMenu'.static.DrawText(H.Canvas, Title, CurTopLeftX * H.Canvas.ClipX, CurTopLeftY * H.Canvas.ClipY, TextScale * H.Canvas.ClipY, TextScale * H.Canvas.ClipY, TextAlign_BottomLeft);
     }
 

@@ -1,5 +1,6 @@
 class Yoshi_HUDMenu_MusicMenu extends Hat_HUDMenu;
 
+var string TestText;
 var TextAlign TextAlignment;
 var Font TextFont;
 
@@ -9,6 +10,8 @@ var Yoshi_UkuleleInstrument_GameMod GameMod;
 var array<Yoshi_HUDPanel> Panels;
 var Yoshi_HUDPanel HoveredPanel;
 var Yoshi_HUDPanel SelectedPanel;
+
+var Color TextColor;
 
 //Component-wise system
 
@@ -99,31 +102,30 @@ function bool Render(HUD H)
         scaleY += stepY;
     }
 
-    /*
-    s = "{My Awesome Text}";
-
-    H.Canvas.Font = TextFont;
-
-    DrawTextBox(H, s, 0.01 * H.Canvas.ClipX, 0.5 * H.Canvas.ClipY, 0.5, 0.5);
-    DrawTextBox(H, s, 0.01 * H.Canvas.ClipX, 0.6 * H.Canvas.ClipY, 1, 1);
-    DrawTextBox(H, s, 0.01 * H.Canvas.ClipX, 0.7 * H.Canvas.ClipY, 2, 2);
-    DrawTextBox(H, s, 0.01 * H.Canvas.ClipX, 0.8 * H.Canvas.ClipY, 1, 0.5);
-    DrawTextBox(H, s, 0.01 * H.Canvas.ClipX, 0.9 * H.Canvas.ClipY, 2, 1);*/
+    //DrawTextTest(H, TestText, 0.01 * H.Canvas.ClipX, 0.6 * H.Canvas.ClipY, 0.3 * H.Canvas.ClipX, 0.3 * H.Canvas.ClipY);
 
     return true;
 }
 
-function DrawTextBox(HUD H, string Text, float posx, float posy, float textScaleX, float textScaleY) {
-    local float TextSizeX, TextSizeY;
-
-    H.Canvas.TextSize(Text, TextSizeX, TextSizeY, textScaleX, textScaleY);
-
+function DrawTextTest(HUD H, string Text, float posx, float posy, float ScaleX, float ScaleY) {
     H.Canvas.SetPos(posx, posy);
+    H.Canvas.SetDrawColor(255, 0, 0, 255);
+
+    H.Canvas.DrawBox(ScaleX, ScaleY);
+
     H.Canvas.SetDrawColor(255, 255, 255, 255);
 
-    H.Canvas.DrawBox(TextSizeX, TextSizeY);
+    class'Yoshi_HUDComponent'.static.DrawTextInBox(H, Text, posx, posy, ScaleX, ScaleY, TextColor, ElementAlign_TopLeft);
+    class'Yoshi_HUDComponent'.static.DrawTextInBox(H, Text, posx, posy, ScaleX, ScaleY, TextColor, ElementAlign_Top);
+    class'Yoshi_HUDComponent'.static.DrawTextInBox(H, Text, posx, posy, ScaleX, ScaleY, TextColor, ElementAlign_TopRight);
+    class'Yoshi_HUDComponent'.static.DrawTextInBox(H, Text, posx, posy, ScaleX, ScaleY, TextColor, ElementAlign_Left);
+    class'Yoshi_HUDComponent'.static.DrawTextInBox(H, Text, posx, posy, ScaleX, ScaleY, TextColor, ElementAlign_Center);
+    class'Yoshi_HUDComponent'.static.DrawTextInBox(H, Text, posx, posy, ScaleX, ScaleY, TextColor, ElementAlign_Right);
+    class'Yoshi_HUDComponent'.static.DrawTextInBox(H, Text, posx, posy, ScaleX, ScaleY, TextColor, ElementAlign_BottomLeft);
+    class'Yoshi_HUDComponent'.static.DrawTextInBox(H, Text, posx, posy, ScaleX, ScaleY, TextColor, ElementAlign_Bottom);
+    class'Yoshi_HUDComponent'.static.DrawTextInBox(H, Text, posx, posy, ScaleX, ScaleY, TextColor, ElementAlign_BottomRight);
 
-    class'Hat_HUDMenu'.static.DrawText(H.Canvas, Text, posx, posy, textScaleX, textScaleY, TextAlignment);
+    H.Canvas.SetDrawColor(255, 255, 255, 255);
 }
 
 function bool OnClick(HUD H, bool release)
@@ -192,8 +194,8 @@ defaultproperties
 
         TopLeftX=0.7
         TopLeftY=0.3
-        ScaleX=0.2
-        ScaleY=0.4
+        ScaleX=0.175
+        ScaleY=0.2
         TextScale=0.0007
     End Object
     Panels.Add(MetronomePanel)
@@ -202,5 +204,7 @@ defaultproperties
 
     RequiresMouse=true
 
+    TestText="{My Test Text} <3"
     TextFont = Font'Yoshi_UkuleleMats_Content.Fonts.LatoBlackStandard'
+    TextColor=(R=255,G=255,B=255,A=255)
 }

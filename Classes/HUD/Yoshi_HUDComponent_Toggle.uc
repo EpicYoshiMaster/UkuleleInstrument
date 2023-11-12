@@ -12,9 +12,18 @@ var Material ToggleMaterial;
 
 var MaterialInstanceConstant ToggleMat;
 
+var delegate<GetValueDelegate> GetValue;
+var delegate<SetValueDelegate> SetValue;
+
 //These delegates should be overridden with functions to link together external data
-delegate bool GetValue();
-delegate SetValue(bool bValue);
+delegate bool GetValueDelegate() {
+    GameMod.Print("Hehehehe I actually got called");
+    return false;
+}
+
+delegate SetValueDelegate(bool bValue) {
+    GameMod.Print("I am devious!" $ bValue);
+}
 
 function Init(Yoshi_UkuleleInstrument_GameMod MyGameMod, Yoshi_HUDMenu_MusicMenu MyMenu, optional Yoshi_HUDComponent MyOwner) {
     local bool Value;
@@ -30,7 +39,7 @@ function Init(Yoshi_UkuleleInstrument_GameMod MyGameMod, Yoshi_HUDMenu_MusicMenu
 function Render(HUD H) {
     local bool Value;
     local string Text;
-    local float ImageSize, TextBoxSizeX, TextSizeLengthX, TextSizeLengthY, posx, posy, marginX, MyTextScale, DefaultSize;
+    local float ImageSize, TextBoxSizeX, posx, posy, marginX;
 
     Super.Render(H);
 
@@ -51,40 +60,12 @@ function Render(HUD H) {
 
     Text = (Value ? OnPropertyName : OffPropertyName);
     posx += ImageSize + marginX;
-    posy += 0.5 * CurScaleY * H.Canvas.ClipY;
 
     TextBoxSizeX = (CurScaleX * H.Canvas.ClipX) - ImageSize - marginX;
 
     if(TextBoxSizeX <= 0) return;
 
-    DefaultSize = (0.7 / 0.8f);
-
-    H.Canvas.SetDrawColorStruct(TextColor);
-    H.Canvas.Font = StandardFont;
-
-    H.Canvas.TextSize(Text, TextSizeLengthX, TextSizeLengthY, DefaultSize, DefaultSize);
-
-    MyTextScale = TextBoxSizeX / TextSizeLengthX;
-
-    if(MyTextScale >= 1) {
-        MyTextScale = 1;
-    }
-
-    H.Canvas.SetDrawColor(0,255,255,255);
-
-    class'Hat_HUDMenu'.static.DrawCenterLeftText(H.Canvas, Text, posx, posy, MyTextScale, MyTextScale);
-
-    H.Canvas.SetDrawColor(255,0,255,255);
-
-    class'Hat_HUDMenu'.static.DrawCenterLeftText(H.Canvas, Text, posx, posy, MyTextScale * DefaultSize, MyTextScale);
-
-    H.Canvas.SetDrawColor(255,255,0,255);
-
-    class'Hat_HUDMenu'.static.DrawCenterLeftText(H.Canvas, Text, posx, posy, MyTextScale, MyTextScale * DefaultSize);
-
-    H.Canvas.SetDrawColorStruct(TextColor);
-
-    class'Hat_HUDMenu'.static.DrawCenterLeftText(H.Canvas, Text, posx, posy, MyTextScale * DefaultSize, MyTextScale * DefaultSize);
+    DrawTextInBox(H, Text, posx, posy, TextBoxSizeX, CurScaleY * H.Canvas.ClipY, TextColor, ElementAlign_Left);
 
     H.Canvas.SetDrawColor(255,255,255,255);
 }

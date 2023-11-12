@@ -13,18 +13,15 @@ class Yoshi_UkuleleInstrument_GameMod extends GameMod
 
 // Menu :3
 // - Scales
-// - Metronome
 // - Keybinds
 // - Settings
 // - Recording/Songs
+// Fix Text Scaling by Resolution
 
 // Fix Coop Issues
 // Fix Animation Issues
 // Continue work on Instrument Visuals
 // Finish building system for releasing notes
-
-// More Instruments:
-// Accordion
 
 // trailer
 
@@ -47,8 +44,6 @@ var config int RecordingMode; //0 = Playback mode, 1 = Record Layer, 2 = Reset L
 var config int SongIndex; //You can have up to 25 different songs saved!
 var config int KeyboardLayout; //The keyboard layout being used ex. QWERTY, AZERTY, etc.
 var config int UseShiftlessMode; //Whether or not to use Shift to access flattened notes
-var config int MetronomeBPM; //What tempo should the metronome use
-var config int MetronomeBeatsInMeasure; //The number of beats in each measure for the metronome
 var config int MetronomeMode; //0 - enabled, 1 enable + count-in, 2 always, 3 always + count-in, 4 disabled
 var config int OnlineNotes; //Should we receive individual notes from online players
 var config int OnlineSongs; //Should we receive the emote songs from online players
@@ -165,7 +160,6 @@ event OnModLoaded() {
     InstrumentManager.GameMod = self;
 
     Metronome = new class'Yoshi_Metronome';
-    Metronome.SetBeatLength(GetConfigBPM(MetronomeBPM), MetronomeBeatsInMeasure + 1);
 
     LoadSongs();
 
@@ -236,10 +230,6 @@ event OnConfigChanged(Name ConfigName) {
         }
 
         LastSongIndex = SongIndex;
-    }
-
-    if(ConfigName == 'MetronomeBPM' || ConfigName == 'MetronomeBeatsInMeasure') {
-        Metronome.SetBeatLength(GetConfigBPM(MetronomeBPM), MetronomeBeatsInMeasure + 1);
     }
 
     if(ConfigName == 'MetronomeMode') {

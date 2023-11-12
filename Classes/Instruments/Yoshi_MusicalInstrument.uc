@@ -24,12 +24,7 @@ static function AudioComponent PlayNote(Actor Player, String Note) {
     local int i;
     for(i = 0; i < default.Pitches.Length; i++) {
         if(default.Pitches[i].Name ~= Note) {
-            if(Hat_Pawn(Player) != None) {
-                return Hat_Pawn(Player).PlayVoice(default.Pitches[i].Sound,,true);
-            }
-            else {
-                return Player.CreateAudioComponent(default.Pitches[i].Sound,true,true);
-            }
+            return Player.CreateAudioComponent(default.Pitches[i].Sound,true,true);
         }
     }
 

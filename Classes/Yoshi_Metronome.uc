@@ -44,6 +44,14 @@ function SetPlayer(Hat_Player ply) {
     Player = ply;
 }
 
+function SetBPM(float NewBPM) {
+    SetBeatLength(NewBPM, BeatsInMeasure);
+}
+
+function SetBeatsInMeasure(float NewBeatsInMeasure) {
+    SetBeatLength(BPM, NewBeatsInMeasure);
+}
+
 function SetBeatLength(float NewBPM, float NewBeatsInMeasure) {
     BPM = NewBPM;
     BeatsInMeasure = NewBeatsInMeasure;

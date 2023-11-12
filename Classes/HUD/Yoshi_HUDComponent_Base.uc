@@ -90,5 +90,5 @@ defaultproperties
 	PositionAbsolute=false
 	StandardFont=Font'Yoshi_UkuleleMats_Content.Fonts.LatoBlackStandard'
 
-	DebugMode=true
+	DebugMode=false
 }
