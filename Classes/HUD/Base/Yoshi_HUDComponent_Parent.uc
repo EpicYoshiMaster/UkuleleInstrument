@@ -15,6 +15,19 @@ function Init(Yoshi_UkuleleInstrument_GameMod MyGameMod, Yoshi_HUDMenu_MusicMenu
     }
 }
 
+function Close() {
+    local int i;
+
+    for(i = 0; i < Components.Length; i++) {
+        Components[i].Close();
+    }
+
+    Components.Length = 0;
+    HoveredComponent = None;
+
+    Super.Close();
+}
+
 function Tick(HUD H, float delta) {
     local int i;
 

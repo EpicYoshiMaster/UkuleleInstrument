@@ -9,7 +9,6 @@ var Yoshi_UkuleleInstrument_GameMod GameMod;
 
 var array<Yoshi_HUDPanel> Panels;
 var Yoshi_HUDPanel HoveredPanel;
-var Yoshi_HUDPanel SelectedPanel;
 
 var Color TextColor;
 
@@ -24,6 +23,20 @@ function OnOpenHUD(HUD H, optional String command)
     for(i = 0; i < Panels.Length; i++) {
         Panels[i].Init(GameMod, self);
     }
+}
+
+function OnCloseHUD(HUD H)
+{
+    local int i;
+
+    for(i = 0; i < Panels.Length; i++) {
+        Panels[i].Close();
+    }
+
+    Panels.Length = 0;
+    HoveredPanel = None;
+
+	Super.OnCloseHUD(H);
 }
 
 function bool Tick(HUD H, float delta)
@@ -198,7 +211,7 @@ defaultproperties
         TopLeftX=0.8
         TopLeftY=0.3
         ScaleX=0.15
-        ScaleY=0.1
+        ScaleY=0.5
         TextScale=0.0007
     End Object 
     Panels.Add(ScalesPanel);

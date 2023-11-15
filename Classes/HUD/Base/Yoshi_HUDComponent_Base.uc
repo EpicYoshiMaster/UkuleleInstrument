@@ -31,6 +31,12 @@ function Init(Yoshi_UkuleleInstrument_GameMod MyGameMod, Yoshi_HUDMenu_MusicMenu
 	Owner = MyOwner;
 }
 
+function Close() {
+	GameMod = None;
+	Menu = None;
+	Owner = None;
+}
+
 function Tick(HUD H, float delta) {
 	if(PositionAbsolute || Owner == None) {
 		CurTopLeftX = TopLeftX;

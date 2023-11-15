@@ -14,7 +14,6 @@ var array<string> Options;
 
 var MaterialInstanceConstant OptionMat;
 var MaterialInstanceConstant OptionHoveredMat;
-//var array<MaterialInstanceConstant> OptionMaterials;
 
 var Material OptionMaterial;
 
@@ -36,14 +35,6 @@ function Init(Yoshi_UkuleleInstrument_GameMod MyGameMod, Yoshi_HUDMenu_MusicMenu
     OptionHoveredMat = new class'MaterialInstanceConstant';
     OptionHoveredMat.SetParent(OptionMaterial);
     OptionHoveredMat.SetScalarParameterValue('Hover', 1.0);
-
-    /*
-    OptionMaterials.Length = 0;
-
-    for(i = 0; i < Options.Length; i++) {
-        OptionMaterials[i] = new class'MaterialInstanceConstant';
-        OptionMaterials[i].SetParent(OptionMaterial);
-    }*/
 }
 
 function RenderStopHover(HUD H) {
@@ -62,6 +53,10 @@ function Render(HUD H) {
     local MaterialInstanceConstant RenderMaterial;
 
     Super.Render(H);
+
+    if(ShouldRefreshOptions) {
+        Options = GetOptions();
+    }
 
     SelectedOption = GetValue();
     posx = CurTopLeftX * H.Canvas.ClipX;
