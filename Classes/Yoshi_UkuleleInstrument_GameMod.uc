@@ -109,6 +109,7 @@ struct SavedSong {
 };
 
 struct NoteScale {
+    var string ScaleName;
     var array<int> NoteOffsets;
 };
 
@@ -937,19 +938,19 @@ defaultproperties
         ShiftlessModifiers=(OctaveDown="U",OctaveUp="I",PitchDown="O",PitchUp="P")
     )}
 
-    Scales.Add((NoteOffsets=(0, 2, 4, 5, 7, 9, 11, 12, 14, 16))); //Major
-    Scales.Add((NoteOffsets=(0, 2, 4, 7, 9, 12, 14, 16, 19, 21))); //Major Pentatonic
-    Scales.Add((NoteOffsets=(0, 2, 3, 4, 7, 9, 12, 14, 15, 16))); //Major Blues
-    Scales.Add((NoteOffsets=(0, 2, 4, 5, 7, 9, 10, 12, 14, 16))); //Mixolydian
+    Scales.Add((ScaleName="Major",NoteOffsets=(0, 2, 4, 5, 7, 9, 11, 12, 14, 16))); //Major
+    Scales.Add((ScaleName="Major Pentatonic",NoteOffsets=(0, 2, 4, 7, 9, 12, 14, 16, 19, 21))); //Major Pentatonic
+    Scales.Add((ScaleName="Major Blues",NoteOffsets=(0, 2, 3, 4, 7, 9, 12, 14, 15, 16))); //Major Blues
+    Scales.Add((ScaleName="Mixolydian",NoteOffsets=(0, 2, 4, 5, 7, 9, 10, 12, 14, 16))); //Mixolydian
     
-    Scales.Add((NoteOffsets=(0, 2, 3, 5, 7, 8, 10, 12, 14, 15))); //Minor
-    Scales.Add((NoteOffsets=(0, 3, 5, 7, 10, 12, 15, 17, 19, 22))); //Minor Pentatonic
-    Scales.Add((NoteOffsets=(0, 3, 5, 6, 7, 10, 12, 15, 17, 18))); //Minor Blues
-    Scales.Add((NoteOffsets=(0, 2, 3, 5, 7, 8, 11, 12, 14, 15))); //Harmonic Minor
+    Scales.Add((ScaleName="Minor",NoteOffsets=(0, 2, 3, 5, 7, 8, 10, 12, 14, 15))); //Minor
+    Scales.Add((ScaleName="Minor Pentatonic",NoteOffsets=(0, 3, 5, 7, 10, 12, 15, 17, 19, 22))); //Minor Pentatonic
+    Scales.Add((ScaleName="Minor Blues",NoteOffsets=(0, 3, 5, 6, 7, 10, 12, 15, 17, 18))); //Minor Blues
+    Scales.Add((ScaleName="Harmonic Minor",NoteOffsets=(0, 2, 3, 5, 7, 8, 11, 12, 14, 15))); //Harmonic Minor
 
-    Scales.Add((NoteOffsets=(0, 2, 3, 5, 7, 9, 10, 12, 14, 15))); //Dorian
-    Scales.Add((NoteOffsets=(0, 1, 4, 5, 7, 8, 10, 12, 13, 16))); //Klezmer
-    Scales.Add((NoteOffsets=(0, 1, 5, 7, 8, 12, 13, 17, 19, 20))); //Japanese
-    Scales.Add((NoteOffsets=(0, 1, 3, 7, 8, 12, 13, 15, 19, 20))); //South-East Asian
-    Scales.Add((NoteOffsets=(0, 2, 4, 6, 8, 10, 12, 14, 16, 18))); //Whole Tone
+    Scales.Add((ScaleName="Dorian",NoteOffsets=(0, 2, 3, 5, 7, 9, 10, 12, 14, 15))); //Dorian
+    Scales.Add((ScaleName="Klezmer",NoteOffsets=(0, 1, 4, 5, 7, 8, 10, 12, 13, 16))); //Klezmer
+    Scales.Add((ScaleName="Japanese",NoteOffsets=(0, 1, 5, 7, 8, 12, 13, 17, 19, 20))); //Japanese
+    Scales.Add((ScaleName="South-East Asian",NoteOffsets=(0, 1, 3, 7, 8, 12, 13, 15, 19, 20))); //South-East Asian
+    Scales.Add((ScaleName="Whole Tone",NoteOffsets=(0, 2, 4, 6, 8, 10, 12, 14, 16, 18))); //Whole Tone
 }

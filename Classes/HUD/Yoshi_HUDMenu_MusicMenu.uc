@@ -13,18 +13,6 @@ var Yoshi_HUDPanel SelectedPanel;
 
 var Color TextColor;
 
-//Component-wise system
-
-//Yoshi_HUDComponent
-//Yoshi_HUDComponent_Slider
-//Yoshi_HUDComponent_Keybind
-//Yoshi_HUDComponent_Panel
-
-//Render
-//Tick
-//OnClick
-//Directional
-
 function OnOpenHUD(HUD H, optional String command)
 {
     local int i;
@@ -56,20 +44,25 @@ function bool Render(HUD H)
     local int i;
     local Vector2D MousePos;
 
-    local float scale, scaleX, scaleY, stepY;
+    local float scale, posX, posY, stepY;
     local string s;
 
 	if (!Super.Render(H)) return false;
 
     MousePos = GetMousePos(H);
 
-    if(HoveredPanel != None && !HoveredPanel.IsPointContainedWithin(H, MousePos)) {
-        HoveredPanel.RenderStopHover(H);
-        HoveredPanel = None;
+    if(HoveredPanel != None) {
+        if(HoveredPanel.IsPointContainedWithin(H, MousePos)) {
+            HoveredPanel.RenderUpdateHover(H);
+        }
+        else {
+            HoveredPanel.RenderStopHover(H);
+            HoveredPanel = None;
+        }
     }
 
     for(i = 0; i < Panels.Length; i++) {
-        if(Panels[i].IsPointContainedWithin(H, MousePos)) {
+        if(HoveredPanel == None && Panels[i].IsPointContainedWithin(H, MousePos)) {
             HoveredPanel = Panels[i];
 
             Panels[i].RenderUpdateHover(H);
@@ -80,8 +73,8 @@ function bool Render(HUD H)
 
     PrintStrings.Length = 0;
     scale = FMin(H.Canvas.ClipX, H.Canvas.ClipY)*0.00045;
-    scaleX = H.Canvas.ClipX*0.01;
-    scaleY = H.Canvas.ClipY*0.15;
+    posX = H.Canvas.ClipX*0.01;
+    posY = H.Canvas.ClipY*0.05;
     stepY = H.Canvas.ClipY*0.05;
 
     H.Canvas.SetDrawColor(255,255,255,255);
@@ -92,14 +85,14 @@ function bool Render(HUD H)
     PrintStrings.AddItem(s);
 
     for(i = 0; i < Panels.Length; i++) {
-        s = "Panel[" $ i $ "]" @ Panels[i].class @ ": Component Hover:" @ Panels[i].HoveredComponent.class;
+        s = "Panel[" $ i $ "]" @ Panels[i].class $ ": Component Hover:" @ Panels[i].HoveredComponent.class;
 
         PrintStrings.AddItem(s);
     }
 
     for(i = 0; i < PrintStrings.Length; i++) {
-        class'Hat_HUDMenu'.static.DrawText(H.Canvas, PrintStrings[i], scaleX, scaleY, scale, scale, TextAlign_Left);
-        scaleY += stepY;
+        class'Hat_HUDMenu'.static.DrawText(H.Canvas, PrintStrings[i], posX, posY, scale, scale, TextAlign_Left);
+        posY += stepY;
     }
 
     //DrawTextTest(H, TestText, 0.01 * H.Canvas.ClipX, 0.6 * H.Canvas.ClipY, 0.3 * H.Canvas.ClipX, 0.3 * H.Canvas.ClipY);
@@ -186,19 +179,29 @@ defaultproperties
         ScaleY=0.35
         TextScale=0.0007
     End Object
-    Panels.Add(SelectInstrumentPanel)
+    Panels.Add(SelectInstrumentPanel);
 
     Begin Object Class=Yoshi_HUDPanel_Metronome Name=MetronomePanel
         Title="Metronome"
-        TextColor=(R=0,G=255,B=0,A=255)
 
-        TopLeftX=0.7
+        TopLeftX=0.55
         TopLeftY=0.3
         ScaleX=0.175
         ScaleY=0.2
         TextScale=0.0007
     End Object
-    Panels.Add(MetronomePanel)
+    Panels.Add(MetronomePanel);
+
+    Begin Object Class=Yoshi_HUDPanel_Scales Name=ScalesPanel
+        Title="Scales"
+
+        TopLeftX=0.8
+        TopLeftY=0.3
+        ScaleX=0.15
+        ScaleY=0.1
+        TextScale=0.0007
+    End Object 
+    Panels.Add(ScalesPanel);
 
     TextAlignment=TextAlign_TopLeft
 

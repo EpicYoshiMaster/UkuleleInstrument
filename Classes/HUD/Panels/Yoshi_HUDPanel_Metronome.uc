@@ -7,8 +7,6 @@ var Yoshi_HUDComponent_NumberEntry BPMEntry;
 var Yoshi_HUDComponent_NumberEntry BeatsEntry;
 
 function Init(Yoshi_UkuleleInstrument_GameMod MyGameMod, Yoshi_HUDMenu_MusicMenu MyMenu, optional Yoshi_HUDComponent MyOwner) {
-    Super.Init(MyGameMod, MyMenu, MyOwner);
-
     Metronome = MyGameMod.Metronome;
 
     Toggle.GetValue = GetUpdating;
@@ -17,6 +15,8 @@ function Init(Yoshi_UkuleleInstrument_GameMod MyGameMod, Yoshi_HUDMenu_MusicMenu
     BPMEntry.SetValue = SetBPM;
     BeatsEntry.GetValue = GetBeatsInMeasure;
     BeatsEntry.SetValue = SetBeatsInMeasure;
+
+    Super.Init(MyGameMod, MyMenu, MyOwner);
 }
 
 delegate bool GetUpdating() {

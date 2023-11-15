@@ -1,4 +1,5 @@
-class Yoshi_HUDComponent extends Yoshi_HUDComponent_Base;
+class Yoshi_HUDComponent extends Yoshi_HUDComponent_Base
+    abstract;
 
 enum ElementAlign {
     ElementAlign_TopLeft,

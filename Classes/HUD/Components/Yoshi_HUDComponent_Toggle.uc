@@ -17,12 +17,10 @@ var delegate<SetValueDelegate> SetValue;
 
 //These delegates should be overridden with functions to link together external data
 delegate bool GetValueDelegate() {
-    GameMod.Print("Hehehehe I actually got called");
     return false;
 }
 
 delegate SetValueDelegate(bool bValue) {
-    GameMod.Print("I am devious!" $ bValue);
 }
 
 function Init(Yoshi_UkuleleInstrument_GameMod MyGameMod, Yoshi_HUDMenu_MusicMenu MyMenu, optional Yoshi_HUDComponent MyOwner) {

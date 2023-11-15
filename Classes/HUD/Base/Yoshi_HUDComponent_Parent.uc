@@ -1,12 +1,9 @@
-class Yoshi_HUDPanel extends Yoshi_HUDComponent;
-
-var string Title;
-var Color TextColor;
-var Surface Background;
+//Base Component class for components which can own other components
+class Yoshi_HUDComponent_Parent extends Yoshi_HUDComponent
+    abstract;
 
 var array<Yoshi_HUDComponent> Components;
 var Yoshi_HUDComponent HoveredComponent;
-var Yoshi_HUDComponent SelectedComponent;
 
 function Init(Yoshi_UkuleleInstrument_GameMod MyGameMod, Yoshi_HUDMenu_MusicMenu MyMenu, optional Yoshi_HUDComponent MyOwner) {
 	local int i;
@@ -36,9 +33,15 @@ function RenderUpdateHover(HUD H) {
     
     MousePos = Menu.GetMousePos(H);
 
-    if(HoveredComponent != None && !HoveredComponent.IsPointContainedWithin(H, MousePos)) {
-        HoveredComponent.RenderStopHover(H);
-        HoveredComponent = None;
+    if(HoveredComponent != None) {
+        if(HoveredComponent.IsPointContainedWithin(H, MousePos)) {
+            HoveredComponent.RenderUpdateHover(H);
+            return; //This component still has control
+        }
+        else {
+            HoveredComponent.RenderStopHover(H);
+            HoveredComponent = None;
+        }
     }
 
     for(i = 0; i < Components.Length; i++) {
@@ -65,22 +68,6 @@ function Render(HUD H) {
 
     Super.Render(H);
 
-    H.Canvas.SetDrawColor(255,255,255,255);
-
-    if(Background != None) {
-        class'Hat_HUDMenu'.static.DrawTopLeft(H, CurTopLeftX * H.Canvas.ClipX, CurTopLeftY * H.Canvas.ClipY, CurScaleX * H.Canvas.ClipX, CurScaleY * H.Canvas.ClipY, Background);
-    }
-
-    H.Canvas.SetDrawColorStruct(TextColor);
-    H.Canvas.Font = StandardFont;
-
-    if(Title != "") {
-        //DrawBorderedTextInBox(H, Title, )
-        class'Hat_HUDMenu'.static.DrawText(H.Canvas, Title, CurTopLeftX * H.Canvas.ClipX, CurTopLeftY * H.Canvas.ClipY, TextScale * H.Canvas.ClipY, TextScale * H.Canvas.ClipY, TextAlign_BottomLeft);
-    }
-
-    H.Canvas.SetDrawColor(255,255,255,255);
-
     for(i = 0; i < Components.Length; i++) {
         Components[i].Render(H);
     }
@@ -88,6 +75,8 @@ function Render(HUD H) {
 
 function bool OnClick(HUD H, bool release)
 {
+    if(Super.OnClick(H, release)) return true;
+
     if(HoveredComponent != None) {
         return HoveredComponent.OnClick(H, release);
     }
@@ -95,10 +84,11 @@ function bool OnClick(HUD H, bool release)
     return false;
 }
 
-defaultproperties
-{
-    Title="I forgot to name my panel :(";
-    TextColor=(R=255,G=255,B=255,A=255)
-    TextScale=0.00045
-    Background=Material'Yoshi_UkuleleMats_Content.Materials.Instrument_Panel_Bg_Mat'
+function bool IsPointContainedWithin(HUD H, Vector2D TargetPos) {
+    if(Super.IsPointContainedWithin(H, TargetPos)) return true;
+
+    //We might still be considered within our hovered component if we have one (ex. a drop-down extends outside of the standard range), check that too
+    if(HoveredComponent != None && HoveredComponent.IsPointContainedWithin(H, TargetPos)) return true;
+
+    return false;
 }

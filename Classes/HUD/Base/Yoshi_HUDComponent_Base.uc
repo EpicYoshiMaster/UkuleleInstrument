@@ -1,4 +1,5 @@
-class Yoshi_HUDComponent_Base extends Component;
+class Yoshi_HUDComponent_Base extends Component
+	abstract;
 
 var const Font StandardFont;
 
@@ -31,10 +32,6 @@ function Init(Yoshi_UkuleleInstrument_GameMod MyGameMod, Yoshi_HUDMenu_MusicMenu
 }
 
 function Tick(HUD H, float delta) {
-
-}
-
-function Render(HUD H) {
 	if(PositionAbsolute || Owner == None) {
 		CurTopLeftX = TopLeftX;
 		CurTopLeftY = TopLeftY;
@@ -47,7 +44,9 @@ function Render(HUD H) {
 		CurScaleX = Owner.CurScaleX * ScaleX;
 		CurScaleY = Owner.CurScaleY * ScaleY;
 	}
+}
 
+function Render(HUD H) {
 	if(DebugMode) {
 		H.Canvas.SetDrawColor(255, 255, 255, 255);
 		H.Canvas.SetPos(CurTopLeftX * H.Canvas.ClipX, CurTopLeftY * H.Canvas.CLipY);
