@@ -60,7 +60,7 @@ function RenderStopHover(HUD H) {
 
 function Render(HUD H) {
     local string Text;
-    local float ButtonSize, TextBoxSizeX, posx, posy, marginX;
+    local float ButtonSize, TextBoxSizeX, posx, posy, MarginSpaceX;
 
     Super.Render(H);
 
@@ -103,10 +103,10 @@ function Render(HUD H) {
 
     //Draw Number Entry
 
-    marginX = (ElementMargin * CurScaleX * H.Canvas.ClipX);
+    MarginSpaceX = (ElementMargin * CurScaleX * H.Canvas.ClipX);
 
-    posx = (CurTopLeftX * H.Canvas.ClipX) + ButtonSize + marginX;
-    TextBoxSizeX = (CurScaleX * H.Canvas.ClipX) - (2 * ButtonSize) - (2 * marginX);
+    posx = (CurTopLeftX * H.Canvas.ClipX) + ButtonSize + MarginSpaceX;
+    TextBoxSizeX = (CurScaleX * H.Canvas.ClipX) - (2 * ButtonSize) - (2 * MarginSpaceX);
 
     Text = string(GetValue());    
 

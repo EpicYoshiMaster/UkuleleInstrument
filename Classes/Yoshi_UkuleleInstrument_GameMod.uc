@@ -12,10 +12,11 @@ class Yoshi_UkuleleInstrument_GameMod extends GameMod
 //
 
 // Menu :3
-// - Scales
-// - Keybinds
+// - Keybinds: Change Key Layouts, Set Shiftless Mode
 // - Settings
 // - Recording/Songs
+// Fix Dynamic Scaling with Instrument List
+// Fix Text issues with dropdown / in general :)
 // Fix Text Scaling by Resolution
 
 // Fix Coop Issues
@@ -64,16 +65,16 @@ const DelimiterNote = "/";
 const DelimiterPitch = "|";
 
 struct ModifierKeyLayout {
-    var Name HoldPitchDown;
-    var Name OctaveDown;
-    var Name OctaveUp;
-    var Name PitchDown;
-    var Name PitchUp;
+    var string HoldPitchDown;
+    var string OctaveDown;
+    var string OctaveUp;
+    var string PitchDown;
+    var string PitchUp;
 };
 
 struct InstrumentKeyboardLayout {
-    var array<Name> Notes;
-    var array<Name> FlatNotes; //1 to 1 mapping with notes as flats of each
+    var array<string> Notes;
+    var array<string> FlatNotes; //1 to 1 mapping with notes as flats of each
     var ModifierKeyLayout Modifiers;
     var ModifierKeyLayout ShiftlessModifiers;
 };
@@ -729,7 +730,7 @@ function bool ReceivedNativeInputKey(int ControllerId, name Key, EInputEvent Eve
 
     if(EventType == IE_Released) {
         for(i = 0; i < InstrumentKeys[KeyboardLayout].Notes.Length; i++) {
-            if(InstrumentKeys[KeyboardLayout].Notes[i] == Key) {
+            if(InstrumentKeys[KeyboardLayout].Notes[i] ~= string(Key)) {
                StopPlayerNote(Key, CurrentInstrument.FadeOutTime);
             }
         }
@@ -737,7 +738,7 @@ function bool ReceivedNativeInputKey(int ControllerId, name Key, EInputEvent Eve
         if(UseShiftlessMode != 1) return false;
 
         for(i = 0; i < InstrumentKeys[KeyboardLayout].FlatNotes.Length; i++) {
-            if(InstrumentKeys[KeyboardLayout].FlatNotes[i] == Key) {
+            if(InstrumentKeys[KeyboardLayout].FlatNotes[i] ~= string(Key)) {
                 StopPlayerNote(Key, CurrentInstrument.FadeOutTime);
             }
         }
@@ -785,51 +786,51 @@ function bool ReceivedNativeInputKey(int ControllerId, name Key, EInputEvent Eve
     HoldingShiftKey = (IsHoldingLeftShift || IsHoldingRightShift);
 
     if(UseShiftlessMode == 1) {
-        if(InstrumentKeys[KeyboardLayout].Modifiers.PitchDown == Key) {
+        if(InstrumentKeys[KeyboardLayout].Modifiers.PitchDown ~= string(Key)) {
             ChangePitchShift(PitchShift - 1);
         }
 
-        if(InstrumentKeys[KeyboardLayout].Modifiers.PitchUp == Key) {
+        if(InstrumentKeys[KeyboardLayout].Modifiers.PitchUp ~= string(Key)) {
             ChangePitchShift(PitchShift + 1);
         }
 
-        if(InstrumentKeys[KeyboardLayout].Modifiers.OctaveUp == Key) {
+        if(InstrumentKeys[KeyboardLayout].Modifiers.OctaveUp ~= string(Key)) {
             ChangeOctave(Octave + 1);
         }
 
-        if(InstrumentKeys[KeyboardLayout].Modifiers.OctaveDown == Key) {
+        if(InstrumentKeys[KeyboardLayout].Modifiers.OctaveDown ~= string(Key)) {
             ChangeOctave(Octave - 1);
         }
         HoldingShiftKey = (IsHoldingLeftShift || IsHoldingRightShift);        
     }
     else {
-        if(InstrumentKeys[KeyboardLayout].ShiftlessModifiers.PitchDown == Key) {
+        if(InstrumentKeys[KeyboardLayout].ShiftlessModifiers.PitchDown ~= string(Key)) {
             ChangePitchShift(PitchShift - 1);
         }
 
-        if(InstrumentKeys[KeyboardLayout].ShiftlessModifiers.PitchUp == Key) {
+        if(InstrumentKeys[KeyboardLayout].ShiftlessModifiers.PitchUp~= string(Key)) {
             ChangePitchShift(PitchShift + 1);
         }
 
-        if(InstrumentKeys[KeyboardLayout].ShiftlessModifiers.OctaveUp == Key) {
+        if(InstrumentKeys[KeyboardLayout].ShiftlessModifiers.OctaveUp ~= string(Key)) {
             ChangeOctave(Octave + 1);
         }
 
-        if(InstrumentKeys[KeyboardLayout].ShiftlessModifiers.OctaveDown == Key) {
+        if(InstrumentKeys[KeyboardLayout].ShiftlessModifiers.OctaveDown ~= string(Key)) {
             ChangeOctave(Octave - 1);
         }
 
         HoldingShiftKey = false;
 
         for(i = 0; i < InstrumentKeys[KeyboardLayout].FlatNotes.Length; i++) {
-            if(InstrumentKeys[KeyboardLayout].FlatNotes[i] == Key && Scale < Scales.Length) {
+            if(InstrumentKeys[KeyboardLayout].FlatNotes[i] ~= string(Key) && Scale < Scales.Length) {
                 PlayPlayerNote(GetNoteName((Scales[Scale].NoteOffsets[i] - 1) + PitchShift), Key);
             }
         }
     }
 
     for(i = 0; i < InstrumentKeys[KeyboardLayout].Notes.Length; i++) {
-        if(InstrumentKeys[KeyboardLayout].Notes[i] == Key && Scale < Scales.Length) {
+        if(InstrumentKeys[KeyboardLayout].Notes[i] ~= string(Key) && Scale < Scales.Length) {
             PlayPlayerNote(GetNoteName(Scales[Scale].NoteOffsets[i] + (HoldingShiftKey ? -1 : 0) + PitchShift), Key);
         }
     }
@@ -932,7 +933,7 @@ defaultproperties
 
     //AZERTY
     InstrumentKeys[2] = {(
-        Notes=("W","X","C","V","B","N","comma","period","slash"), //Only 9 keys, there is no ! or paragraph key input event
+        Notes=("W","X","C","V","B","N","comma","period","slash", ""), //Only 9 keys, there is no ! or paragraph key input event
         FlatNotes=("Q","S","D","F","G","H","J","K","L","M"), //all 10 keys :D
         Modifiers=(OctaveDown="J",OctaveUp="K",PitchDown="L",PitchUp="M"),
         ShiftlessModifiers=(OctaveDown="U",OctaveUp="I",PitchDown="O",PitchUp="P")

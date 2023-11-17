@@ -20,7 +20,7 @@ var ScrollbarState ScrollState;
 
 var MaterialInstanceConstant TopButton;
 var MaterialInstanceConstant Bar;
-var MaterialInstanceCOnstant Track;
+var MaterialInstanceConstant Track;
 var MaterialInstanceConstant BottomButton;
 
 var Material TopButtonMaterial;

@@ -57,8 +57,8 @@ function bool Render(HUD H)
     local int i;
     local Vector2D MousePos;
 
-    local float scale, posX, posY, stepY;
-    local string s;
+    //ocal float scale, posX, posY, stepY;
+    //local string s;
 
 	if (!Super.Render(H)) return false;
 
@@ -84,6 +84,8 @@ function bool Render(HUD H)
         Panels[i].Render(H);
     }
 
+    /*
+
     PrintStrings.Length = 0;
     scale = FMin(H.Canvas.ClipX, H.Canvas.ClipY)*0.00045;
     posX = H.Canvas.ClipX*0.01;
@@ -106,7 +108,7 @@ function bool Render(HUD H)
     for(i = 0; i < PrintStrings.Length; i++) {
         class'Hat_HUDMenu'.static.DrawText(H.Canvas, PrintStrings[i], posX, posY, scale, scale, TextAlign_Left);
         posY += stepY;
-    }
+    }*/
 
     //DrawTextTest(H, TestText, 0.01 * H.Canvas.ClipX, 0.6 * H.Canvas.ClipY, 0.3 * H.Canvas.ClipX, 0.3 * H.Canvas.ClipY);
 
@@ -187,7 +189,7 @@ defaultproperties
 {
     Begin Object Class=Yoshi_HUDPanel_SelectInstrument Name=SelectInstrumentPanel
         TopLeftX=0.1
-        TopLeftY=0.3
+        TopLeftY=0.1
         ScaleX=0.4
         ScaleY=0.35
         TextScale=0.0007
@@ -198,23 +200,21 @@ defaultproperties
         Title="Metronome"
 
         TopLeftX=0.55
-        TopLeftY=0.3
+        TopLeftY=0.15
         ScaleX=0.175
         ScaleY=0.2
         TextScale=0.0007
     End Object
     Panels.Add(MetronomePanel);
 
-    Begin Object Class=Yoshi_HUDPanel_Scales Name=ScalesPanel
-        Title="Scales"
-
-        TopLeftX=0.8
-        TopLeftY=0.3
-        ScaleX=0.15
-        ScaleY=0.5
+    Begin Object Class=Yoshi_HUDPanel_Keybinds Name=KeybindsPanel
+        TopLeftX=0.05
+        TopLeftY=0.55
+        ScaleX=0.5
+        ScaleY=0.35
         TextScale=0.0007
     End Object 
-    Panels.Add(ScalesPanel);
+    Panels.Add(KeybindsPanel);
 
     TextAlignment=TextAlign_TopLeft
 

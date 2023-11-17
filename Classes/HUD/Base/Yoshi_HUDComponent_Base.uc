@@ -23,6 +23,14 @@ var float ScaleX;
 var float ScaleY;
 var float TextScale;
 
+//Within the given space of a component, specifies scale to not include the margin region
+var float MarginX;
+var float MarginY;
+
+//Within subcomponents of this component, specifies the subcomponents scale to not include the padding region
+var float PaddingX;
+var float PaddingY;
+
 var bool DebugMode;
 
 function Init(Yoshi_UkuleleInstrument_GameMod MyGameMod, Yoshi_HUDMenu_MusicMenu MyMenu, optional Yoshi_HUDComponent MyOwner) {
@@ -38,18 +46,46 @@ function Close() {
 }
 
 function Tick(HUD H, float delta) {
+	
 	if(PositionAbsolute || Owner == None) {
-		CurTopLeftX = TopLeftX;
-		CurTopLeftY = TopLeftY;
-		CurScaleX = ScaleX;
-		CurScaleY = ScaleY;
+		CurTopLeftX = CalcBoxModelTopLeft(0.0, 1.0, 0.0, TopLeftX, MarginX);
+		CurTopLeftY = CalcBoxModelTopLeft(0.0, 1.0, 0.0, TopLeftY, MarginY);
+		CurScaleX = CalcBoxModelScale(1.0, 0.0, ScaleX, MarginX);
+		CurScaleY = CalcBoxModelScale(1.0, 0.0, ScaleY, MarginY);
 	}
 	else {
-		CurTopLeftX = Owner.CurTopLeftX + (TopLeftX * Owner.CurScaleX);
-		CurTopLeftY = Owner.CurTopLeftY + (TopLeftY * Owner.CurScaleY);
-		CurScaleX = Owner.CurScaleX * ScaleX;
-		CurScaleY = Owner.CurScaleY * ScaleY;
+
+		CurTopLeftX = CalcBoxModelTopLeft(Owner.CurTopLeftX, Owner.CurScaleX, Owner.PaddingX, TopLeftX, MarginX);
+		CurTopLeftY = CalcBoxModelTopLeft(Owner.CurTopLeftY, Owner.CurScaleY, Owner.PaddingY, TopLeftY, MarginY);
+		CurScaleX = CalcBoxModelScale(Owner.CurScaleX, Owner.PaddingX, ScaleX, MarginX);
+		CurScaleY = CalcBoxModelScale(Owner.CurScaleY, Owner.PaddingY, ScaleY, MarginY);
 	}
+}
+
+static function float CalcBoxModelTopLeft(float OwnerTopLeft, float OwnerScale, float OwnerPadding, float TopLeft, float Margin) {
+	local float PaddingTopLeft, PaddingScale, PaddingAmount, MarginTopLeft, MarginScale, MarginAmount;
+
+	PaddingAmount = OwnerScale * OwnerPadding;
+	PaddingTopLeft = OwnerTopLeft + PaddingAmount;
+	PaddingScale = OwnerScale - (2 * PaddingAmount);
+
+	MarginAmount = PaddingScale * Margin;
+	MarginTopLeft = PaddingTopLeft + MarginAmount;
+	MarginScale = PaddingScale - (2 * MarginAmount);
+
+	return MarginTopLeft + (TopLeft * MarginScale);
+}
+
+static function float CalcBoxModelScale(float OwnerScale, float OwnerPadding, float Scale, float Margin) {
+	local float PaddingScale, PaddingAmount, MarginScale, MarginAmount;
+
+	PaddingAmount = OwnerScale * OwnerPadding;
+	PaddingScale = OwnerScale - (2 * PaddingAmount);
+
+	MarginAmount = PaddingScale * Margin;
+	MarginScale = PaddingScale - (2 * MarginAmount);
+
+	return Scale * MarginScale;
 }
 
 function Render(HUD H) {

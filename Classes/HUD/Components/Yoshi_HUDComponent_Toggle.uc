@@ -37,7 +37,7 @@ function Init(Yoshi_UkuleleInstrument_GameMod MyGameMod, Yoshi_HUDMenu_MusicMenu
 function Render(HUD H) {
     local bool Value;
     local string Text;
-    local float ImageSize, TextBoxSizeX, posx, posy, marginX;
+    local float ImageSize, TextBoxSizeX, posx, posy, MarginSpaceX;
 
     Super.Render(H);
 
@@ -54,12 +54,12 @@ function Render(HUD H) {
 
     class'Hat_HUDMenu'.static.DrawTopLeft(H, posx, posy, ImageSize, ImageSize, ToggleMat);
 
-    marginX = (TextImageMargin * CurScaleX * H.Canvas.ClipX);
+    MarginSpaceX = (TextImageMargin * CurScaleX * H.Canvas.ClipX);
 
     Text = (Value ? OnPropertyName : OffPropertyName);
-    posx += ImageSize + marginX;
+    posx += ImageSize + MarginSpaceX;
 
-    TextBoxSizeX = (CurScaleX * H.Canvas.ClipX) - ImageSize - marginX;
+    TextBoxSizeX = (CurScaleX * H.Canvas.ClipX) - ImageSize - MarginSpaceX;
 
     if(TextBoxSizeX <= 0) return;
 

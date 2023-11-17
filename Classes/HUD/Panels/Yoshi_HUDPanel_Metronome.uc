@@ -53,11 +53,14 @@ defaultproperties
     Title="Metronome"
     Background=Material'Yoshi_UkuleleMats_Content.Materials.Instrument_Panel_Bg_Mat'
 
+    PaddingX=0.03
+    PaddingY=0.03
+
     Begin Object Class=Yoshi_HUDComponent_Toggle Name=ToggleMetronome
-        TopLeftX=0.03
-        TopLeftY=0.03
-        ScaleX=0.94
-        ScaleY=0.29333
+        TopLeftX=0.0
+        TopLeftY=0.0
+        ScaleX=1
+        ScaleY=0.3
         
         OnPropertyName="On"
         OffPropertyName="Off"
@@ -66,10 +69,10 @@ defaultproperties
     Components.Add(ToggleMetronome);
 
     Begin Object Class=Yoshi_HUDComponent_NumberEntry Name=MetronomeBeatsInMeasure
-        TopLeftX=0.03
-        TopLeftY=0.35333
-        ScaleX=0.94
-        ScaleY=0.29333
+        TopLeftX=0.0
+        TopLeftY=0.33333
+        ScaleX=1
+        ScaleY=0.3
 
         MinimumValue=1
         MaximumValue=32
@@ -79,10 +82,10 @@ defaultproperties
     Components.Add(MetronomeBeatsInMeasure);
 
     Begin Object Class=Yoshi_HUDComponent_NumberEntry Name=MetronomeBPM
-        TopLeftX=0.03
-        TopLeftY=0.6766666
-        ScaleX=0.94
-        ScaleY=0.29333
+        TopLeftX=0.0
+        TopLeftY=0.66666
+        ScaleX=1
+        ScaleY=0.3
 
         MinimumValue=1
         MaximumValue=999
