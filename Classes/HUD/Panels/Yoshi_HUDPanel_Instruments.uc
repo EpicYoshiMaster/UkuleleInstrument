@@ -1,4 +1,4 @@
-class Yoshi_HUDPanel_SelectInstrument extends Yoshi_HUDPanel;
+class Yoshi_HUDPanel_Instruments extends Yoshi_HUDPanel;
 
 var Yoshi_HUDComponent_DropDown Scales;
 
@@ -37,15 +37,6 @@ defaultproperties
     PaddingX=0.03
     PaddingY=0.03
 
-    Begin Object Class=Yoshi_HUDComponent_DropDown Name=ScalesDropDown
-        TopLeftX=0.0
-        TopLeftY=0.0
-        ScaleX=0.3
-        ScaleY=0.1
-    End Object
-    Scales=ScalesDropDown
-    Components.Add(ScalesDropDown);
-    
     Begin Object Class=Yoshi_HUDComponent_InstrumentList Name=InstrumentListComponent
         TopLeftX=0.0
         TopLeftY=0.13
@@ -54,5 +45,12 @@ defaultproperties
     End Object
     Components.Add(InstrumentListComponent);
 
-    
+    Begin Object Class=Yoshi_HUDComponent_DropDown Name=ScalesDropDown
+        TopLeftX=0.0
+        TopLeftY=0.0
+        ScaleX=0.25
+        ScaleY=0.1
+    End Object
+    Scales=ScalesDropDown
+    Components.Add(ScalesDropDown);
 }

@@ -59,6 +59,7 @@ function Render(HUD H) {
     }
 
     SelectedOption = GetValue();
+
     posx = CurTopLeftX * H.Canvas.ClipX;
     posy = CurTopLeftY * H.Canvas.ClipY;
     ItemSizeX = CurScaleX * H.Canvas.ClipX;
@@ -68,8 +69,8 @@ function Render(HUD H) {
 
     //Currently Selected Item
     OptionText = (SelectedOption != INDEX_NONE ? Options[SelectedOption] : "Null");
-    class'Hat_HUDMenu'.static.DrawTopLeft(H, posx, posy, ItemSizeX, ItemSizeY, OptionMat);
 
+    class'Hat_HUDMenu'.static.DrawTopLeft(H, posx, posy, ItemSizeX, ItemSizeY, OptionMat);
     DrawTextInBox(H, OptionText, posx, posy, ItemSizeX, ItemSizeY, TextColor, ElementAlign_Center);
 
     if(!IsFocused) return;

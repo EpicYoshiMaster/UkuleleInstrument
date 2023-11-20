@@ -8,13 +8,11 @@ enum ScrollbarState {
     Scrollbar_Bottom
 };
 
-//Do we need to refresh every frame for a dynamic window size / maximum offset?
-var bool ShouldRefresh;
 var float ButtonScale;
 var float ButtonScrollAmount;
 
 var float ScrollWindowSize;
-var float MaximumOffset;
+var float ContentSize;
 var float MouseOffsetToBar;
 var ScrollbarState ScrollState;
 
@@ -29,7 +27,7 @@ var Material TrackMaterial;
 var Material BottomButtonMaterial;
 
 var delegate<GetFloatValueDelegate> GetScrollWindowSize;
-var delegate<GetFloatValueDelegate> GetMaximumOffset;
+var delegate<GetFloatValueDelegate> GetContentSize;
 var delegate<GetFloatValueDelegate> GetValue;
 var delegate<SetFloatValueDelegate> SetValue;
 
@@ -38,9 +36,6 @@ delegate SetFloatValueDelegate(float NewValue);
 
 function Init(Yoshi_UkuleleInstrument_GameMod MyGameMod, Yoshi_HUDMenu_MusicMenu MyMenu, optional Yoshi_HUDComponent MyOwner) {
     Super.Init(MyGameMod, MyMenu, MyOwner);
-
-    ScrollWindowSize = GetScrollWindowSize();
-    MaximumOffset = GetMaximumOffset();
 
     TopButton = new class'MaterialInstanceConstant';
     TopButton.SetParent(TopButtonMaterial);
@@ -62,19 +57,25 @@ function RenderStopHover(HUD H) {
 }
 
 function Render(HUD H) {
-    local float posx, posy, sizeX, sizeY, ButtonSizeY, BarSize, RemainingSize;
+    local float posx, posy, sizeX, sizeY, ButtonSizeY, BarSize, RemainingSize, MaximumPosition;
     local float ScrollOffset;
 
     Super.Render(H);
 
-    H.Canvas.SetDrawColor(255,255,255,255);
+    ScrollWindowSize = GetScrollWindowSize();
+    ContentSize = GetContentSize();
+    ScrollOffset = GetValue();
+    MaximumPosition = ContentSize - ScrollWindowSize;
 
-    if(ShouldRefresh) {
-        ScrollWindowSize = GetScrollWindowSize();
-        MaximumOffset = GetMaximumOffset();
+    if(ContentSize <= ScrollWindowSize) {
+        if(ScrollOffset > 0.0) {
+            SetValue(0.0);
+        }
+        
+        return;
     }
 
-    ScrollOffset = GetValue();
+    H.Canvas.SetDrawColor(255,255,255,255);
 
     posx = CurTopLeftX * H.Canvas.ClipX;
     posy = CurTopLeftY * H.Canvas.ClipY;
@@ -120,17 +121,23 @@ function Render(HUD H) {
     //Render the Track
     class'Hat_HUDMenu'.static.DrawTopLeft(H, posx, posy, sizeX, RemainingSize, Track);
 
-    BarSize = (ScrollWindowSize / MaximumOffset) * RemainingSize;
+    BarSize = (ScrollWindowSize / ContentSize) * RemainingSize;
 
     //Update the Bar's position if needed
     if(ScrollState == Scrollbar_Drag) {
-        ScrollOffset = Lerp(0.0, MaximumOffset, FClamp(((Menu.GetMousePos(H).Y - MouseOffsetToBar) - posy) / (RemainingSize - BarSize), 0.0, 1.0));
+        ScrollOffset = Lerp(0.0, MaximumPosition, FClamp(((Menu.GetMousePos(H).Y - MouseOffsetToBar) - posy) / (RemainingSize - BarSize), 0.0, 1.0));
 
         SetValue(ScrollOffset);
     }
+    else {
+        if(ScrollOffset > MaximumPosition) {
+            ScrollOffset = MaximumPosition;
+            SetValue(ScrollOffset);
+        }
+    }
 
     //Render the Bar
-    posy = Lerp(posy, posy + (RemainingSize - BarSize), ScrollOffset / MaximumOffset);
+    posy = Lerp(posy, posy + (RemainingSize - BarSize), ScrollOffset / MaximumPosition);
 
     if(ScrollState != Scrollbar_Drag) {
         MouseOffsetToBar = Menu.GetMousePos(H).Y - posy;
@@ -147,6 +154,8 @@ function Render(HUD H) {
 
 function bool OnClick(HUD H, bool release)
 {
+    local float MaximumPosition;
+
     if(Super.OnClick(H, release)) return true;
 
     if(release) {
@@ -154,12 +163,14 @@ function bool OnClick(HUD H, bool release)
         return true;
     }
 
+    MaximumPosition = ContentSize - ScrollWindowSize;
+
     switch(ScrollState) {
         case Scrollbar_Top: 
-            SetValue(FClamp(GetValue() - (ButtonScrollAmount * MaximumOffset), 0.0, MaximumOffset)); 
+            SetValue(FClamp(GetValue() - (ButtonScrollAmount * MaximumPosition), 0.0, MaximumPosition)); 
             break;
         case Scrollbar_Bottom: 
-            SetValue(FClamp(GetValue() + (ButtonScrollAmount * MaximumOffset), 0.0, MaximumOffset)); 
+            SetValue(FClamp(GetValue() + (ButtonScrollAmount * MaximumPosition), 0.0, MaximumPosition)); 
             break;
         case Scrollbar_Hover: 
             ScrollState = Scrollbar_Drag; 
@@ -182,7 +193,6 @@ defaultproperties
     ButtonScale=0.05
     ButtonScrollAmount=0.1;
 
-    ShouldRefresh=false
     TopButtonMaterial=Material'Yoshi_UkuleleMats_Content.Materials.Toggle_Component_Mat'
     BarMaterial=Material'Yoshi_UkuleleMats_Content.Materials.Toggle_Component_Mat'
     TrackMaterial=Material'HatInTime_Levels.Materials.Black'

@@ -15,9 +15,6 @@ class Yoshi_UkuleleInstrument_GameMod extends GameMod
 // - Keybinds: Change Key Layouts, Set Shiftless Mode
 // - Settings
 // - Recording/Songs
-// Fix Dynamic Scaling with Instrument List
-// Fix Text issues with dropdown / in general :)
-// Fix Text Scaling by Resolution
 
 // Fix Coop Issues
 // Fix Animation Issues

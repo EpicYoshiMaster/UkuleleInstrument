@@ -1,19 +1,10 @@
-class Yoshi_HUDComponent_InstrumentList extends Yoshi_HUDComponent;
-
-// Pulsating items which alternate with each other
-// Material which can accept a texture for the instrument icon
-// Partial transparency
-
-//This component needs to pull data from Yoshi_MusicalInstrument classes
-//Make a list of instruments with materials / names
-//Display the currently selected instrument / change the instrument selection
-
+class Yoshi_HUDComponent_InstrumentList extends Yoshi_HUDComponent_Parent;
 
 var int MaxPerRow; //Maximum number of items in each row
 
-//Margin applies to all sides
 var float CurItemMargin;
 var float ItemMargin; //Scaled by Min(X,Y)
+var float ScrollbarSpace;
 
 var float PulsePeriod;
 var float PulseScaleAmount;
@@ -25,9 +16,19 @@ var array<MaterialInstanceConstant> InstrumentMaterials;
 
 var int HoverIndex;
 
+var float ContentSize;
+var float ScrollWindowSize;
+var float ScrollOffset;
+var Yoshi_HUDComponent_Scrollbar Scrollbar;
+
 function Init(Yoshi_UkuleleInstrument_GameMod MyGameMod, Yoshi_HUDMenu_MusicMenu MyMenu, optional Yoshi_HUDComponent MyOwner) {
 	local int i;
     local MaterialInstanceConstant InstrumentMat;
+
+    Scrollbar.GetScrollWindowSize = GetScrollWindowSize;
+    Scrollbar.GetContentSize = GetContentSize;
+    Scrollbar.GetValue = GetScrollOffset;
+    Scrollbar.SetValue = SetScrollOffset;
 
     Super.Init(MyGameMod, MyMenu, MyOwner);
 
@@ -68,26 +69,36 @@ function RenderStopHover(HUD H) {
 }
 
 function Render(HUD H) {
-    local int i, rowIndex;
+    local int i, rowIndex, NumRows;
     local WorldInfo wi;
-    local float posx, posy, marginSize, itemSize;
+    local float posx, posy, marginSize, itemSize, ScrollbarSizeX;
+
+    wi = class'WorldInfo'.static.GetWorldInfo();
+
+    posx = CurTopLeftX * H.Canvas.ClipX;
+    posy = CurTopLeftY * H.Canvas.ClipY;
+    CurItemMargin = ItemMargin * CurScaleX;
+    marginSize = CurItemMargin * Min(H.Canvas.ClipX, H.Canvas.ClipY);
+    ScrollbarSizeX = ScrollbarSpace * CurScaleX * H.Canvas.ClipX;
+
+    //Items are sized by the maximum number per row minus the space for margins
+    itemSize = ((CurScaleX * H.Canvas.ClipX) - (marginSize * (MaxPerRow - 1)) - ScrollbarSizeX) / MaxPerRow;
+
+    NumRows = FCeil(float(InstrumentClasses.Length) / MaxPerRow);
+
+    ScrollWindowSize = CurScaleY * H.Canvas.ClipY;
+    ContentSize = itemSize * NumRows + marginSize * (NumRows - 1);
 
     Super.Render(H);
 
     if(MaxPerRow <= 0) return;
 
-    wi = class'WorldInfo'.static.GetWorldInfo();
-
-    CurItemMargin = ItemMargin * CurScaleX;
-
-    marginSize = CurItemMargin * Min(H.Canvas.ClipX, H.Canvas.ClipY);
-
-    //Items are sized by the maximum number per row minus the space for margins
-    itemSize = ((CurScaleX * H.Canvas.ClipX) - (marginSize * (MaxPerRow - 1))) / MaxPerRow;
-
-    posx = CurTopLeftX * H.Canvas.ClipX;
-    posy = CurTopLeftY * H.Canvas.ClipY;
+    //Mask region GO
+    H.Canvas.PushMaskRegion(posx, posy, CurScaleX * H.Canvas.ClipX, CurScaleY * H.Canvas.ClipY);
+    
     rowIndex = 0;
+
+    posy -= ScrollOffset;
 
     for(i = 0; i < InstrumentClasses.Length; i++) {
         if(rowIndex >= MaxPerRow) {
@@ -101,6 +112,9 @@ function Render(HUD H) {
         posx += itemSize + marginSize;
         rowIndex += 1;
     }
+
+    //Mask region... STOP!
+    H.Canvas.PopMaskRegion();
 }
 
 function RenderInstrumentBox(WorldInfo wi, HUD H, int i, int rowIndex, float centerX, float centerY, float itemSize) {
@@ -131,6 +145,8 @@ function RenderInstrumentBox(WorldInfo wi, HUD H, int i, int rowIndex, float cen
 
 function bool OnClick(HUD H, bool release)
 {
+    if(Super.OnClick(H, release)) return true;
+
     if(!release && HoverIndex > INDEX_NONE) {
         class'GameMod'.static.SaveConfigValue(class'Yoshi_UkuleleInstrument_GameMod', 'Instrument', HoverIndex);
 
@@ -140,13 +156,41 @@ function bool OnClick(HUD H, bool release)
     return false;
 }
 
+function float GetScrollWindowSize() {
+    return ScrollWindowSize;
+}
+
+function float GetContentSize() {
+    return ContentSize;
+}
+
+function float GetScrollOffset() {
+    return ScrollOffset;
+}
+
+function SetScrollOffset(float NewOffset) {
+    ScrollOffset = NewOffset;
+}
+
 defaultproperties
 {
     MaxPerRow=6
     ItemMargin=0.03
     PulsePeriod=4.0
     PulseScaleAmount=0.03
+    ScrollbarSpace=0.06
     HoverIndex=INDEX_NONE
 
+    ScrollOffset=0.0
+
     IconMaterial=Material'Yoshi_UkuleleMats_Content.Materials.Instrument_Icon_Mat'
+
+    Begin Object Class=Yoshi_HUDComponent_Scrollbar Name=ScrollbarComponent
+        TopLeftX=0.97
+        TopLeftY=0.0
+        ScaleX=0.03
+        ScaleY=1.0
+    End Object
+    Scrollbar=ScrollbarComponent
+    Components.Add(ScrollbarComponent);
 }

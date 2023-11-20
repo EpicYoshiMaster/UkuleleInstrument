@@ -187,7 +187,7 @@ function bool DisablePause(HUD H)
 
 defaultproperties
 {
-    Begin Object Class=Yoshi_HUDPanel_SelectInstrument Name=SelectInstrumentPanel
+    Begin Object Class=Yoshi_HUDPanel_Instruments Name=SelectInstrumentPanel
         TopLeftX=0.1
         TopLeftY=0.1
         ScaleX=0.4
@@ -195,6 +195,7 @@ defaultproperties
         TextScale=0.0007
     End Object
     Panels.Add(SelectInstrumentPanel);
+    
 
     Begin Object Class=Yoshi_HUDPanel_Metronome Name=MetronomePanel
         Title="Metronome"

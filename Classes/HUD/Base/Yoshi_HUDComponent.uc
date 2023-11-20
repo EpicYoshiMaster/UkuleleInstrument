@@ -40,61 +40,11 @@ static function DrawBorderedTextInBox(
     optional float VerticalSize = -1, 
     optional float BorderQuality = 1
 ) {
-    local float PosX, PosY, TextLengthX, TextLengthY, FinalTextScale;
-
-    PosX = BoxTopLeftX;
-    PosY = BoxTopLeftY;
-
-    H.Canvas.TextSize(Text, TextLengthX, TextLengthY, TextSize, TextSize);
-
-    //TextLengthX and TextLengthY describe the size of the text in pixels
-
-    switch(Align) {
-        case ElementAlign_TopLeft: 
-            break; //easy
-        case ElementAlign_Top: 
-            PosX += (0.5 * BoxScaleX) - (0.5 * TextLengthX);
-            break;
-        case ElementAlign_TopRight: 
-            PosX += BoxScaleX - TextLengthX;
-            break;
-        
-        case ElementAlign_Left: 
-            PosY += (0.5 * BoxScaleY) - (0.5 * TextLengthY); 
-            break;
-        case ElementAlign_Center: 
-            PosX += (0.5 * BoxScaleX) - (0.5 * TextLengthX); 
-            PosY += 0.5 * BoxScaleY - (0.5 * TextLengthY);
-            break;
-        case ElementAlign_Right: 
-            PosX += BoxScaleX - TextLengthX;
-            PosY += (0.5 * BoxScaleY) - (0.5 * TextLengthY);
-            break;
-
-        case ElementAlign_BottomLeft: 
-            PosY += BoxScaleY - TextLengthY;
-            break;
-        case ElementAlign_Bottom: 
-            PosX += (0.5 * BoxScaleX) - (0.5 * TextLengthX);
-            PosY += BoxScaleY - TextLengthY;
-            break;
-        case ElementAlign_BottomRight: 
-            PosX += BoxScaleX - TextLengthX;
-            PosY += BoxScaleY - TextLengthY;
-            break;
-    }
-
     H.Canvas.SetDrawColorStruct(TextColor);
 
-    H.Canvas.Font = default.StandardFont;
+    GetFinalTextPlacement(H, Text, default.StandardFont, BoxTopLeftX, BoxTopLeftY, TextSize, BoxScaleX, BoxScaleY, Align);
 
-    FinalTextScale = BoxScaleX / TextLengthX;
-
-    if(FinalTextScale >= 1) {
-        FinalTextScale = 1;
-    }
-
-    class'Hat_HUDMenu'.static.DrawBorderedText(H.Canvas, Text, PosX, PosY, FinalTextScale * TextSize, Shadow, TextAlign_Left, ShadowAlpha, BorderWidth, BorderColor, VerticalSize, BorderQuality);
+    class'Hat_HUDMenu'.static.DrawBorderedText(H.Canvas, Text, BoxTopLeftX, BoxTopLeftY, TextSize, Shadow, TextAlign_Left, ShadowAlpha, BorderWidth, BorderColor, VerticalSize, BorderQuality);
 
     H.Canvas.SetDrawColor(255,255,255,255);
 }
@@ -110,10 +60,32 @@ static function DrawTextInBox(
     optional ElementAlign Align = ElementAlign_TopLeft,
     optional float TextSize = 1.0f
 ) {
-    local float PosX, PosY, TextLengthX, TextLengthY, FinalTextScale;
 
-    PosX = BoxTopLeftX;
-    PosY = BoxTopLeftY;
+    H.Canvas.SetDrawColorStruct(TextColor);
+
+    GetFinalTextPlacement(H, Text, default.StandardFont, BoxTopLeftX, BoxTopLeftY, TextSize, BoxScaleX, BoxScaleY, Align);
+
+    class'Hat_HUDMenu'.static.DrawCenterLeftText(H.Canvas, Text, BoxTopLeftX, BoxTopLeftY, TextSize, TextSize);
+
+    H.Canvas.SetDrawColor(255,255,255,255);
+}
+
+static function GetFinalTextPlacement(HUD H, string Text, Font TextFont, out float PosX, out float PosY, out float TextSize, float BoxScaleX, float BoxScaleY, ElementAlign Align) {
+    local float TextLengthX, TextLengthY, TextScalingFactor;
+
+    H.Canvas.Font = TextFont;
+
+    TextSize *= H.Canvas.ClipY / 1440.0; //Resolution scaling
+
+    H.Canvas.TextSize(Text, TextLengthX, TextLengthY, TextSize, TextSize);
+
+    TextScalingFactor = BoxScaleX / TextLengthX;
+
+    if(TextScalingFactor >= 1) {
+        TextScalingFactor = 1;
+    }
+
+    TextSize *= TextScalingFactor;
 
     H.Canvas.TextSize(Text, TextLengthX, TextLengthY, TextSize, TextSize);
 
@@ -151,19 +123,6 @@ static function DrawTextInBox(
             PosY += BoxScaleY - TextLengthY;
             break;
     }
-
-    H.Canvas.SetDrawColorStruct(TextColor);
-    H.Canvas.Font = default.StandardFont;
-
-    FinalTextScale = BoxScaleX / TextLengthX;
-
-    if(FinalTextScale >= 1) {
-        FinalTextScale = 1;
-    }
-
-    class'Hat_HUDMenu'.static.DrawCenterLeftText(H.Canvas, Text, posx, posy, FinalTextScale * TextSize, FinalTextScale * TextSize);
-
-    H.Canvas.SetDrawColor(255,255,255,255);
 }
 
 static function bool IsPointInSpaceTopLeft(HUD H, Vector2D TargetPos, float StartX, float StartY, float SizeX, float SizeY, bool applyclips) {
