@@ -57,7 +57,7 @@ function bool Render(HUD H)
     local int i;
     local Vector2D MousePos;
 
-    //ocal float scale, posX, posY, stepY;
+    //local float scale, posX, posY, stepY;
     //local string s;
 
 	if (!Super.Render(H)) return false;
@@ -84,13 +84,14 @@ function bool Render(HUD H)
         Panels[i].Render(H);
     }
 
+
     /*
 
     PrintStrings.Length = 0;
-    scale = FMin(H.Canvas.ClipX, H.Canvas.ClipY)*0.00045;
+    scale = FMin(H.Canvas.ClipX, H.Canvas.ClipY)*0.00025;
     posX = H.Canvas.ClipX*0.01;
-    posY = H.Canvas.ClipY*0.05;
-    stepY = H.Canvas.ClipY*0.05;
+    posY = H.Canvas.ClipY*0.01;
+    stepY = H.Canvas.ClipY*0.03;
 
     H.Canvas.SetDrawColor(255,255,255,255);
     H.Canvas.Font = class'Yoshi_HUDComponent'.default.StandardFont;
@@ -100,7 +101,11 @@ function bool Render(HUD H)
     PrintStrings.AddItem(s);
 
     for(i = 0; i < Panels.Length; i++) {
-        s = "Panel[" $ i $ "]" @ Panels[i].class $ ": Component Hover:" @ Panels[i].HoveredComponent.class;
+        s = "Panel[" $ i $ "]" @ Panels[i].class $ " Hover:" @ Panels[i].HoveredComponent.class;
+
+        if(Yoshi_HUDComponent_Parent(Panels[i].HoveredComponent) != None) {
+           s $= " Hover:" @ Yoshi_HUDComponent_Parent(Panels[i].HoveredComponent).HoveredComponent.class;
+        }
 
         PrintStrings.AddItem(s);
     }

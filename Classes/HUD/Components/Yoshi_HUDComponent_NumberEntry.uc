@@ -1,9 +1,5 @@
 class Yoshi_HUDComponent_NumberEntry extends Yoshi_HUDComponent;
 
-var string PropertyName;
-
-var float PropertySpaceX;
-
 var Color TextColor;
 
 var float ElementMargin;
@@ -37,8 +33,6 @@ delegate SetValueDelegate(int NewValue);
 
 //var Yoshi_BubbleTalker_InputText_Ukulele BubbleTalker;
 
-//Left and Right button to increment and decrement
-
 //A text entry where you can edit the number
 
 
@@ -63,12 +57,6 @@ function Render(HUD H) {
     local float ButtonSize, TextBoxSizeX, posx, posy, MarginSpaceX;
 
     Super.Render(H);
-
-    //Draw Property Text
-    /*posx = (CurTopLeftX + PropertySpaceX) * H.Canvas.ClipX;
-    posy = CurTopLeftY * H.Canvas.ClipY;
-
-    RemainingScaleX = CurScaleX - PropertySpaceX;*/
 
     HoverState = EHover_None;
 
@@ -141,9 +129,6 @@ defaultproperties
     MinimumValue=0
     MaximumValue=100
     ChangeValue=1
-    PropertyName="Number Entry"
-    PropertySpaceX=0.4
-
     TextColor=(R=255,G=255,B=255,A=255)
 
     LeftButtonMaterial=Material'Yoshi_UkuleleMats_Content.Materials.Toggle_Component_Mat'

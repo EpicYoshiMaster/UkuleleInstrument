@@ -56,40 +56,88 @@ defaultproperties
     PaddingX=0.03
     PaddingY=0.03
 
-    Begin Object Class=Yoshi_HUDComponent_Toggle Name=ToggleMetronome
+    //
+    // Text
+    //
+
+    Begin Object Class=Yoshi_HUDComponent_Text Name=PowerText
         TopLeftX=0.0
         TopLeftY=0.0
-        ScaleX=1
-        ScaleY=0.3
-        
-        OnPropertyName="On"
-        OffPropertyName="Off"
+        ScaleX=0.3
+        ScaleY=0.2
+        MarginX=0.03
+        MarginY=0.03
+
+        Text="Power"
+        BaseTextSize=0.8f        
+    End Object
+    Components.Add(PowerText);
+
+    Begin Object Class=Yoshi_HUDComponent_Text Name=BeatsText
+        TopLeftX=0.0
+        TopLeftY=0.2
+        ScaleX=0.3
+        ScaleY=0.4
+        MarginX=0.03
+        MarginY=0.03
+
+        Text="Beats"
+        BaseTextSize=0.8f        
+    End Object
+    Components.Add(BeatsText);
+
+    Begin Object Class=Yoshi_HUDComponent_Text Name=BPMText
+        TopLeftX=0.0
+        TopLeftY=0.6
+        ScaleX=0.3
+        ScaleY=0.4
+        MarginX=0.03
+        MarginY=0.03
+
+        Text="BPM"
+        BaseTextSize=0.8f
+    End Object
+    Components.Add(BPMText);
+
+    //
+    // Components
+    //
+
+    Begin Object Class=Yoshi_HUDComponent_Toggle Name=ToggleMetronome
+        TopLeftX=0.3
+        TopLeftY=0.0
+        ScaleX=0.7
+        ScaleY=0.2
+        MarginX=0.03
+        MarginY=0.06
     End Object
     Toggle=ToggleMetronome
     Components.Add(ToggleMetronome);
 
     Begin Object Class=Yoshi_HUDComponent_NumberEntry Name=MetronomeBeatsInMeasure
-        TopLeftX=0.0
-        TopLeftY=0.33333
-        ScaleX=1
-        ScaleY=0.3
+        TopLeftX=0.3
+        TopLeftY=0.2
+        ScaleX=0.7
+        ScaleY=0.4
+        MarginX=0.03
+        MarginY=0.03
 
         MinimumValue=1
         MaximumValue=32
-        PropertyName="Beats"
     End Object
     BeatsEntry=MetronomeBeatsInMeasure
     Components.Add(MetronomeBeatsInMeasure);
 
     Begin Object Class=Yoshi_HUDComponent_NumberEntry Name=MetronomeBPM
-        TopLeftX=0.0
-        TopLeftY=0.66666
-        ScaleX=1
-        ScaleY=0.3
+        TopLeftX=0.3
+        TopLeftY=0.6
+        ScaleX=0.7
+        ScaleY=0.4
+        MarginX=0.03
+        MarginY=0.03
 
         MinimumValue=1
         MaximumValue=999
-        PropertyName="BPM"
     End Object
     BPMEntry=MetronomeBPM
     Components.Add(MetronomeBPM);

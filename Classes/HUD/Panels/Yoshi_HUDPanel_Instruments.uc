@@ -10,7 +10,7 @@ function Init(Yoshi_UkuleleInstrument_GameMod MyGameMod, Yoshi_HUDMenu_MusicMenu
     Super.Init(MyGameMod, MyMenu, MyOwner);
 }
 
-delegate array<string> GetScaleOptions() {
+function array<string> GetScaleOptions() {
     local array<string> ScaleOptions;
     local int i;
 
@@ -21,11 +21,11 @@ delegate array<string> GetScaleOptions() {
     return ScaleOptions;
 }
 
-delegate int GetScaleValue() {
+function int GetScaleValue() {
     return class'Yoshi_UkuleleInstrument_GameMod'.default.Scale;
 }
 
-delegate SetScaleValue(int NewValue) {
+function SetScaleValue(int NewValue) {
     class'GameMod'.static.SaveConfigValue(GameMod.class, 'Scale', NewValue);
 }
 
@@ -45,11 +45,23 @@ defaultproperties
     End Object
     Components.Add(InstrumentListComponent);
 
-    Begin Object Class=Yoshi_HUDComponent_DropDown Name=ScalesDropDown
-        TopLeftX=0.0
+    Begin Object Class=Yoshi_HUDComponent_Text Name=ScalesText
+        Text="Scale"
+        UseBorderedText=false
+        TextAlignment=ElementAlign_Right
+        TopLeftX=0.6
         TopLeftY=0.0
-        ScaleX=0.25
+        ScaleX=0.2
         ScaleY=0.1
+        BaseTextSize=0.8f
+    End Object
+    Components.Add(ScalesText);
+
+    Begin Object Class=Yoshi_HUDComponent_DropDown Name=ScalesDropDown
+        TopLeftX=0.8
+        TopLeftY=0.01
+        ScaleX=0.2
+        ScaleY=0.08
     End Object
     Scales=ScalesDropDown
     Components.Add(ScalesDropDown);

@@ -1,6 +1,5 @@
 //Base Component class for components which can own other components
-class Yoshi_HUDComponent_Parent extends Yoshi_HUDComponent
-    abstract;
+class Yoshi_HUDComponent_Parent extends Yoshi_HUDComponent;
 
 var array<Yoshi_HUDComponent> Components;
 var Yoshi_HUDComponent HoveredComponent;
