@@ -90,6 +90,7 @@ function AddPlayerInstrument(Hat_Player Ply, class<Yoshi_MusicalInstrument> Inst
 function RemovePlayerInstrument() {
     if(Player == None) return;
     if(GameMod == None) GameMod = class'Yoshi_UkuleleInstrument_GameMod'.static.GetGameMod();
+    if(!IsPlayerEquipped) return;
 
     StopStrumAnim(Player.Mesh);
 

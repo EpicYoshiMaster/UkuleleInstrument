@@ -38,6 +38,7 @@ defaultproperties
     TextAlignment=ElementAlign_Right
     TextColor=(R=255,G=255,B=255,A=255)
     BaseTextSize=1.0f
+    
     ShadowAlpha=0.5f
     BorderWidth=4.0f
     BorderColor=(R=0,G=0,B=0,A=255)

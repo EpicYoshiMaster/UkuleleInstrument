@@ -200,7 +200,6 @@ defaultproperties
         TextScale=0.0007
     End Object
     Panels.Add(SelectInstrumentPanel);
-    
 
     Begin Object Class=Yoshi_HUDPanel_Metronome Name=MetronomePanel
         Title="Metronome"
@@ -216,8 +215,8 @@ defaultproperties
     Begin Object Class=Yoshi_HUDPanel_Keybinds Name=KeybindsPanel
         TopLeftX=0.05
         TopLeftY=0.55
-        ScaleX=0.5
-        ScaleY=0.35
+        ScaleX=0.8
+        ScaleY=0.3
         TextScale=0.0007
     End Object 
     Panels.Add(KeybindsPanel);

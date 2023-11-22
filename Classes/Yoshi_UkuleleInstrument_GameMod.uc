@@ -12,9 +12,9 @@ class Yoshi_UkuleleInstrument_GameMod extends GameMod
 //
 
 // Menu :3
-// - Keybinds: Change Key Layouts, Set Shiftless Mode
 // - Settings
 // - Recording/Songs
+// - Tooltips
 
 // Fix Coop Issues
 // Fix Animation Issues
@@ -62,16 +62,26 @@ const DelimiterNote = "/";
 const DelimiterPitch = "|";
 
 struct ModifierKeyLayout {
-    var string HoldPitchDown;
+    //Adjust by a full octave
     var string OctaveDown;
     var string OctaveUp;
+
+    //Step all pitches by a half step
     var string PitchDown;
     var string PitchUp;
+
+    //Step all pitches by a note name (shifting the keyboard over)
+    var string StepDown;
+    var string StepUp;
 };
 
 struct InstrumentKeyboardLayout {
+    var string LayoutName;
     var array<string> Notes;
     var array<string> FlatNotes; //1 to 1 mapping with notes as flats of each
+    var string ToggleMenu;
+    var string EndRecording;
+    var string HoldPitchDown;
     var ModifierKeyLayout Modifiers;
     var ModifierKeyLayout ShiftlessModifiers;
 };
@@ -142,8 +152,7 @@ var int LastSongIndex; //Saved in case this config value is attempted to be chan
 
 var array<InstrumentKeyboardLayout> InstrumentKeys;
 var array<NoteScale> Scales;
-var bool IsHoldingLeftShift;
-var bool IsHoldingRightShift;
+var bool IsHoldingPitchDownKey;
 
 var Yoshi_Metronome Metronome;
 
@@ -708,26 +717,39 @@ function DeleteSong(int RemoveSongIndex) {
 
 function bool ReceivedNativeInputKey(int ControllerId, name Key, EInputEvent EventType, float AmountDepressed, bool bGamepad) {
     local int i;
-    local bool HoldingShiftKey;
+    local string KeyName;
+    local ModifierKeyLayout ModifierKeys;
 
     if(InputPack.PlyCon.IsPaused()) return false;
 
     //Print(`ShowVar(Key) @ `ShowVar(EventType) @ `ShowVar(bGamepad));
 
-    if (Key == 'LeftShift')
-	{
-		if (EventType == IE_Released) IsHoldingLeftShift = false;
-		else if (EventType == IE_Pressed || EventType == IE_Repeat) IsHoldingLeftShift = true;
-	}
-	else if (Key == 'RightShift')
-	{
-		if (EventType == IE_Released) IsHoldingRightShift = false;
-		else if (EventType == IE_Pressed || EventType == IE_Repeat) IsHoldingRightShift = true;
-	}
+    switch(Key) {
+        case 'LeftShift':
+        case 'RightShift':
+            KeyName = "Shift"; 
+            break;
+        case 'LeftControl':
+        case 'RightControl':
+            KeyName = "Control";
+            break;
+        case 'LeftAlt':
+        case 'RightAlt':
+            KeyName = "Alt";
+            break;
+        default:
+            KeyName = string(Key);
+            break;
+    }
+
+    if(KeyName ~= InstrumentKeys[KeyboardLayout].HoldPitchDown) {
+        if (EventType == IE_Released) IsHoldingPitchDownKey = false;
+		else if (EventType == IE_Pressed || EventType == IE_Repeat) IsHoldingPitchDownKey = true;
+    }
 
     if(EventType == IE_Released) {
         for(i = 0; i < InstrumentKeys[KeyboardLayout].Notes.Length; i++) {
-            if(InstrumentKeys[KeyboardLayout].Notes[i] ~= string(Key)) {
+            if(InstrumentKeys[KeyboardLayout].Notes[i] ~= KeyName) {
                StopPlayerNote(Key, CurrentInstrument.FadeOutTime);
             }
         }
@@ -735,7 +757,7 @@ function bool ReceivedNativeInputKey(int ControllerId, name Key, EInputEvent Eve
         if(UseShiftlessMode != 1) return false;
 
         for(i = 0; i < InstrumentKeys[KeyboardLayout].FlatNotes.Length; i++) {
-            if(InstrumentKeys[KeyboardLayout].FlatNotes[i] ~= string(Key)) {
+            if(InstrumentKeys[KeyboardLayout].FlatNotes[i] ~= KeyName) {
                 StopPlayerNote(Key, CurrentInstrument.FadeOutTime);
             }
         }
@@ -743,7 +765,7 @@ function bool ReceivedNativeInputKey(int ControllerId, name Key, EInputEvent Eve
 
     if(EventType != IE_Pressed) return false;
 
-    if(Key == 'G') {
+    if(KeyName ~= InstrumentKeys[KeyboardLayout].ToggleMenu) {
         if(MenuHUD == None) {
             MenuHUD =  Yoshi_HUDMenu_MusicMenu(Hat_HUD(InputPack.PlyCon.MyHUD).OpenHUD(class'Yoshi_HUDMenu_MusicMenu'));
         }
@@ -753,7 +775,7 @@ function bool ReceivedNativeInputKey(int ControllerId, name Key, EInputEvent Eve
         }
     }
 
-    if(Key == 'LeftControl' || Key == 'RightControl') {
+    if(KeyName ~= InstrumentKeys[KeyboardLayout].EndRecording) {
         if(PlayingState == PS_IdleMode && RecordingMode == 1) {
 
             if((MetronomeMode == 1 || MetronomeMode == 3)) {
@@ -770,6 +792,7 @@ function bool ReceivedNativeInputKey(int ControllerId, name Key, EInputEvent Eve
         }
     }
 
+    //Need a smarter solution here
     if(Key == 'Hat_Player_Attack') {
         if(PlayingState == PS_PlaybackMode) {
             //Eat the input, we shouldn't be attacking right now
@@ -780,55 +803,38 @@ function bool ReceivedNativeInputKey(int ControllerId, name Key, EInputEvent Eve
         }
     }
 
-    HoldingShiftKey = (IsHoldingLeftShift || IsHoldingRightShift);
+    ModifierKeys = (UseShiftlessMode == 0) ? InstrumentKeys[KeyboardLayout].Modifiers : InstrumentKeys[KeyboardLayout].ShiftlessModifiers;
 
-    if(UseShiftlessMode == 1) {
-        if(InstrumentKeys[KeyboardLayout].Modifiers.PitchDown ~= string(Key)) {
-            ChangePitchShift(PitchShift - 1);
-        }
-
-        if(InstrumentKeys[KeyboardLayout].Modifiers.PitchUp ~= string(Key)) {
-            ChangePitchShift(PitchShift + 1);
-        }
-
-        if(InstrumentKeys[KeyboardLayout].Modifiers.OctaveUp ~= string(Key)) {
-            ChangeOctave(Octave + 1);
-        }
-
-        if(InstrumentKeys[KeyboardLayout].Modifiers.OctaveDown ~= string(Key)) {
-            ChangeOctave(Octave - 1);
-        }
-        HoldingShiftKey = (IsHoldingLeftShift || IsHoldingRightShift);        
+    if(KeyName ~= ModifierKeys.PitchDown) {
+        ChangePitchShift(PitchShift - 1);
     }
-    else {
-        if(InstrumentKeys[KeyboardLayout].ShiftlessModifiers.PitchDown ~= string(Key)) {
-            ChangePitchShift(PitchShift - 1);
-        }
+    else if(KeyName ~= ModifierKeys.PitchUp) {
+        ChangePitchShift(PitchShift + 1);
+    }
+    else if(KeyName ~= ModifierKeys.OctaveDown) {
+        ChangeOctave(Octave - 1);
+    }
+    else if(KeyName ~= ModifierKeys.OctaveUp) {
+        ChangeOctave(Octave + 1);
+    }
+    else if(KeyName ~= ModifierKeys.StepDown) {
 
-        if(InstrumentKeys[KeyboardLayout].ShiftlessModifiers.PitchUp~= string(Key)) {
-            ChangePitchShift(PitchShift + 1);
-        }
+    }
+    else if(KeyName ~= ModifierKeys.StepUp) {
 
-        if(InstrumentKeys[KeyboardLayout].ShiftlessModifiers.OctaveUp ~= string(Key)) {
-            ChangeOctave(Octave + 1);
-        }
-
-        if(InstrumentKeys[KeyboardLayout].ShiftlessModifiers.OctaveDown ~= string(Key)) {
-            ChangeOctave(Octave - 1);
-        }
-
-        HoldingShiftKey = false;
-
-        for(i = 0; i < InstrumentKeys[KeyboardLayout].FlatNotes.Length; i++) {
-            if(InstrumentKeys[KeyboardLayout].FlatNotes[i] ~= string(Key) && Scale < Scales.Length) {
-                PlayPlayerNote(GetNoteName((Scales[Scale].NoteOffsets[i] - 1) + PitchShift), Key);
-            }
-        }
     }
 
     for(i = 0; i < InstrumentKeys[KeyboardLayout].Notes.Length; i++) {
         if(InstrumentKeys[KeyboardLayout].Notes[i] ~= string(Key) && Scale < Scales.Length) {
-            PlayPlayerNote(GetNoteName(Scales[Scale].NoteOffsets[i] + (HoldingShiftKey ? -1 : 0) + PitchShift), Key);
+            PlayPlayerNote(GetNoteName(Scales[Scale].NoteOffsets[i] + (IsHoldingPitchDownKey ? -1 : 0) + PitchShift), Key);
+        }
+    }
+
+    if(UseShiftlessMode == 1) return false;
+
+    for(i = 0; i < InstrumentKeys[KeyboardLayout].FlatNotes.Length; i++) {
+        if(InstrumentKeys[KeyboardLayout].FlatNotes[i] ~= string(Key) && Scale < Scales.Length) {
+            PlayPlayerNote(GetNoteName((Scales[Scale].NoteOffsets[i] - 1) + PitchShift), Key);
         }
     }
 
@@ -912,26 +918,35 @@ defaultproperties
     PlayingState=PS_IdleMode
     Octave=3;
 
-    //QWERTY
     InstrumentKeys[0] = {(
+        LayoutName="QWERTY",
         Notes=("Z","X","C","V","B","N","M","comma","period","slash"),
         FlatNotes=("A","S","D","F","G","H","J","K","L","semicolon"),
+        ToggleMenu="G",
+        HoldPitchDown="Shift",
+        EndRecording="Control",
         Modifiers=(OctaveDown="J",OctaveUp="K",PitchDown="L",PitchUp="semicolon"),
         ShiftlessModifiers=(OctaveDown="U",OctaveUp="I",PitchDown="O",PitchUp="P")
     )}
 
-    //QWERTZ
     InstrumentKeys[1] = {(
+        LayoutName="QWERTZ",
         Notes=("Y","X","C","V","B","N","M","comma","period","underscore"),
         FlatNotes=("A","S","D","F","G","H","J","K","L","semicolon"),
+        ToggleMenu="G",
+        HoldPitchDown="Shift",
+        EndRecording="Control",
         Modifiers=(OctaveDown="J",OctaveUp="K",PitchDown="L",PitchUp="semicolon"),
         ShiftlessModifiers=(OctaveDown="U",OctaveUp="I",PitchDown="O",PitchUp="P")
     )}
 
-    //AZERTY
     InstrumentKeys[2] = {(
+        LayoutName="AZERTY",
         Notes=("W","X","C","V","B","N","comma","period","slash", ""), //Only 9 keys, there is no ! or paragraph key input event
         FlatNotes=("Q","S","D","F","G","H","J","K","L","M"), //all 10 keys :D
+        ToggleMenu="G",
+        HoldPitchDown="Shift",
+        EndRecording="Control",
         Modifiers=(OctaveDown="J",OctaveUp="K",PitchDown="L",PitchUp="M"),
         ShiftlessModifiers=(OctaveDown="U",OctaveUp="I",PitchDown="O",PitchUp="P")
     )}
