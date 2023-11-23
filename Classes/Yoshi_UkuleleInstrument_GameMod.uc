@@ -12,7 +12,6 @@ class Yoshi_UkuleleInstrument_GameMod extends GameMod
 //
 
 // Menu :3
-// - Settings
 // - Recording/Songs
 // - Tooltips
 

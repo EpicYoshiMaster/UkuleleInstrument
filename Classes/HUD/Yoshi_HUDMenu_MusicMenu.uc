@@ -193,10 +193,10 @@ function bool DisablePause(HUD H)
 defaultproperties
 {
     Begin Object Class=Yoshi_HUDPanel_Instruments Name=SelectInstrumentPanel
-        TopLeftX=0.1
+        TopLeftX=0.05
         TopLeftY=0.1
         ScaleX=0.4
-        ScaleY=0.35
+        ScaleY=0.4
         TextScale=0.0007
     End Object
     Panels.Add(SelectInstrumentPanel);
@@ -204,8 +204,8 @@ defaultproperties
     Begin Object Class=Yoshi_HUDPanel_Metronome Name=MetronomePanel
         Title="Metronome"
 
-        TopLeftX=0.55
-        TopLeftY=0.15
+        TopLeftX=0.5
+        TopLeftY=0.1
         ScaleX=0.175
         ScaleY=0.2
         TextScale=0.0007
@@ -214,12 +214,21 @@ defaultproperties
 
     Begin Object Class=Yoshi_HUDPanel_Keybinds Name=KeybindsPanel
         TopLeftX=0.05
-        TopLeftY=0.55
+        TopLeftY=0.65
         ScaleX=0.8
         ScaleY=0.3
         TextScale=0.0007
     End Object 
     Panels.Add(KeybindsPanel);
+
+    Begin Object Class=Yoshi_HUDPanel_Settings Name=SettingsPanel
+        TopLeftX=0.5
+        TopLeftY=0.35
+        ScaleX=0.175
+        ScaleY=0.15
+        TextScale=0.0007
+    End Object
+    Panels.Add(SettingsPanel);
 
     TextAlignment=TextAlign_TopLeft
 
