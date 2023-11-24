@@ -202,8 +202,6 @@ defaultproperties
     Panels.Add(SelectInstrumentPanel);
 
     Begin Object Class=Yoshi_HUDPanel_Metronome Name=MetronomePanel
-        Title="Metronome"
-
         TopLeftX=0.5
         TopLeftY=0.1
         ScaleX=0.175
@@ -229,6 +227,15 @@ defaultproperties
         TextScale=0.0007
     End Object
     Panels.Add(SettingsPanel);
+
+    Begin Object Class=Yoshi_HUDPanel_Songs Name=SongsPanel
+        TopLeftX=0.725
+        TopLeftY=0.1
+        ScaleX=0.15
+        ScaleY=0.15
+        TextScale=0.0007
+    End Object
+    Panels.Add(SongsPanel);
 
     TextAlignment=TextAlign_TopLeft
 

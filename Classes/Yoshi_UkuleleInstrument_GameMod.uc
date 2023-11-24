@@ -6,20 +6,28 @@ class Yoshi_UkuleleInstrument_GameMod extends GameMod
 // TODO
 //
 
-
 //
-// Script:
-//
+// Next Build Requirements:
+// 
 
 // Menu :3
-// - Recording/Songs
 // - Tooltips
+// - Change Tabs
+// - Fix Component Lifetime
 
+// Okay it's time we need to split functionality out of GameMod better to help fix all the other problems
 // Fix Coop Issues
 // Fix Animation Issues
 // Continue work on Instrument Visuals
 // Finish building system for releasing notes
 
+//
+// To Release And Beyond
+//
+
+// We need assets. Please.
+// Polish and cleanup to menu and panels
+// Solve the 250 notes problem
 // trailer
 
 // The Awesome Soundfont Offerings:
@@ -107,11 +115,13 @@ struct SongLayer {
 struct SongPlaybackStatus {
     var float Time;
     var Actor Player;
+    var string SongName;
     var array<SongLayer> Layers;
 };
 
 //Song format for Yoshi_MusicalSong_Storage
 struct SavedSong {
+    var string SongName;
     var array<SongLayer> Layers;
 };
 
@@ -228,6 +238,7 @@ event OnConfigChanged(Name ConfigName) {
             class'GameMod'.static.SaveConfigValue(class'Yoshi_UkuleleInstrument_GameMod', 'SongIndex', LastSongIndex);
         }
         else {
+            PlayerSong.SongName = StoredSongs.Songs[SongIndex].SongName;
             PlayerSong.Layers = StoredSongs.Songs[SongIndex].Layers;
 
             //Make sure to update the relevant recording layer
@@ -693,8 +704,16 @@ function StopRecording() {
 }
 
 function SaveSongs(optional int SaveSongIndex = -1) {
-    if(SaveSongIndex > -1 && SaveSongIndex < MaxSongs) {
-        StoredSongs.Songs[SaveSongIndex].Layers = PlayerSong.Layers;
+    local SavedSong NewSong;
+
+    NewSong.SongName = PlayerSong.SongName;
+    NewSong.Layers = PlayerSong.Layers;
+
+    if(SaveSongIndex > -1 && SaveSongIndex < StoredSongs.Songs.Length) {
+        StoredSongs.Songs[SaveSongIndex] = NewSong;
+    }
+    else {
+        StoredSongs.Songs.AddItem(NewSong);
     }
     
     class'Engine'.static.BasicSaveObject(StoredSongs, SavedSongsPath, false, SongFormatVersion);
@@ -705,12 +724,19 @@ function LoadSongs() {
         StoredSongs = new class'Yoshi_MusicalSong_Storage';
     }
     class'Engine'.static.BasicLoadObject(StoredSongs, SavedSongsPath, false, SongFormatVersion);
+
+    PlayerSong.SongName = StoredSongs.Songs[SongIndex].SongName;
     PlayerSong.Layers = StoredSongs.Songs[SongIndex].Layers;
 }
 
 function DeleteSong(int RemoveSongIndex) {
+    PlayerSong.SongName = "Song " $ (RemoveSongIndex + 1);
     PlayerSong.Layers.Length = 0;
-    StoredSongs.Songs[RemoveSongIndex].Layers.Length = 0;
+
+    if(RemoveSongIndex < StoredSongs.Songs.Length) {
+        StoredSongs.Songs.Remove(RemoveSongIndex, 1);
+    }
+
     class'Engine'.static.BasicSaveObject(StoredSongs, SavedSongsPath, false, SongFormatVersion);
 }
 
@@ -802,7 +828,7 @@ function bool ReceivedNativeInputKey(int ControllerId, name Key, EInputEvent Eve
         }
     }
 
-    ModifierKeys = (UseShiftlessMode == 0) ? InstrumentKeys[KeyboardLayout].Modifiers : InstrumentKeys[KeyboardLayout].ShiftlessModifiers;
+    ModifierKeys = (UseShiftlessMode == 1) ? InstrumentKeys[KeyboardLayout].Modifiers : InstrumentKeys[KeyboardLayout].ShiftlessModifiers;
 
     if(KeyName ~= ModifierKeys.PitchDown) {
         ChangePitchShift(PitchShift - 1);

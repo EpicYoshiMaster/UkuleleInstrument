@@ -1,4 +1,4 @@
-class Yoshi_HUDComponent_Button extends Yoshi_HUDComponent;
+class Yoshi_HUDComponent_Button extends Yoshi_HUDComponent_Parent;
 
 var bool MakeSquare;
 
@@ -19,8 +19,6 @@ function Init(Yoshi_UkuleleInstrument_GameMod MyGameMod, Yoshi_HUDMenu_MusicMenu
 function Render(HUD H) {
     local float ButtonSizeX, ButtonSizeY, posx, posy;
 
-    Super.Render(H);
-
     if(MakeSquare) {
         ButtonSizeX = CurScaleY * H.Canvas.ClipY;
         ButtonSizeY = ButtonSizeX;
@@ -40,6 +38,8 @@ function Render(HUD H) {
     class'Hat_HUDMenu'.static.DrawTopLeft(H, posx, posy, ButtonSizeX, ButtonSizeY, Button);
 
     H.Canvas.SetDrawColor(255,255,255,255);
+
+    Super.Render(H);
 }
 
 function bool OnClick(HUD H, bool release)
