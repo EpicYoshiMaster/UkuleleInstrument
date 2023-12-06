@@ -1,13 +1,33 @@
 class Yoshi_HUDPanel_Instruments extends Yoshi_HUDPanel;
 
+var Yoshi_HUDComponent_IconBoxList Instruments;
 var Yoshi_HUDComponent_DropDown Scales;
 
 function Init(Yoshi_UkuleleInstrument_GameMod MyGameMod, Yoshi_HUDMenu_MusicMenu MyMenu, optional Yoshi_HUDComponent MyOwner) {
+    Instruments.GetIcons = GetInstrumentIcons;
+    Instruments.GetValue = GetInstrumentIndex;
+    Instruments.SetValue = MyGameMod.SetInstrumentIndex;
+
     Scales.GetOptions = GetScaleOptions;
     Scales.GetValue = GetScaleValue;
-    Scales.SetValue = SetScaleValue;
+    Scales.SetValue = MyGameMod.SetScaleIndex;
 
     Super.Init(MyGameMod, MyMenu, MyOwner);
+}
+
+function array<Texture2D> GetInstrumentIcons() {
+    local array<Texture2D> AllIcons;
+    local int i;
+
+    for(i = 0; i < GameMod.AllInstruments.Length; i++) {
+        AllIcons.AddItem(GameMod.AllInstruments[i].default.Icon);
+    }
+
+    return AllIcons;
+}
+
+function int GetInstrumentIndex() {
+    return GameMod.Settings.InstrumentIndex;
 }
 
 function array<string> GetScaleOptions() {
@@ -22,11 +42,7 @@ function array<string> GetScaleOptions() {
 }
 
 function int GetScaleValue() {
-    return class'Yoshi_UkuleleInstrument_GameMod'.default.Scale;
-}
-
-function SetScaleValue(int NewValue) {
-    class'GameMod'.static.SaveConfigValue(GameMod.class, 'Scale', NewValue);
+    return GameMod.Settings.ScaleIndex;
 }
 
 defaultproperties
@@ -37,12 +53,13 @@ defaultproperties
     PaddingX=0.03
     PaddingY=0.03
 
-    Begin Object Class=Yoshi_HUDComponent_InstrumentList Name=InstrumentListComponent
+    Begin Object Class=Yoshi_HUDComponent_IconBoxList Name=InstrumentListComponent
         TopLeftX=0.0
         TopLeftY=0.13
         ScaleX=1.0
         ScaleY=0.87
     End Object
+    Instruments=InstrumentListComponent
     Components.Add(InstrumentListComponent);
 
     Begin Object Class=Yoshi_HUDComponent_Text Name=ScalesText

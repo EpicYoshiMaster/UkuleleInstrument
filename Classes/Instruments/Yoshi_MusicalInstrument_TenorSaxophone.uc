@@ -5,6 +5,7 @@ defaultproperties
 {
     InstrumentID=11
     InstrumentName="Tenor Saxophone"
+    ShortName="TSx"
 
     CanReleaseNote=true
     FadeOutTime=0.3

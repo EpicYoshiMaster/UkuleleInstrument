@@ -5,6 +5,7 @@ defaultproperties
 {
     InstrumentID=13
     InstrumentName="Drum Set"
+    ShortName="Drm"
 
     CanReleaseNote=false
 

@@ -6,28 +6,20 @@ var Yoshi_HUDComponent_Toggle SongsToggle;
 function Init(Yoshi_UkuleleInstrument_GameMod MyGameMod, Yoshi_HUDMenu_MusicMenu MyMenu, optional Yoshi_HUDComponent MyOwner) {
 
     NotesToggle.GetValue = GetNotes;
-    NotesToggle.SetValue = SetNotes;
+    NotesToggle.SetValue = MyGameMod.SetOnlineNotes;
 
     SongsToggle.GetValue = GetSongs;
-    SongsToggle.SetValue = SetSongs;
+    SongsToggle.SetValue = MyGameMod.SetOnlineSongs;
 
     Super.Init(MyGameMod, MyMenu, MyOwner);
 }
 
 function bool GetNotes() {
-    return (class'Yoshi_UkuleleInstrument_GameMod'.default.OnlineNotes == 0);
-}
-
-function SetNotes(bool NewValue) {
-    class'GameMod'.static.SaveConfigValue(GameMod.class, 'OnlineNotes', (NewValue) ? 0 : 1);
+    return GameMod.Settings.OnlineNotes;
 }
 
 function bool GetSongs() {
-    return (class'Yoshi_UkuleleInstrument_GameMod'.default.OnlineSongs == 0);
-}
-
-function SetSongs(bool NewValue) {
-    class'GameMod'.static.SaveConfigValue(GameMod.class, 'OnlineSongs', (NewValue) ? 0 : 1);
+    return GameMod.Settings.OnlineSongs;
 }
 
 defaultproperties

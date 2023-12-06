@@ -4,6 +4,7 @@ defaultproperties
 {
     InstrumentID=4
     InstrumentName="Acoustic Guitar"
+    ShortName="AcG"
 
     CanReleaseNote=true
     FadeOutTime=0.3

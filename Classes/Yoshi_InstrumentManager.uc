@@ -49,6 +49,10 @@ struct MaterialCount {
 //
 //
 
+function Init(Yoshi_UkuleleInstrument_GameMod MyGameMod) {
+    GameMod = MyGameMod;
+}
+
 function AddPlayerInstrument(Hat_Player Ply, class<Yoshi_MusicalInstrument> InstrumentClass) {
     local bool WasPlayerEquipped;
 

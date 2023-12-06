@@ -1,18 +1,24 @@
 class Yoshi_HUDPanel_Songs extends Yoshi_HUDPanel;
 
+var Yoshi_RecordManager RecordManager;
+var Yoshi_SongManager SongManager;
+
 var Yoshi_HUDComponent_DropDown Songs;
 var Yoshi_HUDComponent_Toggle RecordMode;
 var Yoshi_HUDComponent_Button ResetLayers;
 
 function Init(Yoshi_UkuleleInstrument_GameMod MyGameMod, Yoshi_HUDMenu_MusicMenu MyMenu, optional Yoshi_HUDComponent MyOwner) {
+    RecordManager = MyGameMod.RecordManager;
+    SongManager = MyGameMod.SongManager;
+
     Songs.GetOptions = GetSongs;
     Songs.GetValue = GetSongIndex;
-    Songs.SetValue = SetSongIndex;
+    Songs.SetValue = MyGameMod.SetSongIndex;
 
     RecordMode.GetValue = GetRecordMode;
-    RecordMode.SetValue = SetRecordMode;
+    RecordMode.SetValue = RecordManager.SetRecordingMode;
 
-    ResetLayers.OnClickButton = ResetSongLayers;
+    ResetLayers.OnClickButton = DeleteSong;
 
     Super.Init(MyGameMod, MyMenu, MyOwner);
 }
@@ -21,8 +27,8 @@ function array<string> GetSongs() {
     local array<string> SongNames;
     local int i;
 
-    for(i = 0; i < GameMod.StoredSongs.Songs.Length; i++) {
-        SongNames.AddItem("Song " $ (i + 1));
+    for(i = 0; i < SongManager.SavedSongs.Length; i++) {
+        SongNames.AddItem(SongManager.SavedSongs[i].SongName);
     }
 
     SongNames.AddItem("New Song");
@@ -31,23 +37,15 @@ function array<string> GetSongs() {
 }
 
 function int GetSongIndex() {
-    return class'Yoshi_UkuleleInstrument_GameMod'.default.SongIndex;
-}
-
-function SetSongIndex(int NewValue) {
-    class'GameMod'.static.SaveConfigValue(GameMod.class, 'SongIndex', NewValue);
+    return GameMod.Settings.SongIndex;
 }
 
 function bool GetRecordMode() {
-    return (class'Yoshi_UkuleleInstrument_GameMod'.default.RecordingMode == 1);
+    return RecordManager.InRecordingMode;
 }
 
-function SetRecordMode(bool NewValue) {
-    class'GameMod'.static.SaveConfigValue(GameMod.class, 'RecordingMode', (NewValue) ? 1 : 0);
-}
-
-function ResetSongLayers() {
-    class'GameMod'.static.SaveConfigValue(GameMod.class, 'RecordingMode', 2);
+function DeleteSong() {
+    SongManager.DeleteSong(GetSongIndex());
 }
 
 defaultproperties

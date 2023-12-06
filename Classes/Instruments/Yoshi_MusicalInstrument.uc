@@ -7,6 +7,7 @@ struct InstrumentPitchSet {
 };
 
 var const string InstrumentName;
+var const string ShortName;
 var array<InstrumentPitchSet> Pitches;
 var const int InstrumentID; //Corresponds with Configs
 
@@ -22,9 +23,16 @@ var int DefaultOctave;
 
 static function AudioComponent PlayNote(Actor Player, String Note) {
     local int i;
+    local AudioComponent Component;
     for(i = 0; i < default.Pitches.Length; i++) {
         if(default.Pitches[i].Name ~= Note) {
-            return Player.CreateAudioComponent(default.Pitches[i].Sound,true,true);
+            Component = Player.CreateAudioComponent(default.Pitches[i].Sound,true,true);
+
+            if(Component != None) {
+                Component.bAutoDestroy = true;
+            }
+
+            return Component;
         }
     }
 

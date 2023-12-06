@@ -1,9 +1,11 @@
+//
 class Yoshi_MusicalInstrument_Trumpet extends Yoshi_MusicalInstrument;
 
 defaultproperties
 {
     InstrumentID=6
     InstrumentName="Trumpet"
+    ShortName="Tpt"
 
     CanReleaseNote=true
 

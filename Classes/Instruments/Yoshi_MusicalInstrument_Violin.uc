@@ -5,6 +5,7 @@ defaultproperties
 {
     InstrumentID=10
     InstrumentName="Violin"
+    ShortName="Vln"
 
     CanReleaseNote=true
     FadeOutTime=0.3

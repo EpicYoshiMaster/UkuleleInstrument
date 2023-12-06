@@ -1,7 +1,9 @@
 class Yoshi_HUDPanel_Keybinds extends Yoshi_HUDPanel
-    dependsOn(Yoshi_UkuleleInstrument_GameMod);
+    dependsOn(Yoshi_KeyManager);
 
-var Yoshi_HUDComponent_Toggle Shiftless;
+var Yoshi_KeyManager KeyManager;
+
+var Yoshi_HUDComponent_Toggle TwoRow;
 var Yoshi_HUDComponent_DropDown KeyboardLayout;
 
 var Yoshi_HUDComponent_KeybindList KeyList;
@@ -16,18 +18,20 @@ var Yoshi_HUDComponent_KeybindListText PitchKeyList;
 var Yoshi_HUDComponent_KeybindListText StepKeyList;
 
 function Init(Yoshi_UkuleleInstrument_GameMod MyGameMod, Yoshi_HUDMenu_MusicMenu MyMenu, optional Yoshi_HUDComponent MyOwner) {
-    Shiftless.GetValue = GetShiftlessValue;
-    Shiftless.SetValue = SetShiftlessValue;
+    KeyManager = MyGameMod.KeyManager;
+
+    TwoRow.GetValue = GetTwoRowMode;
+    TwoRow.SetValue = MyGameMod.SetTwoRowMode;
     
     KeyboardLayout.GetOptions = GetKeyboardLayoutOptions;
-    KeyboardLayout.GetValue = GetKeyboardLayoutValue;
-    KeyboardLayout.SetValue = SetKeyboardLayoutValue;
+    KeyboardLayout.GetValue = GetKeyboardLayoutIndex;
+    KeyboardLayout.SetValue = MyGameMod.SetKeyboardLayoutIndex;
 
     KeyList.GetValue = GetKeyValues;
-    KeyList.SetValue = SetKeyValues;
+    //KeyList.SetValue = SetKeyValues;
 
     FlatKeyList.GetValue = GetFlatKeyValues;
-    FlatKeyList.SetValue = SetFlatKeyValues;
+    //FlatKeyList.SetValue = SetFlatKeyValues;
 
     MenuKeyList.GetValue = GetMenuKeyValues;
     ///MenuKeyList.SetValue = SetMenuKeyValues;
@@ -49,35 +53,30 @@ function Init(Yoshi_UkuleleInstrument_GameMod MyGameMod, Yoshi_HUDMenu_MusicMenu
     Super.Init(MyGameMod, MyMenu, MyOwner);
 }
 
-function bool GetShiftlessValue() {
-    return (class'Yoshi_UkuleleInstrument_GameMod'.default.UseShiftlessMode != 1);
-}
-
-function SetShiftlessValue(bool NewValue) {
-    class'GameMod'.static.SaveConfigValue(GameMod.class, 'UseShiftlessMode', NewValue ? 0 : 1);
+function bool GetTwoRowMode() {
+    return GameMod.Settings.TwoRowMode;
 }
 
 function array<string> GetKeyboardLayoutOptions() {
+    local array<InstrumentKeyboardLayout> AllLayouts;
     local array<string> Options;
     local int i;
 
-    for(i = 0; i < GameMod.InstrumentKeys.Length; i++) {
-        Options.AddItem(GameMod.InstrumentKeys[i].LayoutName);
+    AllLayouts = KeyManager.GetAllLayouts();
+
+    for(i = 0; i < AllLayouts.Length; i++) {
+        Options.AddItem(AllLayouts[i].LayoutName);
     }
 
     return Options;
 }
 
-function int GetKeyboardLayoutValue() {
-    return class'Yoshi_UkuleleInstrument_GameMod'.default.KeyboardLayout;
-}
-
-function SetKeyboardLayoutValue(int NewValue) {
-    class'GameMod'.static.SaveConfigValue(GameMod.class, 'KeyboardLayout', NewValue);
+function int GetKeyboardLayoutIndex() {
+    return GameMod.Settings.CurrentLayoutIndex;
 }
 
 function array<string> GetKeyValues() {
-    return GameMod.InstrumentKeys[GameMod.KeyboardLayout].Notes;
+    return KeyManager.GetCurrentLayout().Notes;
 }
 
 function SetKeyValues(array<string> NewValues) {
@@ -85,7 +84,7 @@ function SetKeyValues(array<string> NewValues) {
 }
 
 function array<string> GetFlatKeyValues() {
-    return GameMod.InstrumentKeys[GameMod.KeyboardLayout].FlatNotes;
+    return KeyManager.GetCurrentLayout().FlatNotes;
 }
 
 function SetFlatKeyValues(array<string> NewValues) {
@@ -95,7 +94,7 @@ function SetFlatKeyValues(array<string> NewValues) {
 function array<string> GetMenuKeyValues() {
     local array<string> Keys;
 
-    Keys.AddItem(GameMod.InstrumentKeys[GameMod.KeyboardLayout].ToggleMenu);
+    Keys.AddItem(KeyManager.GetCurrentLayout().ToggleMenu);
     
     return Keys;
 }
@@ -103,7 +102,7 @@ function array<string> GetMenuKeyValues() {
 function array<string> GetEndRecordingKeyValues() {
     local array<string> Keys;
 
-    Keys.AddItem(GameMod.InstrumentKeys[GameMod.KeyboardLayout].EndRecording);
+    Keys.AddItem(KeyManager.GetCurrentLayout().ControlRecording);
     
     return Keys;
 }
@@ -111,43 +110,43 @@ function array<string> GetEndRecordingKeyValues() {
 function array<string> GetShiftKeyValues() {
     local array<string> Keys;
 
-    Keys.AddItem(GameMod.InstrumentKeys[GameMod.KeyboardLayout].HoldPitchDown);
+    Keys.AddItem(KeyManager.GetCurrentLayout().HoldPitchDown);
     
     return Keys;
 }
 
 function array<string> GetOctaveKeyValues() {
-    local ModifierKeyLayout ModKeys;
+    local array<string> ModKeys;
     local array<string> Keys;
 
-    ModKeys = (GameMod.UseShiftlessMode == 1) ? GameMod.InstrumentKeys[GameMod.KeyboardLayout].Modifiers : GameMod.InstrumentKeys[GameMod.KeyboardLayout].ShiftlessModifiers;
+    ModKeys = (GameMod.Settings.TwoRowMode) ? KeyManager.GetCurrentLayout().Modifiers : KeyManager.GetCurrentLayout().TwoRowModifiers;
 
-    Keys.AddItem(ModKeys.OctaveDown);
-    Keys.AddItem(ModKeys.OctaveUp);
+    Keys.AddItem(ModKeys[0]);
+    Keys.AddItem(ModKeys[1]);
     
     return Keys;
 }
 
 function array<string> GetPitchKeyValues() {
-    local ModifierKeyLayout ModKeys;
+    local array<string> ModKeys;
     local array<string> Keys;
 
-    ModKeys = (GameMod.UseShiftlessMode == 1) ? GameMod.InstrumentKeys[GameMod.KeyboardLayout].Modifiers : GameMod.InstrumentKeys[GameMod.KeyboardLayout].ShiftlessModifiers;
+    ModKeys = (GameMod.Settings.TwoRowMode) ? KeyManager.GetCurrentLayout().Modifiers : KeyManager.GetCurrentLayout().TwoRowModifiers;
 
-    Keys.AddItem(ModKeys.PitchDown);
-    Keys.AddItem(ModKeys.PitchUp);
+    Keys.AddItem(ModKeys[2]);
+    Keys.AddItem(ModKeys[3]);
     
     return Keys;
 }
 
 function array<string> GetStepKeyValues() {
-    local ModifierKeyLayout ModKeys;
+    local array<string> ModKeys;
     local array<string> Keys;
 
-    ModKeys = (GameMod.UseShiftlessMode == 1) ? GameMod.InstrumentKeys[GameMod.KeyboardLayout].Modifiers : GameMod.InstrumentKeys[GameMod.KeyboardLayout].ShiftlessModifiers;
+    ModKeys = (GameMod.Settings.TwoRowMode) ? KeyManager.GetCurrentLayout().Modifiers : KeyManager.GetCurrentLayout().TwoRowModifiers;
 
-    Keys.AddItem(ModKeys.StepDown);
-    Keys.AddItem(ModKeys.StepUp);
+    Keys.AddItem(ModKeys[4]);
+    Keys.AddItem(ModKeys[5]);
     
     return Keys;
 }
@@ -232,7 +231,7 @@ defaultproperties
         ScaleX=0.1
         ScaleY=0.1
     End Object
-    Shiftless=ShiftlessToggle
+    TwoRow=ShiftlessToggle
     Components.Add(ShiftlessToggle)
 
     Begin Object Class=Yoshi_HUDComponent_Text Name=KeyboardLayoutText

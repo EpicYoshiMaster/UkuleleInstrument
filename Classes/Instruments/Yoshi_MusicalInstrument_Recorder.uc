@@ -4,6 +4,7 @@ defaultproperties
 {
     InstrumentID=2
     InstrumentName="Recorder"
+    ShortName="Rcd"
 
     Icon=Texture2D'HatInTime_Hud_ItemIcons3.MetroTicket_Green'
 

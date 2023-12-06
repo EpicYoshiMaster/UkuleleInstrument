@@ -5,6 +5,7 @@ defaultproperties
 {
     InstrumentID=0
     InstrumentName="Ukulele"
+    ShortName="Uke"
 
     ShouldUseParticle=false
 

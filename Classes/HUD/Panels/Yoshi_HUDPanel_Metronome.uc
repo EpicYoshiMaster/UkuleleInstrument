@@ -1,5 +1,6 @@
 class Yoshi_HUDPanel_Metronome extends Yoshi_HUDPanel;
 
+var Yoshi_KeyManager KeyManager;
 var Yoshi_Metronome Metronome;
 
 var Yoshi_HUDComponent_Toggle Toggle;
@@ -8,13 +9,14 @@ var Yoshi_HUDComponent_NumberEntry BeatsEntry;
 
 function Init(Yoshi_UkuleleInstrument_GameMod MyGameMod, Yoshi_HUDMenu_MusicMenu MyMenu, optional Yoshi_HUDComponent MyOwner) {
     Metronome = MyGameMod.Metronome;
+    KeyManager = MyGameMod.KeyManager;
 
     Toggle.GetValue = GetUpdating;
     Toggle.SetValue = SetUpdating;
     BPMEntry.GetValue = GetBPM;
-    BPMEntry.SetValue = SetBPM;
+    BPMEntry.SetValue = MyGameMod.SetBPM;
     BeatsEntry.GetValue = GetBeatsInMeasure;
-    BeatsEntry.SetValue = SetBeatsInMeasure;
+    BeatsEntry.SetValue = MyGameMod.SetBeatsInMeasure;
 
     Super.Init(MyGameMod, MyMenu, MyOwner);
 }
@@ -24,8 +26,10 @@ delegate bool GetUpdating() {
 }
 
 delegate SetUpdating(bool bValue) {
+    if(bValue && Metronome.IsUpdating()) return;
+
     if(bValue) {
-        Metronome.Start();
+        Metronome.Start(KeyManager.GetPlayer());
     }
     else {
         Metronome.Stop();
@@ -36,16 +40,8 @@ delegate int GetBPM() {
     return Metronome.BPM;
 }
 
-delegate SetBPM(int NewBPM) {
-    Metronome.SetBPM(NewBPM);
-}
-
 delegate int GetBeatsInMeasure() {
     return Metronome.BeatsInMeasure;
-}
-
-delegate SetBeatsInMeasure(int NewBeatsInMeasure) {
-    Metronome.SetBeatsInMeasure(NewBeatsInMeasure);
 }
 
 defaultproperties

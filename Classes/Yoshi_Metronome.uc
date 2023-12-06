@@ -1,5 +1,7 @@
 class Yoshi_Metronome extends Object;
 
+var Yoshi_UkuleleInstrument_GameMod GameMod;
+
 var Hat_Player Player;
 
 var SoundCue BigBeat;
@@ -17,13 +19,27 @@ var float SongPosition;
 var float SongStartTime;
 
 var bool bUpdating;
+var bool DidCountIn;
 
-function Start() {
+function Init(Yoshi_UkuleleInstrument_GameMod MyGameMod) {
+    GameMod = MyGameMod;
+}
+
+function Start(Hat_Player MyPlayer) {
     SetBeatLength(BPM, BeatsInMeasure);
+
+    Player = MyPlayer;
 
     MeasureNumber = 1;
     BeatNumber = 1;
     LastBeat = 0.0;
+
+    if(GameMod.Settings.MetronomeCountIn) {
+        DidCountIn = false;
+    }
+    else {
+        DidCountIn = true;
+    }
 
     SongStartTime = class'WorldInfo'.static.GetWorldInfo().AudioTimeSeconds;
 
@@ -38,10 +54,6 @@ function Stop() {
 
 function bool IsUpdating() {
     return bUpdating;
-}
-
-function SetPlayer(Hat_Player ply) {
-    Player = ply;
 }
 
 function SetBPM(float NewBPM) {
@@ -59,7 +71,7 @@ function SetBeatLength(float NewBPM, float NewBeatsInMeasure) {
     BeatLength = (60 / BPM);
 }
 
-function TickMetronome() {
+function Tick(float delta) {
     local bool DidBeat;
 
     if(!bUpdating) return;
@@ -78,6 +90,11 @@ function TickMetronome() {
             MeasureNumber++;
             BeatNumber -= BeatsInMeasure;
         }
+    }
+
+    if(!DidCountIn && MeasureNumber > 1) {
+        DidCountIn = true;
+        GameMod.OnCountIn();
     }
 
     if(DidBeat) {

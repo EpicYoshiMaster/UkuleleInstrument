@@ -4,6 +4,7 @@ defaultproperties
 {
     InstrumentID=9
     InstrumentName="Electric Guitar"
+    ShortName="ElG"
 
     CanReleaseNote=true
     FadeOutTime=0.3

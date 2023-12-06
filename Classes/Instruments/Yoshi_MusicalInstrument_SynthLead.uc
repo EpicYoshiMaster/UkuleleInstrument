@@ -5,6 +5,7 @@ defaultproperties
 {
     InstrumentID=12
     InstrumentName="Synth Lead"
+    ShortName="SLd"
 
     CanReleaseNote=true
     FadeOutTime=0.3

@@ -8,11 +8,11 @@ class Yoshi_InputPack extends Object
 	abstract;
 
 struct InputPack {
-	var PlayerController PlyCon;
+	var Hat_PlayerController PlyCon;
 	var Interaction KeyCaptureInteraction;
 };
 
-static function AttachController(delegate<Interaction.OnReceivedNativeInputKey> InputDelegate, PlayerController Controller, out InputPack pack) {
+static function AttachController(delegate<Interaction.OnReceivedNativeInputKey> InputDelegate, Hat_PlayerController Controller, out InputPack pack) {
 	local int iInput;
 
 	if(pack.KeyCaptureInteraction != None) {

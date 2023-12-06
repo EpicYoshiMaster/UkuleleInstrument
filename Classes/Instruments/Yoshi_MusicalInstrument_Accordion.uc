@@ -4,6 +4,7 @@ defaultproperties
 {
     InstrumentID=14
     InstrumentName="Accordion"
+    ShortName="Acd"
 
     CanReleaseNote=true
 

@@ -4,6 +4,7 @@ defaultproperties
 {
     InstrumentID=7
     InstrumentName="Euphonium"
+    ShortName="Epm"
 
     CanReleaseNote=true
     FadeOutTime=0.3

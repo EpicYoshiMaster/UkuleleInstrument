@@ -1,4 +1,4 @@
-class Yoshi_HUDComponent_InstrumentList extends Yoshi_HUDComponent_Parent;
+class Yoshi_HUDComponent_IconBoxList extends Yoshi_HUDComponent_Parent;
 
 var int MaxPerRow; //Maximum number of items in each row
 
@@ -11,8 +11,7 @@ var float PulseScaleAmount;
 
 var Material IconMaterial;
 
-var array< class<Yoshi_MusicalInstrument> > InstrumentClasses;
-var array<MaterialInstanceConstant> InstrumentMaterials;
+var array<MaterialInstanceConstant> IconMaterials;
 
 var int HoverIndex;
 
@@ -21,9 +20,21 @@ var float ScrollWindowSize;
 var float ScrollOffset;
 var Yoshi_HUDComponent_Scrollbar Scrollbar;
 
+var delegate<GetArrayTextureDelegate> GetIcons;
+var delegate<GetIntValueDelegate> GetValue;
+var delegate<SetIntValueDelegate> SetValue;
+
+//These delegates should be overridden with functions to link together external data
+delegate array<Texture2D> GetArrayTextureDelegate();
+delegate int GetIntValueDelegate();
+delegate SetIntValueDelegate(int NewValue);
+
+//TODO: Convey selected item
+
 function Init(Yoshi_UkuleleInstrument_GameMod MyGameMod, Yoshi_HUDMenu_MusicMenu MyMenu, optional Yoshi_HUDComponent MyOwner) {
 	local int i;
     local MaterialInstanceConstant InstrumentMat;
+    local array<Texture2D> AllIcons;
 
     Scrollbar.GetScrollWindowSize = GetScrollWindowSize;
     Scrollbar.GetContentSize = GetContentSize;
@@ -32,16 +43,16 @@ function Init(Yoshi_UkuleleInstrument_GameMod MyGameMod, Yoshi_HUDMenu_MusicMenu
 
     Super.Init(MyGameMod, MyMenu, MyOwner);
 
-    InstrumentClasses = class'Yoshi_MusicalInstrument'.static.GetAllInstruments();
+    AllIcons = GetIcons();
 
-    InstrumentMaterials.Length = 0;
+    IconMaterials.Length = 0;
 
-    for(i = 0; i < InstrumentClasses.Length; i++) {
+    for(i = 0; i < AllIcons.Length; i++) {
         InstrumentMat = new class'MaterialInstanceConstant';
         InstrumentMat.SetParent(IconMaterial);
-        InstrumentMat.SetTextureParameterValue('Texture', InstrumentClasses[i].default.Icon);
+        InstrumentMat.SetTextureParameterValue('Texture', AllIcons[i]);
 
-        InstrumentMaterials.AddItem(InstrumentMat);
+        IconMaterials.AddItem(InstrumentMat);
     }
 }
 
@@ -62,7 +73,7 @@ function RenderStopHover(HUD H) {
     Super.RenderStopHover(H);
 
     if(HoverIndex > INDEX_NONE) {
-        InstrumentMaterials[HoverIndex].SetScalarParameterValue('Hover', 0.0);
+        IconMaterials[HoverIndex].SetScalarParameterValue('Hover', 0.0);
     }
 
     HoverIndex = INDEX_NONE;
@@ -84,7 +95,7 @@ function Render(HUD H) {
     //Items are sized by the maximum number per row minus the space for margins
     itemSize = ((CurScaleX * H.Canvas.ClipX) - (marginSize * (MaxPerRow - 1)) - ScrollbarSizeX) / MaxPerRow;
 
-    NumRows = FCeil(float(InstrumentClasses.Length) / MaxPerRow);
+    NumRows = FCeil(float(IconMaterials.Length) / MaxPerRow);
 
     ScrollWindowSize = CurScaleY * H.Canvas.ClipY;
     ContentSize = itemSize * NumRows + marginSize * (NumRows - 1);
@@ -100,14 +111,14 @@ function Render(HUD H) {
 
     posy -= ScrollOffset;
 
-    for(i = 0; i < InstrumentClasses.Length; i++) {
+    for(i = 0; i < IconMaterials.Length; i++) {
         if(rowIndex >= MaxPerRow) {
             rowindex -= MaxPerRow;
             posx = CurTopLeftX * H.Canvas.ClipX;
             posy += itemSize + marginSize;
         }
 
-        RenderInstrumentBox(wi, H, i, rowIndex, posx + 0.5 * itemSize, posy + 0.5 * itemSize, itemSize);
+        RenderIconBox(wi, H, i, rowIndex, posx + 0.5 * itemSize, posy + 0.5 * itemSize, itemSize);
 
         posx += itemSize + marginSize;
         rowIndex += 1;
@@ -117,11 +128,11 @@ function Render(HUD H) {
     H.Canvas.PopMaskRegion();
 }
 
-function RenderInstrumentBox(WorldInfo wi, HUD H, int i, int rowIndex, float centerX, float centerY, float itemSize) {
+function RenderIconBox(WorldInfo wi, HUD H, int i, int rowIndex, float centerX, float centerY, float itemSize) {
     local float pulseItemSize;
     local float hoverSize;
 
-    if(i < 0 || i >= InstrumentClasses.Length) return;
+    if(i < 0 || i >= IconMaterials.Length) return;
 
     if(IsComponentHovered) {
         hoverSize = itemSize * (1 + PulseScaleAmount);
@@ -129,18 +140,18 @@ function RenderInstrumentBox(WorldInfo wi, HUD H, int i, int rowIndex, float cen
         if(IsPointInSpace(H, Menu.GetMousePos(H), centerX, centerY, hoverSize, hoverSize, false)) {
 
             if(HoverIndex != INDEX_NONE) {
-                InstrumentMaterials[HoverIndex].SetScalarParameterValue('Hover', 0.0);
+                IconMaterials[HoverIndex].SetScalarParameterValue('Hover', 0.0);
             }
 
             HoverIndex = i;
 
-            InstrumentMaterials[HoverIndex].SetScalarParameterValue('Hover', 1.0);
+            IconMaterials[HoverIndex].SetScalarParameterValue('Hover', 1.0);
         }
     }
 
     pulseItemSize = GetPulseSize(itemSize, wi.TimeSeconds, rowIndex);
 
-    class'Hat_HUDMenu'.static.DrawCenter(H, centerX, centerY, pulseItemSize, pulseItemSize, InstrumentMaterials[i]);
+    class'Hat_HUDMenu'.static.DrawCenter(H, centerX, centerY, pulseItemSize, pulseItemSize, IconMaterials[i]);
 }
 
 function bool OnClick(HUD H, bool release)
@@ -148,7 +159,7 @@ function bool OnClick(HUD H, bool release)
     if(Super.OnClick(H, release)) return true;
 
     if(!release && HoverIndex > INDEX_NONE) {
-        class'GameMod'.static.SaveConfigValue(class'Yoshi_UkuleleInstrument_GameMod', 'Instrument', HoverIndex);
+        SetValue(HoverIndex);
 
         return true;
     }

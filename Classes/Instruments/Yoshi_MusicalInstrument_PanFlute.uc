@@ -4,6 +4,7 @@ defaultproperties
 {
     InstrumentID=8
     InstrumentName="Pan Flute"
+    ShortName="PFl"
 
     Icon=Texture2D'HatInTime_Hud_Loadout.Badges.fly01'
 

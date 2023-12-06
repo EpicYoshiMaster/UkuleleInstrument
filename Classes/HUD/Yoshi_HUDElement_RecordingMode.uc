@@ -1,24 +1,36 @@
 class Yoshi_HUDElement_RecordingMode extends Hat_HUDElement
-	dependsOn(Yoshi_UkuleleInstrument_GameMod);
+	dependsOn(Yoshi_KeyManager)
+	dependsOn(Yoshi_SongManager)
+	dependsOn(Yoshi_RecordManager);
 
 var array<string> DisplayStrings;
-var Yoshi_UkuleleInstrument_GameMod GM;
+var Yoshi_UkuleleInstrument_GameMod GameMod;
+var Yoshi_RecordManager RecordManager;
+var Yoshi_SongManager SongManager;
+var Yoshi_KeyManager KeyManager;
 
 //Press Left or Right to change which layer to record
 //Display if a layer has previous been recorded or is a new layer
 //Display how many notes a previously recorded layer has
 //Display to press Ctrl to end recording
 
+function Init(Yoshi_UkuleleInstrument_GameMod MyGameMod) {
+	GameMod = MyGameMod;
+	RecordManager = GameMod.RecordManager;
+	SongManager = GameMod.SongManager;
+	KeyManager = GameMod.KeyManager;
+}
+
 function bool OnPressLeft(HUD H, bool menu, bool release)
 {
-	GM.SetRecordingLayer(GM.RecordingLayer - 1);
+	RecordManager.SetRecordingLayer(RecordManager.RecordingLayer - 1);
 
 	return true;
 }
 
 function bool OnPressRight(HUD H, bool menu, bool release)
 {
-	GM.SetRecordingLayer(GM.RecordingLayer + 1);
+	RecordManager.SetRecordingLayer(RecordManager.RecordingLayer + 1);
 
 	return true;
 }
@@ -34,16 +46,15 @@ static function string FormatTime(int Seconds) {
 
 function bool Render(HUD H)
 {
+	local InstrumentKeyboardLayout CurrentLayout;
+	local SongLayer OldLayer;
 	local float scale, scaleX, scaleY, stepY;
 	local int i;
 	local string s;
 
     if (!Super.Render(H)) return false;
     if (Hat_HUD(H) != None && Hat_HUD(H).bForceHideHud) return false;
-	if(GM == None) GM = class'Yoshi_UkuleleInstrument_GameMod'.static.GetGameMod();
-	if(GM == None) return true;
-
-	if(GM.RecordingMode != 1) return false;
+	if(!RecordManager.InRecordingMode) return false;
 
 	DisplayStrings.Length = 0;
 
@@ -55,33 +66,41 @@ function bool Render(HUD H)
 	scaleY = H.Canvas.ClipY * 0.15;
 	stepY = H.Canvas.ClipY * 0.07;
 
-	if(GM.PlayingState == PS_IdleMode) {
+	CurrentLayout = KeyManager.GetCurrentLayout();
 
-		s = "Ready to Record for Layer " $ (GM.RecordingLayer + 1);
-		s @= GM.PlayerSong.Layers[GM.RecordingLayer].Notes.Length > 0 ? "(" $ GM.PlayerSong.Layers[GM.RecordingLayer].InstrumentName @ "-" @ GM.PlayerSong.Layers[GM.RecordingLayer].Notes.Length @ "Notes)" : "(New)";
+	if(SongManager.IsPlayingPlayerSong() && !RecordManager.IsRecording) {
+		DisplayStrings.AddItem("Cannot Record during Emote Playback");
+	}
+	else if(!RecordManager.IsRecording) {
+		if(RecordManager.RecordingLayer < SongManager.PlayerSong.Layers.Length) {
+			OldLayer = SongManager.PlayerSong.Layers[RecordManager.RecordingLayer];
+		}
+
+		s = "Ready to Record for Layer " $ (RecordManager.RecordingLayer + 1);
+		s @= OldLayer.Notes.Length > 0 ? "(" $ OldLayer.Instrument.default.InstrumentName @ "-" @ OldLayer.Notes.Length @ "Notes)" : "(New)";
 
 		DisplayStrings.AddItem(s); 
 		DisplayStrings.AddItem("Press Left or Right to change Recording Layer");
 
-		if((GM.MetronomeMode == 1 || GM.MetronomeMode == 3)) {
-			if(!GM.Metronome.IsUpdating()) {
-				DisplayStrings.AddItem("Press Ctrl or a Note Key to Begin the Metronome Count-In");
+		if((GameMod.Settings.MetronomeCountIn)) {
+			if(!GameMod.Metronome.IsUpdating()) {
+				DisplayStrings.AddItem("Press " $ CurrentLayout.ControlRecording $ " or a Note Key to Begin the Metronome Count-In");
+			}
+			else {
+				DisplayStrings.AddItem("Press " $ CurrentLayout.ControlRecording $ " or a Note Key to Begin the Metronome Count-In");
 			}
 		}
 		else {
-			DisplayStrings.AddItem("Press Ctrl or a Note Key to Begin Recording");
+			DisplayStrings.AddItem("Press " $ CurrentLayout.ControlRecording $ " or a Note Key to Begin Recording");
 		}
 	}
-	else if(GM.PlayingState == PS_PlaybackMode) {
-		DisplayStrings.AddItem("Cannot Record during Emote Playback");
-	}
 	else {
-		s = "Now Recording for Layer " $ (GM.RecordingLayer + 1);
-		s @= "(" $ GM.RecordLayer.InstrumentName @ "-" @ GM.RecordLayer.Notes.Length @ "Notes)";
+		s = "Now Recording for Layer " $ (RecordManager.RecordingLayer + 1);
+		s @= "(" $ RecordManager.RecordLayer.Instrument.default.InstrumentName @ "-" @ RecordManager.RecordLayer.Notes.Length @ "Notes)";
 
 		DisplayStrings.AddItem(s);
-		DisplayStrings.AddItem("Total Song Notes: " $ GM.GetPlayerSongNoteCount() $ " | Time Elapsed: " $ FormatTime(int(GM.PlayerSong.Time)) $ "/" $ FormatTime(GM.MaxRecordingLength));
-		DisplayStrings.AddItem("Press Ctrl to End Recording");
+		DisplayStrings.AddItem("Total Song Notes: " $ SongManager.GetPlayerSongNoteCount() $ " | Time Elapsed: " $ FormatTime(int(SongManager.PlayerSong.Time)) $ "/" $ FormatTime(RecordManager.MaxRecordingLength));
+		DisplayStrings.AddItem("Press " $ CurrentLayout.ControlRecording $ " to End Recording");
 	}
 
 	for(i = 0; i < DisplayStrings.Length; i++) {

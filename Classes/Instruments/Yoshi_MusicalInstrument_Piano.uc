@@ -5,6 +5,7 @@ defaultproperties
 {
     InstrumentID=1
     InstrumentName="Piano"
+    ShortName="Pno"
 
     Icon=Texture2D'HatInTime_Hud_Loadout.Item_Icons.itemicon_badge_sprint'
 

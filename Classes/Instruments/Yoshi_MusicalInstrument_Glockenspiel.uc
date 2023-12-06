@@ -4,6 +4,7 @@ defaultproperties
 {
     InstrumentID=3
     InstrumentName="Glockenspiel"
+    ShortName="Gsp"
 
     Icon=Texture2D'HatInTime_Hud_ItemIcons3.DYE_obnoxious'
 

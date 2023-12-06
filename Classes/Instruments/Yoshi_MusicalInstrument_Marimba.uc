@@ -5,6 +5,7 @@ defaultproperties
 {
     InstrumentID=5
     InstrumentName="Marimba"
+    ShortName="Mba"
 
     Icon=Texture2D'HatInTime_Hud_Loadout.Overview.cloth_points'
 
