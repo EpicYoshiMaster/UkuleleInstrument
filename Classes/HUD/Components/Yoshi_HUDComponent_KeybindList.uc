@@ -198,23 +198,6 @@ defaultproperties
     ShortKeyNames.Add((Key="eight", ShortKey="8"))
     ShortKeyNames.Add((Key="nine", ShortKey="9"))
 
-    BannedKeys.Add("leftmousebutton")
-    BannedKeys.Add("rightmousebutton")
-    BannedKeys.Add("middlemousebutton")
-    BannedKeys.Add("escape")
-    BannedKeys.Add("pause")
-    BannedKeys.Add("scrolllock")
-    BannedKeys.Add("left")
-    BannedKeys.Add("right")
-    BannedKeys.Add("up")
-    BannedKeys.Add("down")
-    BannedKeys.Add("insert")
-    BannedKeys.Add("delete")
-    BannedKeys.Add("home")
-    BannedKeys.Add("end")
-    BannedKeys.Add("pageup")
-    BannedKeys.Add("pagedown")
-
     ModifierKeys=("Space", "BackSpace", "Control", "Shift", "CapsLock", "Tab", "Alt")
 
     PulsePeriod=4.0

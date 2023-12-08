@@ -105,22 +105,19 @@ function Render(HUD H) {
     H.Canvas.SetDrawColor(255,255,255,255);
 }
 
-function bool OnClick(HUD H, bool release)
+function bool OnClick(EInputEvent EventType)
 {
-    if(Super.OnClick(H, release)) return true;
+    if(Super.OnClick(EventType)) return true;
+    if(EventType != IE_Pressed) return false;
 
-    if(!release) {
-        switch(HoverState) {
-            case EHover_None: break;
-            case EHover_Left: SetValue(FClamp(GetValue() - ChangeValue, MinimumValue, MaximumValue)); break;
-            case EHover_Right: SetValue(FClamp(GetValue() + ChangeValue, MinimumValue, MaximumValue)); break;
-            case Ehover_Entry: break;
-        }
-
-        return true;
+    switch(HoverState) {
+        case EHover_None: break;
+        case EHover_Left: SetValue(FClamp(GetValue() - ChangeValue, MinimumValue, MaximumValue)); break;
+        case EHover_Right: SetValue(FClamp(GetValue() + ChangeValue, MinimumValue, MaximumValue)); break;
+        case Ehover_Entry: break;
     }
 
-    return false;
+    return true;
 }
 
 defaultproperties

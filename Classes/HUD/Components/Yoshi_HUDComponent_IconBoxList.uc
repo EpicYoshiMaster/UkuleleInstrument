@@ -154,11 +154,12 @@ function RenderIconBox(WorldInfo wi, HUD H, int i, int rowIndex, float centerX, 
     class'Hat_HUDMenu'.static.DrawCenter(H, centerX, centerY, pulseItemSize, pulseItemSize, IconMaterials[i]);
 }
 
-function bool OnClick(HUD H, bool release)
+function bool OnClick(EInputEvent EventType)
 {
-    if(Super.OnClick(H, release)) return true;
+    if(Super.OnClick(EventType)) return true;
+    if(EventType != IE_Pressed) return false;
 
-    if(!release && HoverIndex > INDEX_NONE) {
+    if(HoverIndex > INDEX_NONE) {
         SetValue(HoverIndex);
 
         return true;

@@ -1,6 +1,15 @@
 class Yoshi_HUDComponent_Base extends Component
 	abstract;
 
+const HatConfirm = "Hat_Menu_Confirm";
+const HatCancel = "Hat_Menu_Cancel";
+const HatPageLeft = "Hat_Menu_PageLeft";
+const HatPageRight = "Hat_Menu_PageRight";
+const HatUp = "Hat_Hotkey_Up";
+const HatDown = "Hat_Hotkey_Down";
+const HatLeft = "Hat_Hotkey_Left";
+const HatRight = "Hat_Hotkey_Right";
+
 var const Font StandardFont;
 
 var Yoshi_UkuleleInstrument_GameMod GameMod;
@@ -121,34 +130,43 @@ function Render(HUD H) {
 	}
 }
 
-function bool OnPressUp(HUD H, bool bMenu, bool release)
-{
+//Generic event for getting any input key
+function bool OnInputKey(string KeyName, EInputEvent EventType) {
+
+	switch(KeyName) {
+		case HatConfirm: return OnClick(EventType);
+		case HatCancel: return OnAltClick(EventType);
+		case HatUp: return OnPressUp(EventType);
+		case HatDown: return OnPressDown(EventType);
+		case HatLeft: return OnPressLeft(EventType);
+		case HatRight: return OnPressRight(EventType);
+	}
+
 	return false;
 }
 
-function bool OnPressDown(HUD H, bool bMenu, bool release)
-{
+function bool OnClick(EInputEvent EventType) {
 	return false;
 }
 
-function bool OnPressLeft(HUD H, bool bMenu, bool release)
-{
-	return false;
-}
-
-function bool OnPressRight(HUD H, bool bMenu, bool release)
-{
-	return false;
-}
-
-function bool OnClick(HUD H, bool release)
-{
+function bool OnAltClick(EInputEvent EventType) {
     return false;
 }
 
-function bool OnAltClick(HUD H, bool release)
-{
-    return false;
+function bool OnPressUp(EInputEvent EventType) {
+	return false;
+}
+
+function bool OnPressDown(EInputEvent EventType) {
+	return false;
+}
+
+function bool OnPressLeft(EInputEvent EventType) {
+	return false;
+}
+
+function bool OnPressRight(EInputEvent EventType) {
+	return false;
 }
 
 defaultproperties

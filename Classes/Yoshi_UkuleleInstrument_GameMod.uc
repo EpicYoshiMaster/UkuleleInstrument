@@ -16,7 +16,6 @@ class Yoshi_UkuleleInstrument_GameMod extends GameMod
 // - Change Tabs
 // - Fix Component Lifetime
 
-// Okay it's time we need to split functionality out of GameMod better to help fix all the other problems
 // Fix Animation Issues
 // Continue work on Instrument Visuals
 

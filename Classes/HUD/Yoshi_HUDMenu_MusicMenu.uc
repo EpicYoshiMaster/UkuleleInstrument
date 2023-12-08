@@ -19,6 +19,8 @@ function OnOpenHUD(HUD H, optional String command)
 	Super.OnOpenHUD(H, command);
 
     GameMod = class'Yoshi_UkuleleInstrument_GameMod'.static.GetGameMod();
+
+    GameMod.KeyManager.RegisterInputDelegate(OnInputKey);
     
     for(i = 0; i < Panels.Length; i++) {
         Panels[i].Init(GameMod, self);
@@ -35,6 +37,8 @@ function OnCloseHUD(HUD H)
 
     Panels.Length = 0;
     HoveredPanel = None;
+
+    GameMod.KeyManager.RemoveInputDelegate(OnInputKey);
 
 	Super.OnCloseHUD(H);
 }
@@ -141,38 +145,12 @@ function DrawTextTest(HUD H, string Text, float posx, float posy, float ScaleX, 
     H.Canvas.SetDrawColor(255, 255, 255, 255);
 }
 
-function bool OnClick(HUD H, bool release)
-{
+function bool OnInputKey(string KeyName, EInputEvent EventType) {
     if(HoveredPanel != None) {
-        return HoveredPanel.OnClick(H, release);
+        return HoveredPanel.OnInputKey(KeyName, EventType);
     }
 
     return false;
-}
-
-function bool OnAltClick(HUD H, bool release)
-{
-    return false;
-}
-
-function bool OnPressUp(HUD H, bool menu, bool release)
-{
-	return false;
-}
-
-function bool OnPressDown(HUD H, bool menu, bool release)
-{
-	return false;
-}
-
-function bool OnPressLeft(HUD H, bool menu, bool release)
-{
-	return false;
-}
-
-function bool OnPressRight(HUD H, bool menu, bool release)
-{
-	return false;
 }
 
 function bool DisablesMovement(HUD H)

@@ -45,11 +45,11 @@ function Render(HUD H) {
     H.Canvas.SetDrawColor(255,255,255,255);
 }
 
-function bool OnClick(HUD H, bool release)
+function bool OnClick(EInputEvent EventType)
 {
-    if(Super.OnClick(H, release)) return true;
+    if(Super.OnClick(EventType)) return true;
 
-    if(!release) {
+    if(EventType == IE_Pressed) {
         SetValue(!GetValue());
         return true;
     }

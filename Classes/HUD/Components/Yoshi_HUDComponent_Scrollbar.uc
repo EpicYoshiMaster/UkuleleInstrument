@@ -152,16 +152,18 @@ function Render(HUD H) {
     class'Hat_HUDMenu'.static.DrawTopLeft(H, posx, posy, sizeX, BarSize, Bar);
 }
 
-function bool OnClick(HUD H, bool release)
+function bool OnClick(EInputEvent EventType)
 {
     local float MaximumPosition;
 
-    if(Super.OnClick(H, release)) return true;
+    if(Super.OnClick(EventType)) return true;
 
-    if(release) {
+    if(EventType == IE_Released) {
         ScrollState = Scrollbar_None;
         return true;
     }
+
+    if(EventType != IE_Pressed) return false;
 
     MaximumPosition = ContentSize - ScrollWindowSize;
 

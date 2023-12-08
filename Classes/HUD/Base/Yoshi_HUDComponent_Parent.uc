@@ -85,15 +85,15 @@ function Render(HUD H) {
     }
 }
 
-function bool OnClick(HUD H, bool release)
-{
-    if(Super.OnClick(H, release)) return true;
+function bool OnInputKey(string KeyName, EInputEvent EventType) {
+
+	if(Super.OnInputKey(KeyName, EventType)) return true;
 
     if(HoveredComponent != None) {
-        return HoveredComponent.OnClick(H, release);
+        return HoveredComponent.OnInputKey(KeyName, EventType);
     }
 
-    return false;
+	return false;
 }
 
 function bool IsPointContainedWithin(HUD H, Vector2D TargetPos) {

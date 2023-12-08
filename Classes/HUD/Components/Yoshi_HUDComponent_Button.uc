@@ -42,10 +42,10 @@ function Render(HUD H) {
     Super.Render(H);
 }
 
-function bool OnClick(HUD H, bool release)
+function bool OnClick(EInputEvent EventType)
 {
-    if(Super.OnClick(H, release)) return true;
-    if(release) return false;
+    if(Super.OnClick(EventType)) return true;
+    if(EventType != IE_Pressed) return false;
 
     OnClickButton();
 
