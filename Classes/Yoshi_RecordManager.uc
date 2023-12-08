@@ -40,7 +40,7 @@ function RecordPressNote(Hat_Player Ply, string NoteName, string KeyName) {
             return;
         }
         else {
-            StartRecording();
+            StartRecording(Ply);
         }
     }
 
@@ -83,7 +83,7 @@ function bool OnPressControlRecording(Hat_PlayerController PC) {
             AwaitingCountIn = true;
         }
         else {
-            StartRecording();
+            StartRecording(Hat_Player(PC.Pawn));
         }
 
         return true;
@@ -92,10 +92,10 @@ function bool OnPressControlRecording(Hat_PlayerController PC) {
     return false;
 }
 
-function OnCountIn() {
+function OnCountIn(Hat_Player Ply) {
     if(InRecordingMode && !IsRecording && AwaitingCountIn) {
         AwaitingCountIn = false;
-        StartRecording();
+        StartRecording(Ply);
     }
 }
 
@@ -121,7 +121,7 @@ function SetRecordingLayer(int NewRecordingLayer) {
     RecordingLayer = NewRecordingLayer;
 }
 
-function StartRecording() {
+function StartRecording(Hat_Player Ply) {
     if(GameMod.SongManager.IsPlayingPlayerSong() || AwaitingCountIn || IsRecording) return;
 
     IsRecording = true;
@@ -132,7 +132,7 @@ function StartRecording() {
     RecordLayer.LastPlayedNoteIndex = 0;
     RecordLayer.Notes.Length = 0;
 
-    SongManager.PlayPlayerSong(RecordingLayer);
+    SongManager.PlayPlayerSong(Ply, RecordingLayer);
 }
 
 function StopRecording() {

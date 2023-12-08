@@ -119,10 +119,10 @@ function array<string> GetOctaveKeyValues() {
     local array<string> ModKeys;
     local array<string> Keys;
 
-    ModKeys = (GameMod.Settings.TwoRowMode) ? KeyManager.GetCurrentLayout().Modifiers : KeyManager.GetCurrentLayout().TwoRowModifiers;
+    ModKeys = (GameMod.Settings.TwoRowMode) ? KeyManager.GetCurrentLayout().TwoRowModifiers : KeyManager.GetCurrentLayout().Modifiers;
 
-    Keys.AddItem(ModKeys[0]);
-    Keys.AddItem(ModKeys[1]);
+    Keys.AddItem(ModKeys[class'Yoshi_KeyManager'.const.OctaveDown]);
+    Keys.AddItem(ModKeys[class'Yoshi_KeyManager'.const.OctaveUp]);
     
     return Keys;
 }
@@ -131,10 +131,10 @@ function array<string> GetPitchKeyValues() {
     local array<string> ModKeys;
     local array<string> Keys;
 
-    ModKeys = (GameMod.Settings.TwoRowMode) ? KeyManager.GetCurrentLayout().Modifiers : KeyManager.GetCurrentLayout().TwoRowModifiers;
+    ModKeys = (GameMod.Settings.TwoRowMode) ? KeyManager.GetCurrentLayout().TwoRowModifiers : KeyManager.GetCurrentLayout().Modifiers;
 
-    Keys.AddItem(ModKeys[2]);
-    Keys.AddItem(ModKeys[3]);
+    Keys.AddItem(ModKeys[class'Yoshi_KeyManager'.const.PitchDown]);
+    Keys.AddItem(ModKeys[class'Yoshi_KeyManager'.const.PitchUp]);
     
     return Keys;
 }
@@ -143,10 +143,10 @@ function array<string> GetStepKeyValues() {
     local array<string> ModKeys;
     local array<string> Keys;
 
-    ModKeys = (GameMod.Settings.TwoRowMode) ? KeyManager.GetCurrentLayout().Modifiers : KeyManager.GetCurrentLayout().TwoRowModifiers;
+    ModKeys = (GameMod.Settings.TwoRowMode) ? KeyManager.GetCurrentLayout().TwoRowModifiers : KeyManager.GetCurrentLayout().Modifiers;
 
-    Keys.AddItem(ModKeys[4]);
-    Keys.AddItem(ModKeys[5]);
+    Keys.AddItem(ModKeys[class'Yoshi_KeyManager'.const.StepDown]);
+    Keys.AddItem(ModKeys[class'Yoshi_KeyManager'.const.StepUp]);
     
     return Keys;
 }

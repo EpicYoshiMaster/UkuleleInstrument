@@ -17,10 +17,8 @@ class Yoshi_UkuleleInstrument_GameMod extends GameMod
 // - Fix Component Lifetime
 
 // Okay it's time we need to split functionality out of GameMod better to help fix all the other problems
-// Fix Coop Issues
 // Fix Animation Issues
 // Continue work on Instrument Visuals
-// Finish building system for releasing notes
 
 //
 // To Release And Beyond
@@ -74,6 +72,8 @@ var Yoshi_HUDMenu_MusicMenu MenuHUD;
 
 var array<NoteScale> Scales;
 
+var bool DebugMode;
+
 function Sync(string CommandString, Name CommandChannel, optional Pawn SendingPlayer, optional Hat_GhostPartyPlayerStateBase Receiver) {
     SendOnlinePartyCommand(CommandString, CommandChannel, SendingPlayer, Receiver);
     Print("OPSend:" @ CommandString $ "," @ CommandChannel $ "," @ SendingPlayer $ "," @ Receiver);
@@ -121,8 +121,8 @@ function AssignPlayerInstrument() {
     for(i = 0; i < AllInstruments.Length; i++) {
         if(AllInstruments[i].default.InstrumentID == Settings.InstrumentIndex) {
             CurrentInstrument = AllInstruments[i];
-            ChangeOctave(CurrentInstrument.default.DefaultOctave);
-            ChangePitchShift(0);
+            Octave = CurrentInstrument.default.DefaultOctave;
+            PitchShift = 0;
             return;
         }
     }
@@ -195,6 +195,7 @@ event Tick(float delta) {
     RecordManager.Tick(delta);
     InstrumentManager.Tick(delta);
     KeyManager.Tick(delta);
+    NoteManager.Tick(delta);
     SongManager.Tick(delta);
     Metronome.Tick(delta);
 }
@@ -220,7 +221,7 @@ function OnActivateEmote(Hat_Player Ply) {
         Ply.PlayCustomAnimation(Name(JammingOutAnimName), true);
     }
 
-    SongManager.PlayPlayerSong();
+    SongManager.PlayPlayerSong(Ply);
     SongManager.SendOnlineSongPackage();
 }
 
@@ -228,8 +229,8 @@ function OnActivateEmote(Hat_Player Ply) {
 // Metronome Events
 //
 
-function OnCountIn() {
-    RecordManager.OnCountIn();
+function OnCountIn(Hat_Player Ply) {
+    RecordManager.OnCountIn(Ply);
 }
 
 //
@@ -494,6 +495,8 @@ static function Print(coerce string msg)
 
 defaultproperties
 {
+    DebugMode=true
+
     Scales.Add((ScaleName="Major",NoteOffsets=(0, 2, 4, 5, 7, 9, 11, 12, 14, 16))); //Major
     Scales.Add((ScaleName="Major Pentatonic",NoteOffsets=(0, 2, 4, 7, 9, 12, 14, 16, 19, 21))); //Major Pentatonic
     Scales.Add((ScaleName="Major Blues",NoteOffsets=(0, 2, 3, 4, 7, 9, 12, 14, 15, 16))); //Major Blues

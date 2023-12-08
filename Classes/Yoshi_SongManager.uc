@@ -70,12 +70,13 @@ function Init(Yoshi_UkuleleInstrument_GameMod MyGameMod) {
     }
 }
 
-function PlayPlayerSong(optional int RecordingSkipLayer = -1) {
+function PlayPlayerSong(Hat_Player Ply, optional int RecordingSkipLayer = -1) {
     local int i;
 
     SkipLayer = RecordingSkipLayer;
     PlayingPlayerSong = true;
 
+    PlayerSong.Player = Ply;
     PlayerSong.Time = 0.0;
     PlayerSong.FurthestTimestamp = GetFurthestSongTimestamp(PlayerSong);
     
@@ -303,6 +304,8 @@ function LoadSongs() {
     SongsStorage = new class'Yoshi_Storage_MusicalSong';
 
     class'Engine'.static.BasicLoadObject(SongsStorage, SavedSongsPath, false, SongFormatVersion);
+
+    SavedSongs = SongsStorage.Songs;
 }
 
 function SaveSongs() {

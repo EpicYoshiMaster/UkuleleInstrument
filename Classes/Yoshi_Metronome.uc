@@ -94,7 +94,7 @@ function Tick(float delta) {
 
     if(!DidCountIn && MeasureNumber > 1) {
         DidCountIn = true;
-        GameMod.OnCountIn();
+        GameMod.OnCountIn(Player);
     }
 
     if(DidBeat) {

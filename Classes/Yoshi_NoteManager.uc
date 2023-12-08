@@ -13,7 +13,6 @@ struct PlayerNoteSet {
 
 //This is for song notes which have a defined start and end time
 struct SongNote {
-    var bool Hold;
     var float Duration;
     var float FadeOutTime;
     var AudioComponent Component;
@@ -35,6 +34,8 @@ function PlayNote(Actor Player, class<Yoshi_MusicalInstrument> Instrument, strin
 
     NewNote.KeyName = KeyName;
     NewNote.Component = Instrument.static.PlayNote(Player, NoteName);
+
+    if(!Instrument.default.CanReleaseNote) return;
 
     for(i = 0; i < NoteSets.Length; i++) {
         if(NoteSets[i].Player == Player) {
@@ -60,6 +61,9 @@ function StopNote(Actor Player, string KeyName, float FadeOutTime) {
 
             if(NoteSets[i].Notes[j].Component != None) {
                 NoteSets[i].Notes[j].Component.FadeOut(FadeOutTime, 0.0);
+                
+                NoteSets[i].Notes.Remove(j, 1);
+                j--;
             }
         }
 
@@ -70,12 +74,11 @@ function StopNote(Actor Player, string KeyName, float FadeOutTime) {
 function PlaySongNote(Actor Player, class<Yoshi_MusicalInstrument> Instrument, string NoteName, bool Hold, optional float Duration) {
     local SongNote NewNote;
 
-    NewNote.Hold = Hold;
     NewNote.Duration = Duration;
     NewNote.FadeOutTime = Instrument.default.FadeOutTime;
     NewNote.Component = Instrument.static.PlayNote(Player, NoteName);
 
-    if(NewNote.Component != None) {
+    if(Hold && NewNote.Component != None) {
         SongNotes.AddItem(NewNote);
     }
 }

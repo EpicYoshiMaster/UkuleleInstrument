@@ -2,17 +2,21 @@ class Yoshi_HUDElement_DebugMode extends Hat_HUDElement
 	dependsOn(Yoshi_UkuleleInstrument_GameMod);
 
 var array<string> PrintStrings;
-var Yoshi_UkuleleInstrument_GameMod GM;
+var Yoshi_UkuleleInstrument_GameMod GameMod;
 
 function bool Render(HUD H)
 {
 	local float scale, scaleX, scaleY, stepY;
-    local int i;
+    local int i, j;
     local string s;
-    local Yoshi_InstrumentManager Manager;
+    //local Yoshi_InstrumentManager Manager;
+    local Yoshi_NoteManager NoteManager;
+
     if (!Super.Render(H)) return false;
     if (Hat_HUD(H) != None && Hat_HUD(H).bForceHideHud) return false;
-    if(GM == None) GM = class'Yoshi_UkuleleInstrument_GameMod'.static.GetGameMod();
+    if(GameMod == None) GameMod = class'Yoshi_UkuleleInstrument_GameMod'.static.GetGameMod();
+
+    NoteManager = GameMod.NoteManager;
 
     PrintStrings.Length = 0;
     scale = FMin(H.Canvas.ClipX, H.Canvas.ClipY)*0.00045;
@@ -23,7 +27,20 @@ function bool Render(HUD H)
     H.Canvas.SetDrawColor(255,255,255,255);
     H.Canvas.Font = class'Hat_FontInfo'.static.GetDefaultFont("");
 
-    Manager = GM.InstrumentManager;
+    for(i = 0; i < NoteManager.NoteSets.Length; i++) {
+        s = "[" $ i $ "]" @ NoteManager.NoteSets[i].Player $ ":";
+
+        PrintStrings.AddItem(s);
+        
+        for(j = 0; j < NoteManager.NoteSets[i].Notes.Length; j++) {
+            s = "   " $ NoteManager.NoteSets[i].Notes[j].KeyName $ "," @ NoteManager.NoteSets[i].Notes[j].Component $ "," @ NoteManager.NoteSets[i].Notes[j].Component.IsPlaying();
+            PrintStrings.AddItem(s);
+        }
+    }
+
+    /*
+
+    Manager = GameMod.InstrumentManager;
 
     s = "Player";
     s $= ": (Class:" @ Manager.EquippedClass;
@@ -31,6 +48,8 @@ function bool Render(HUD H)
     s $=", Equipped:" @ Manager.IsPlayerEquipped $ ")";
 
     PrintStrings.AddItem(s);
+
+    
 
     for(i = 0; i < Manager.OPInstruments.Length; i++) {
 
@@ -40,7 +59,7 @@ function bool Render(HUD H)
         s $= ", Equipped:" @ Manager.OPInstruments[i].IsEquipped $ ")";
 
         PrintStrings.AddItem(s);
-    }
+    }*/
 
     /* 
     PrintStrings.AddItem("Recording Layer: " $ GM.RecordingLayer);

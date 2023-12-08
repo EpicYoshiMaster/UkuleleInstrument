@@ -4,6 +4,13 @@ class Yoshi_KeyManager extends Object
 const BannedPrefix = "Hat_";
 const CustomLayoutName = "Custom";
 
+const OctaveDown = 0;
+const OctaveUp = 1;
+const PitchDown = 2;
+const PitchUp = 3;
+const StepDown = 4;
+const StepUp = 5;
+
 enum KeybindType {
     Keybind_Note,
     Keybind_FlatNote,
@@ -42,10 +49,11 @@ var InputPack InputPack;
 var array<InstrumentKeyboardLayout> DefaultLayouts;
 var InstrumentKeyboardLayout CustomLayout;
 
-var bool TwoRowMode;
 var bool IsHoldingPitchDownKey;
 
 var array< delegate<OnInputKey> > InputDelegates;
+
+var Yoshi_HUDElement_DebugMode DebugHUD;
 
 delegate bool OnInputKey(string KeyName, EInputEvent EventType);
 
@@ -67,6 +75,12 @@ function Tick(float delta) {
 
         if(KeyboardPlayer != None) {
             class'Yoshi_InputPack'.static.AttachController(ReceivedNativeInputKey, KeyboardPlayer, InputPack);
+        }
+    }
+
+    if(GameMod.DebugMode) {
+        if(InputPack.PlyCon != None && DebugHUD == None) {
+            DebugHUD = Yoshi_HUDElement_DebugMode(Hat_HUD(InputPack.PlyCon.MyHUD).OpenHUD(class'Yoshi_HUDElement_DebugMode'));
         }
     }
 }
@@ -230,7 +244,7 @@ function bool ReceivedNativeInputKey(int ControllerId, name Key, EInputEvent Eve
             }
         }
 
-        if(!TwoRowMode) return false;
+        if(!GameMod.Settings.TwoRowMode) return false;
 
         for(i = 0; i < CurrentLayout.FlatNotes.Length; i++) {
             if(CurrentLayout.FlatNotes[i] ~= KeyName) {
@@ -254,24 +268,24 @@ function bool ReceivedNativeInputKey(int ControllerId, name Key, EInputEvent Eve
         return GameMod.OnPressPlayerAttack(PC);
     }
 
-    ModifierKeys = (TwoRowMode) ? CurrentLayout.TwoRowModifiers : CurrentLayout.Modifiers;
+    ModifierKeys = (GameMod.Settings.TwoRowMode) ? CurrentLayout.TwoRowModifiers : CurrentLayout.Modifiers;
 
-    if(KeyName ~= ModifierKeys[0]) {
-        GameMod.ChangePitchShift(-1);
-    }
-    else if(KeyName ~= ModifierKeys[1]) {
-        GameMod.ChangePitchShift(1);
-    }
-    else if(KeyName ~= ModifierKeys[2]) {
+    if(KeyName ~= ModifierKeys[OctaveDown]) {
         GameMod.ChangeOctave(-1);
     }
-    else if(KeyName ~= ModifierKeys[3]) {
+    else if(KeyName ~= ModifierKeys[OctaveUp]) {
         GameMod.ChangeOctave(1);
     }
-    else if(KeyName ~= ModifierKeys[4]) {
+    else if(KeyName ~= ModifierKeys[PitchDown]) {
+        GameMod.ChangePitchShift(-1);
+    }
+    else if(KeyName ~= ModifierKeys[PitchUp]) {
+        GameMod.ChangePitchShift(1);
+    }
+    else if(KeyName ~= ModifierKeys[StepDown]) {
 
     }
-    else if(KeyName ~= ModifierKeys[5]) {
+    else if(KeyName ~= ModifierKeys[StepUp]) {
 
     }
 
@@ -281,7 +295,7 @@ function bool ReceivedNativeInputKey(int ControllerId, name Key, EInputEvent Eve
         }
     }
 
-    if(!TwoRowMode) return false;
+    if(!GameMod.Settings.TwoRowMode) return false;
 
     for(i = 0; i < CurrentLayout.FlatNotes.Length; i++) {
         if(CurrentLayout.FlatNotes[i] ~= KeyName) {
@@ -299,14 +313,11 @@ static function Hat_PlayerController GetKeyboardPlayer(optional Controller Calli
 
 	GamePlayers = class'Engine'.static.GetEngine().GamePlayers;
 
-	if (GamePlayers.Length > 1)
+	for (i = 0; i < GamePlayers.Length; i++)
 	{
-		for (i = 0; i < GamePlayers.Length; i++)
-		{
-			if (GamePlayers[i].Actor == None || GamePlayers[i].Actor.Pawn == None) continue;
-			if (LocalPlayer(GamePlayers[i]).ControllerId >= 0) continue;
-			return Hat_PlayerController(GamePlayers[i].Actor);
-		}
+		if (GamePlayers[i].Actor == None || GamePlayers[i].Actor.Pawn == None) continue;
+		if (LocalPlayer(GamePlayers[i]).ControllerId >= 0) continue;
+		return Hat_PlayerController(GamePlayers[i].Actor);
 	}
 
 	return CallingController != None ? Hat_PlayerController(CallingController) : None;
@@ -322,7 +333,7 @@ defaultproperties
         LayoutName="QWERTY",
         Notes=("Z","X","C","V","B","N","M","comma","period","slash"),
         FlatNotes=("A","S","D","F","G","H","J","K","L","semicolon"),
-        ToggleMenu="G",
+        ToggleMenu="Y",
         HoldPitchDown="Shift",
         ControlRecording="Control",
         Modifiers=("J","K","L","semicolon","",""),
@@ -333,7 +344,7 @@ defaultproperties
         LayoutName="QWERTZ",
         Notes=("Y","X","C","V","B","N","M","comma","period","underscore"),
         FlatNotes=("A","S","D","F","G","H","J","K","L","semicolon"),
-        ToggleMenu="G",
+        ToggleMenu="Y",
         HoldPitchDown="Shift",
         ControlRecording="Control",
         Modifiers=("J","K","L","semicolon","",""),
@@ -344,7 +355,7 @@ defaultproperties
         LayoutName="AZERTY",
         Notes=("W","X","C","V","B","N","comma","period","slash", ""), //Only 9 keys, there is no ! or paragraph key input event
         FlatNotes=("Q","S","D","F","G","H","J","K","L","M"), //all 10 keys :D
-        ToggleMenu="G",
+        ToggleMenu="Y",
         HoldPitchDown="Shift",
         ControlRecording="Control",
         Modifiers=("J","K","L","M","",""),
@@ -355,7 +366,7 @@ defaultproperties
         LayoutName="Custom",
         Notes=("Z","X","C","V","B","N","M","comma","period","slash"),
         FlatNotes=("A","S","D","F","G","H","J","K","L","semicolon"),
-        ToggleMenu="G",
+        ToggleMenu="Y",
         HoldPitchDown="Shift",
         ControlRecording="Control",
         Modifiers=("J","K","L","semicolon","",""),
