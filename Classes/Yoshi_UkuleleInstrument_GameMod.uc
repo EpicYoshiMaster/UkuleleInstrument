@@ -16,17 +16,18 @@ class Yoshi_UkuleleInstrument_GameMod extends GameMod
 // - Change Tabs
 // - Fix Component Lifetime
 
-// Fix Animation Issues
-// Continue work on Instrument Visuals
-
 //
 // To Release And Beyond
 //
 
 // We need assets. Please.
+// Rebinding
+// Text Inputs
+// Step Shifting
 // Polish and cleanup to menu and panels
 // Solve the 250 notes problem
 // trailer
+// Fix No Instrument -> Play Song -> Instrument Anim Post Song
 
 // The Awesome Soundfont Offerings:
 // Strings - Harp, Bass
@@ -98,30 +99,47 @@ event OnModLoaded() {
     Metronome.Init(self);
 
     AllInstruments = class'Yoshi_MusicalInstrument'.static.GetAllInstruments();
+    AllInstruments.Sort(SortInstruments);
     AssignPlayerInstrument();
 
-    HookActorSpawn(class'Hat_PlayerController', 'Hat_PlayerController');
     HookActorSpawn(class'Hat_GhostPartyPlayer', 'Hat_GhostPartyPlayer');
 }
 
+delegate int SortInstruments(class<Yoshi_MusicalInstrument> InstrumentA, class<Yoshi_MusicalInstrument> InstrumentB) {
+    return InstrumentA.default.InstrumentID < InstrumentB.default.InstrumentID ? 0 : -1;
+}
+
+function class<Hat_Collectible_Skin> GetCurrentSkin(Hat_PlayerController PC) {
+    return class<Hat_Collectible_Skin>(PC.GetLoadout().MyLoadout.Skin.BackpackClass);
+}
+
 function OnLoadoutChanged(PlayerController Controller, Object Loadout, Object BackpackItem) {
-    local class<Hat_Collectible_Skin> PlayerSkin;
+    if(Hat_PlayerController(Controller) != KeyManager.GetPC()) return;
 
-    if(InstrumentManager.Player == None) return;
-
-    PlayerSkin = class<Hat_Collectible_Skin>(Hat_PlayerController(InstrumentManager.Player.Controller).GetLoadout().MyLoadout.Skin.BackpackClass);
-
-    InstrumentManager.UpdateInstrumentColors(InstrumentManager.Player, InstrumentManager.InstrumentMesh, PlayerSkin, CurrentInstrument);
+    InstrumentManager.UpdateInstrument(Controller.Pawn, Controller.Pawn.Mesh, CurrentInstrument, GetCurrentSkin(Hat_PlayerController(Controller)));
 }
 
 function AssignPlayerInstrument() {
     local int i;
+    local Hat_Player Player;
 
     for(i = 0; i < AllInstruments.Length; i++) {
         if(AllInstruments[i].default.InstrumentID == Settings.InstrumentIndex) {
+            Player = KeyManager.GetPlayer();
+
+            if(Player != None) {
+                //Don't allow notes from other instruments to continue when we switch
+                NoteManager.StopAllNotes(Player, CurrentInstrument.default.FadeOutTime);
+            }
+
             CurrentInstrument = AllInstruments[i];
             Octave = CurrentInstrument.default.DefaultOctave;
             PitchShift = 0;
+
+            if(InstrumentManager.PlayerEquipped) {
+                InstrumentManager.UpdateInstrument(Player, Player.Mesh, CurrentInstrument, GetCurrentSkin(Hat_PlayerController(Player.Controller)));
+            }
+
             return;
         }
     }
@@ -135,8 +153,8 @@ function OnHookedActorSpawn(Object NewActor, Name Identifier) {
 
 function HookOnlinePlayerSpawn(Hat_GhostPartyPlayer GPP) {
     //We haven't seen this player before and we have an instrument, let them know!
-    if(InstrumentManager.IsPlayerInstrumentEquipped()) {
-        Sync(CurrentInstrument.default.InstrumentName $ "|true", class'YoshiPrivate_MusicalInstruments_Commands'.const.YoshiAddInstrument,,GPP.PlayerState);
+    if(InstrumentManager.PlayerEquipped) {
+        Sync(CurrentInstrument.default.ShortName $ "|true", class'YoshiPrivate_MusicalInstruments_Commands'.const.YoshiAddInstrument,,GPP.PlayerState);
     }
 }
 
@@ -168,8 +186,8 @@ event OnOnlinePartyCommand(string Command, Name CommandChannel, Hat_GhostPartyPl
         //KeyName|NoteName|InstrumentShortName
         InstrumentClass = GetInstrumentClass(args[2]);
 
-        InstrumentManager.AddOPInstrument(GhostPlayer, InstrumentClass); //Just in case
-        InstrumentManager.PlayStrumAnim(Hat_GhostPartyPlayer(Sender.GhostActor).SkeletalMeshComponent);
+        InstrumentManager.AddInstrument(GhostPlayer, GhostPlayer.SkeletalMeshComponent, InstrumentClass, GhostPlayer.CurrentSkin); //Just in case
+        InstrumentManager.PlayStrumAnim(GhostPlayer.SkeletalMeshComponent);
         NoteManager.PlayNote(GhostPlayer, InstrumentClass, args[0], args[1]);
     }
 
@@ -182,11 +200,11 @@ event OnOnlinePartyCommand(string Command, Name CommandChannel, Hat_GhostPartyPl
         if(args.Length < 2) return;
 
         //InstrumentShortName|ForceAnim
-        InstrumentManager.AddOPInstrument(Hat_GhostPartyPlayer(Sender.GhostActor), GetInstrumentClass(args[0]), bool(args[1]));
+        InstrumentManager.AddInstrument(GhostPlayer, GhostPlayer.SkeletalMeshComponent, GetInstrumentClass(args[0]), GhostPlayer.CurrentSkin, bool(args[1]));
     }
 
     if(CommandChannel == class'YoshiPrivate_MusicalInstruments_Commands'.const.YoshiRemoveInstrument) {
-        InstrumentManager.RemoveOPInstrument(Hat_GhostPartyPlayer(Sender.GhostActor));
+        InstrumentManager.RemoveInstrument(GhostPlayer, GhostPlayer.SkeletalMeshComponent);
     }
 }
 
@@ -210,7 +228,7 @@ function OnActivateEmote(Hat_Player Ply) {
     if(SongManager.IsPlayingPlayerSong()) return;
 
     if(Ply.Physics == Phys_Walking) {
-        InstrumentManager.AddPlayerInstrument(Ply, CurrentInstrument);
+        InstrumentManager.AddInstrument(Ply, Ply.Mesh, CurrentInstrument, GetCurrentSkin(Hat_PlayerController(Ply.Controller)));
 
         PTI.TauntDuration = SongManager.GetFurthestSongTimestamp(SongManager.PlayerSong);
         PTI.PlayerCanExit = false;
@@ -245,7 +263,7 @@ function bool OnPressNoteKey(Hat_Player Ply, int Index, bool HoldingPitchDownKey
 
     ply.PutAwayWeapon();
 
-    InstrumentManager.AddPlayerInstrument(ply, CurrentInstrument);
+    InstrumentManager.AddInstrument(ply, ply.Mesh, CurrentInstrument, GetCurrentSkin(Hat_PlayerController(Ply.Controller)));
     InstrumentManager.PlayStrumAnim(ply.Mesh);
 
     if(Settings.OnlineNotes) {
@@ -285,8 +303,9 @@ function bool OnPressToggleMenu(Hat_PlayerController PC) {
 
 function bool OnPressPlayerAttack(Hat_PlayerController PC) {
     if(SongManager.IsPlayingPlayerSong()) return true;
+    if(MenuHUD != None) return false;
 
-    InstrumentManager.RemovePlayerInstrument();
+    InstrumentManager.RemoveInstrument(PC.Pawn, PC.Pawn.Mesh);
 
     return false;
 }

@@ -71,6 +71,25 @@ function StopNote(Actor Player, string KeyName, float FadeOutTime) {
     }
 }
 
+function StopAllNotes(Actor Player, float FadeOutTime) {
+    local int i, j;
+
+    for(i = 0; i < NoteSets.Length; i++) {
+        if(NoteSets[i].Player != Player) continue;
+
+        for(j = 0; j < NoteSets[i].Notes.Length; j++) {
+            if(NoteSets[i].Notes[j].Component != None) {
+                NoteSets[i].Notes[j].Component.FadeOut(FadeOutTime, 0.0);
+                
+                NoteSets[i].Notes.Remove(j, 1);
+                j--;
+            }
+        }
+
+        return;
+    }
+}
+
 function PlaySongNote(Actor Player, class<Yoshi_MusicalInstrument> Instrument, string NoteName, bool Hold, optional float Duration) {
     local SongNote NewNote;
 

@@ -11,106 +11,103 @@ var ParticleSystem InstrumentParticleSystem;
 
 var Yoshi_UkuleleInstrument_GameMod GameMod;
 
-var Hat_Player Player;
-var class<Yoshi_MusicalInstrument> EquippedClass;
-var SkeletalMeshComponent InstrumentMesh;
-var ParticleSystemComponent InstrumentParticle;
-var bool IsPlayerEquipped;
-var float ParticleOffsetTime;
-
 var SkeletalMeshComponent InstrumentTemplate;
 
-struct OPInstrument {
-    var Hat_GhostPartyPlayer GPP;
-    var class<Yoshi_MusicalInstrument> EquippedClass;
-    var SkeletalMeshComponent InstrumentMesh;
-    var ParticleSystemComponent InstrumentParticle;
-    var bool IsEquipped;
-    var float ParticleOffsetTime;
+struct InstrumentSet {
+    var Actor Player;
+    var SkeletalMeshComponent MeshComp;
+    var class<Yoshi_MusicalInstrument> Instrument;
+    var SkeletalMeshComponent InstrMeshComp;
+    var ParticleSystemComponent Particle;
+    var float OffsetTime;
+    var class<Hat_Collectible_Skin> Skin;
 };
 
-var array<OPInstrument> OPInstruments;
+var array<InstrumentSet> Instruments;
+
+var bool PlayerEquipped;
 
 struct MaterialCount {
     var int Count;
     var MaterialInterface Mat;
 };
 
-// Class is same
-// Is equipped? Do nothing
-// Is not equipped and available? Equip it. (Particle is inherent (maybe))
-// Is not equipped or available equip as new, new particle.
-
-// Class is different
-
-//
-// Does the player have an instrument?
-// Does the player have a particle? Is it the correct one for the class?
-//
-//
-
 function Init(Yoshi_UkuleleInstrument_GameMod MyGameMod) {
     GameMod = MyGameMod;
 }
 
-function AddPlayerInstrument(Hat_Player Ply, class<Yoshi_MusicalInstrument> InstrumentClass) {
-    local bool WasPlayerEquipped;
+//Returns true if instrument was added
+function bool AddInstrument(Actor Player, SkeletalMeshComponent MeshComp, class<Yoshi_MusicalInstrument> Instrument, class<Hat_Collectible_Skin> Skin, optional bool ForceAnim = false) {    
+    local InstrumentSet NewInstrument;
 
-    if(Ply == None) return;
-    if(GameMod == None) GameMod = class'Yoshi_UkuleleInstrument_GameMod'.static.GetGameMod();
+    if(Instruments.Find('Player', Player) != INDEX_NONE) return false;
+    
+    UpdateAnimSet(MeshComp, InstrumentAnimSet, true);
 
-    Player = Ply;
+    NewInstrument.Player = Player;
+    NewInstrument.MeshComp = MeshComp;
+    NewInstrument.Instrument = Instrument;
+    NewInstrument.InstrMeshComp = AttachInstrument(MeshComp, InstrumentSkeletalMesh);
+    NewInstrument.Particle = AttachParticle(MeshComp, Instrument);
+    NewInstrument.OffsetTime = RandRange(0, ParticleRotationTime);
+    NewInstrument.Skin = Skin;
 
-    WasPlayerEquipped = IsPlayerEquipped;
+    if(ForceAnim) PlayStrumAnim(MeshComp, true);
 
-    IsPlayerEquipped = CheckInstrumentStatus(Ply.Mesh, EquippedClass, InstrumentClass, instrumentMesh, IsPlayerEquipped);
+    Instruments.AddItem(NewInstrument);
 
-    if(!WasPlayerEquipped && IsPlayerEquipped) {
-        GameMod.Sync(InstrumentClass.default.InstrumentName $ "|false", class'YoshiPrivate_MusicalInstruments_Commands'.const.YoshiAddInstrument);
-        UpdateInstrumentColors(ply, InstrumentMesh, class<Hat_Collectible_Skin>(Hat_PlayerController(Player.Controller).GetLoadout().MyLoadout.Skin.BackpackClass), InstrumentClass);
+    if(Hat_Player(Player) != None) {
+        GameMod.Sync(Instrument.default.ShortName $ "|false", class'YoshiPrivate_MusicalInstruments_Commands'.const.YoshiAddInstrument);
+        PlayerEquipped = true;
+    }   
+
+    UpdateInstrumentColors(Player, NewInstrument.InstrMeshComp, Skin, Instrument);
+
+    return true;
+}
+
+function RemoveInstrument(Actor Player, SkeletalMeshComponent MeshComp) {
+    local int i;
+
+    i = Instruments.Find('Player', Player);
+
+    if(i == INDEX_NONE) return;
+
+    StopStrumAnim(Instruments[i].MeshComp);
+
+    if(Instruments[i].Particle != None) {
+        Instruments[i].Particle.DetachFromAny();
     }
 
-    if(IsPlayerEquipped) return;
+    DetachInstrument(Instruments[i].MeshComp, Instruments[i].InstrMeshComp);
+    UpdateAnimSet(Instruments[i].MeshComp, InstrumentAnimSet, false);
 
-    //If we get this far, we are ready to add a new instrument
-    UpdateAnimSet(Player.Mesh, InstrumentAnimSet, true);
-    EquippedClass = InstrumentClass;
-    IsPlayerEquipped = true;
-    InstrumentMesh = AttachInstrument(Player.Mesh, InstrumentSkeletalMesh);
+    Instruments.Remove(i, 1);
 
-    if(InstrumentParticle == None) {
-        InstrumentParticle = AttachParticle(InstrumentMesh, InstrumentClass);
-        ParticleOffsetTime = RandRange(0, ParticleRotationTime);
+    if(Hat_Player(Player) != None) {
+        GameMod.Sync("Hello there :D", class'YoshiPrivate_MusicalInstruments_Commands'.const.YoshiRemoveInstrument);
+        PlayerEquipped = false;
     }
-    else {
-        UpdateParticle(InstrumentParticle, InstrumentClass);
+}
+
+function UpdateInstrument(Actor Player, SkeletalMeshComponent MeshComp, class<Yoshi_MusicalInstrument> Instrument, class<Hat_Collectible_Skin> Skin) {
+    local int i;
+
+    if(AddInstrument(Player, MeshComp, Instrument, Skin, false)) return;
+
+    i = Instruments.Find('Player', Player);
+
+    if(i == INDEX_NONE) return; //This shouldn't happen :<
+
+    if(Instrument != Instruments[i].Instrument) {
+        Instruments[i].Instrument = Instrument;
+        UpdateParticle(Instruments[i].Particle, Instrument);
     }
     
-    GameMod.Sync(InstrumentClass.default.InstrumentName $ "|false", class'YoshiPrivate_MusicalInstruments_Commands'.const.YoshiAddInstrument);
-
-    UpdateInstrumentColors(ply, InstrumentMesh, class<Hat_Collectible_Skin>(Hat_PlayerController(Player.Controller).GetLoadout().MyLoadout.Skin.BackpackClass), InstrumentClass);
-}
-
-function RemovePlayerInstrument() {
-    if(Player == None) return;
-    if(GameMod == None) GameMod = class'Yoshi_UkuleleInstrument_GameMod'.static.GetGameMod();
-    if(!IsPlayerEquipped) return;
-
-    StopStrumAnim(Player.Mesh);
-
-    if(InstrumentMesh != None && InstrumentMesh.bAttached) {
-        DetachInstrument(Player.Mesh, InstrumentMesh);
+    if(Skin != None && Skin != Instruments[i].Skin) {
+        Instruments[i].Skin = Skin;
+        UpdateInstrumentColors(Player, Instruments[i].InstrMeshComp, Skin, Instrument);
     }
-
-    UpdateAnimSet(Player.Mesh, InstrumentAnimSet, false);
-
-    IsPlayerEquipped = false;
-
-    GameMod.Sync("Hello there :D", class'YoshiPrivate_MusicalInstruments_Commands'.const.YoshiRemoveInstrument);
-}
-
-function bool IsPlayerInstrumentEquipped() {
-    return Player != None && IsPlayerEquipped;
 }
 
 function Tick(float delta) {
@@ -121,97 +118,33 @@ function Tick(float delta) {
     local Vector v;
 
     wi = class'WorldInfo'.static.GetWorldInfo();
-    
-    if(InstrumentParticle != None) {
-        Angle = (ParticleOffsetTime + wi.TimeSeconds) / ParticleRotationTime;
-            
-        v.X = Sin(Angle) * ParticleRadius;
-        v.Y = Cos(Angle) * ParticleRadius;
-        v.Z = ParticleHeightOffset;
 
-        InstrumentParticle.SetTranslation(v);
-    }
+    for(i = 0; i < Instruments.Length; i++) {
+        if(Instruments[i].Player == None) {
+            Instruments.Remove(i, 1);
+            i--;
+            continue;
+        }
 
-    for(i = 0; i < OPInstruments.Length; i++) {
-        if(OPInstruments[i].InstrumentParticle != None) {
-            Angle = (OPInstruments[i].ParticleOffsetTime + wi.TimeSeconds) / ParticleRotationTime;
+        if(Hat_Player(Instruments[i].Player) != None) {
+            foreach Instruments[i].MeshComp.AllAnimNodes(class'Hat_AnimNodeRandomIdle', Anim) {
+		        Anim.CurrentCountdown = Anim.TimeUntilIdle;
+	        }
+        }
+
+        if(Instruments[i].Particle != None) {
+            Angle = (Instruments[i].OffsetTime + wi.TimeSeconds) / ParticleRotationTime;
             
             v.X = Sin(Angle) * ParticleRadius;
             v.Y = Cos(Angle) * ParticleRadius;
             v.Z = ParticleHeightOffset;
 
-            OPInstruments[i].InstrumentParticle.SetTranslation(v);
-        }
-    }
-
-    if(Player != None && IsPlayerEquipped) {
-        foreach Player.Mesh.AllAnimNodes(class'Hat_AnimNodeRandomIdle', Anim) {
-		    Anim.CurrentCountdown = Anim.TimeUntilIdle;
-	    }
-    }
-}  
-
-function AddOPInstrument(Hat_GhostPartyPlayer GPP, class<Yoshi_MusicalInstrument> InstrumentClass, optional bool ForceAnim = false) {
-    local int i;
-    local OPInstrument NewUser;
-
-    CleanUpInstruments();
-
-    if(GPP == None) return;
-
-    for(i = 0; i < OPInstruments.Length; i++) {
-        //This player already has an Instrument but it needs to be attached again
-        if(OPInstruments[i].GPP == GPP) {
-
-            OPInstruments[i].IsEquipped = CheckInstrumentStatus(GPP.SkeletalMeshComponent, OPInstruments[i].EquippedClass, InstrumentClass, OPInstruments[i].InstrumentMesh, OPInstruments[i].IsEquipped);
-
-            if(OPInstruments[i].IsEquipped) {
-                if(ForceAnim) PlayStrumAnim(GPP.SkeletalMeshComponent, true);
-                UpdateInstrumentColors(GPP, OPInstruments[i].InstrumentMesh, GPP.CurrentSkin, InstrumentClass);
-                return;
-            }
-
-            //If we're not ready by now, get rid of this entry and make a new one
-            OPInstruments.Remove(i, 1);
-            break;
-        }
-    }
-    
-    UpdateAnimSet(GPP.SkeletalMeshComponent, InstrumentAnimSet, true);
-    NewUser.GPP = GPP;
-    NewUser.EquippedClass = InstrumentClass;
-    NewUser.InstrumentMesh = AttachInstrument(GPP.SkeletalMeshComponent, InstrumentSkeletalMesh);
-    NewUser.IsEquipped = true;
-
-    if(ForceAnim) PlayStrumAnim(GPP.SkeletalMeshComponent, true);
-
-    UpdateInstrumentColors(GPP, NewUser.InstrumentMesh, GPP.CurrentSkin, InstrumentClass);
-
-    OPInstruments.AddItem(NewUser);
-}
-
-function RemoveOPInstrument(Hat_GhostPartyPlayer GPP) {
-    local int i;
-
-    if(GPP == None) return;
-
-    for(i = 0; i < OPInstruments.Length; i++) {
-        if(OPInstruments[i].GPP == GPP && OPInstruments[i].IsEquipped) {
-            OPInstruments[i].IsEquipped = false;
-            if(OPInstruments[i].InstrumentMesh != None) {
-                UpdateAnimSet(GPP.SkeletalMeshComponent, InstrumentAnimSet, false);
-                DetachInstrument(GPP.SkeletalMeshComponent, OPInstruments[i].InstrumentMesh);
-            }
-        }
-
-        if(OPInstruments[i].GPP == None) {
-            OPInstruments.Remove(i, 1);
-            i--;
+            Instruments[i].Particle.SetTranslation(v);
         }
     }
 }
 
-function UpdateInstrumentColors(Actor a, SkeletalMeshComponent MeshComp, class<Hat_Collectible_Skin> Skin, class<Yoshi_MusicalInstrument> InstrumentClass) {
+function UpdateInstrumentColors(Actor a, SkeletalMeshComponent InstrumentMeshComp, class<Hat_Collectible_Skin> Skin, class<Yoshi_MusicalInstrument> InstrumentClass) {
     local array<Texture2D> TextureSlots;
     local MaterialInterface FullBodyMaterial;
     local LinearColor LinearSkinColor;
@@ -221,17 +154,17 @@ function UpdateInstrumentColors(Actor a, SkeletalMeshComponent MeshComp, class<H
     local Name ParameterName;
     local int i;
 
-    GameMod.Print("UpdateInstrumentColors" @ MeshComp.Name $ "," @ Skin);
+    GameMod.Print("UpdateInstrumentColors" @ InstrumentMeshComp.Name $ "," @ Skin);
 
-    if(MeshComp == None) return;
+    if(InstrumentMeshComp == None) return;
     if(Skin == None) return;
 
     FullBodyMaterial = GetFullBodyMaterial(a, Skin);
 
-    SetFullbodyMaterial(MeshComp, InstrumentClass, FullBodyMaterial);
+    SetFullbodyMaterial(InstrumentMeshComp, InstrumentClass, FullBodyMaterial);
 
     Skin.static.GetTextureSlotList(TextureSlots);
-    SetTextureSlots(MeshComp, Skin, TextureSlots);
+    SetTextureSlots(InstrumentMeshComp, Skin, TextureSlots);
 
     for(i = 0; i < class'Hat_Collectible_Skin'.const.SkinColorNum; i++) {
         iSkinColor = SkinColors(i);
@@ -242,7 +175,7 @@ function UpdateInstrumentColors(Actor a, SkeletalMeshComponent MeshComp, class<H
         Tex = Skin.default.SkinTextureInfo[iSkinColor].Texture;
 
         if(Skin.static.IsSlotEmpty(SkinColor, Tex)) {
-            ClearMaterialVectorValueMesh(InstrumentMesh, ParameterName);
+            ClearMaterialVectorValueMesh(InstrumentMeshComp, ParameterName);
         }
         else {
             if(Tex != None) {
@@ -258,13 +191,15 @@ function UpdateInstrumentColors(Actor a, SkeletalMeshComponent MeshComp, class<H
 				LinearSkinColor.A = -1;
             }
 
-            SetMaterialVectorValueMesh(MeshComp, ParameterName, LinearSkinColor);
+            SetMaterialVectorValueMesh(InstrumentMeshComp, ParameterName, LinearSkinColor);
         }
 
         GameMod.Print("[" $ i $ "]" @ ParameterName $ ", (R=" $ SkinColor.R $ ", G=" $ SkinColor.G $ ", B=" $ SkinColor.B $ ", A=" $ SkinColor.A $ ")," @ Tex.Name $ "," @ LinearSkinColor.R);
     }
 
-    GameMod.Sync("ColorsWeaveIntoASpiralOfFlame", class'YoshiPrivate_MusicalInstruments_Commands'.const.YoshiUpdatePlayerInstrumentColors);
+    if(Hat_Player(a) != None) {
+        GameMod.Sync("ColorsWeaveIntoASpiralOfFlame", class'YoshiPrivate_MusicalInstruments_Commands'.const.YoshiUpdatePlayerInstrumentColors);
+    }   
 }
 
 static function InitMaterialInstancesMesh(Meshcomponent MeshComp) {
@@ -311,40 +246,6 @@ static function SetFullbodyMaterial(SkeletalMeshComponent InstrumentComp, class<
 
         InitMaterialInstancesMesh(InstrumentComp);
     }
-}
-
-function CleanUpInstruments() {
-    local int i;
-    for(i = 0; i < OPInstruments.Length; i++) {
-        if(OPInstruments[i].GPP == None) {
-            OPInstruments.Remove(i, 1);
-            i--;
-        }
-    }
-}
-
-//Checks our current instrument status and determines if we need to add a new instrument
-//Returns true if we are now equipped correctly, and false if we need a new instrument
-//Updates equip status as well
-function bool CheckInstrumentStatus(SkeletalMeshComponent ActorComp, class<Yoshi_MusicalInstrument> CurrentClass, class<Yoshi_MusicalInstrument> NewClass, SkeletalMeshComponent MeshComp, bool IsEquipped) {
-
-    if(NewClass == CurrentClass) {
-        if(IsEquipped) return true; //Already equipped and is the correct class
-
-        if(MeshComp != None) {
-            //We can reattach
-            ReAttachInstrument(ActorComp, MeshComp);
-            return true;
-        }
-    }
-    else {
-        //Different class, we may need to remove
-        if(IsPlayerEquipped && MeshComp != None) {
-            DetachInstrument(ActorComp, MeshComp);
-        }
-    }
-
-    return false;
 }
 
 static function PlayStrumAnim(SkeletalMeshComponent Comp, optional bool FixAnim = false) {

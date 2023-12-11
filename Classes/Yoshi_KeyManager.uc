@@ -70,6 +70,7 @@ function Tick(float delta) {
 
     if(KeyboardPlayer != InputPack.PlyCon) {
         if(InputPack.PlyCon != None) {
+            //Check coop instrument status with this
             class'Yoshi_InputPack'.static.DetachController(InputPack);
         }
 
