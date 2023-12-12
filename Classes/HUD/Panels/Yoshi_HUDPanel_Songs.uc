@@ -118,6 +118,7 @@ defaultproperties
         ScaleY=0.2
         MarginX=0.03
         MarginY=0.03
+        ShouldRefreshOptions=true
     End Object
     Songs=SongsDropDown
     Components.Add(SongsDropDown);

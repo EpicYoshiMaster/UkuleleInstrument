@@ -9,7 +9,9 @@ const YoshiMusicSong = 'vFmphzHrpFpwUAKdaxjOgnzvA';
 */
 
 const YoshiAddInstrument = 'AddInstrument';
+const YoshiUpdateInstrument = 'UpdateInstrument';
 const YoshiRemoveInstrument = 'RemoveInstrument';
-const YoshiMusicNote = 'MusicNote';
+const YoshiPlayNote = 'PlayNote';
+const YoshiStopNote = 'StopNote';
 const YoshiMusicSong = 'MusicSong';
 const YoshiUpdatePlayerInstrumentColors = 'InstrumentColors';

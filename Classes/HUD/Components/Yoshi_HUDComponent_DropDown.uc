@@ -140,5 +140,5 @@ defaultproperties
 
     TextColor=(R=255,G=255,B=255,A=255)
 
-    OptionMaterial=Material'Yoshi_UkuleleMats_Content.Materials.Toggle_Component_Mat'
+    OptionMaterial=Material'Yoshi_UkuleleMats_Content.Materials.DropDown_Component_Mat'
 }

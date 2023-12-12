@@ -3,22 +3,16 @@ class Yoshi_UkuleleInstrument_GameMod extends GameMod
     dependsOn(Yoshi_MusicalInstrument)
     dependsOn(Yoshi_SongManager);
 
-//
-// TODO
-//
-
-//
-// Next Build Requirements:
-// 
-
-// Menu :3
-// - Tooltips
-// - Change Tabs
-// - Fix Component Lifetime
+//Playtest :D
 
 //
 // To Release And Beyond
 //
+
+// Menu :3
+// - Suitable Temporary Materials/Icons
+// - Tooltips
+// - Change Tabs
 
 // We need assets. Please.
 // Rebinding
@@ -130,6 +124,8 @@ function AssignPlayerInstrument() {
             if(Player != None) {
                 //Don't allow notes from other instruments to continue when we switch
                 NoteManager.StopAllNotes(Player, CurrentInstrument.default.FadeOutTime);
+
+                Sync(CurrentInstrument.default.ShortName, class'YoshiPrivate_MusicalInstruments_Commands'.const.YoshiStopNote);
             }
 
             CurrentInstrument = AllInstruments[i];
@@ -179,7 +175,7 @@ event OnOnlinePartyCommand(string Command, Name CommandChannel, Hat_GhostPartyPl
 
     Print("OPGet:" @ Command $ "," @ CommandChannel $ "," @ Hat_GhostPartyPlayer(Sender.GhostActor).UserName);
 
-    if(CommandChannel == class'YoshiPrivate_MusicalInstruments_Commands'.const.YoshiMusicNote && Settings.OnlineNotes) {
+    if(CommandChannel == class'YoshiPrivate_MusicalInstruments_Commands'.const.YoshiPlayNote && Settings.OnlineNotes) {
         args = SplitString(Command, "|");
         if(args.Length < 3) return;
 
@@ -189,6 +185,23 @@ event OnOnlinePartyCommand(string Command, Name CommandChannel, Hat_GhostPartyPl
         InstrumentManager.AddInstrument(GhostPlayer, GhostPlayer.SkeletalMeshComponent, InstrumentClass, GhostPlayer.CurrentSkin); //Just in case
         InstrumentManager.PlayStrumAnim(GhostPlayer.SkeletalMeshComponent);
         NoteManager.PlayNote(GhostPlayer, InstrumentClass, args[0], args[1]);
+    }
+
+    if(CommandChannel == class'YoshiPrivate_MusicalInstruments_Commands'.const.YoshiStopNote && Settings.OnlineNotes) {
+        args = SplitString(Command, "|");
+
+        if(args.Length == 1) {
+            //InstrumentShortName
+            InstrumentClass = GetInstrumentClass(args[0]);
+            
+            NoteManager.StopAllNotes(GhostPlayer, InstrumentClass.default.FadeOutTime);
+            return;
+        }
+
+        //KeyName|InstrumentShortName
+        InstrumentClass = GetInstrumentClass(args[1]);
+
+        NoteManager.StopNote(GhostPlayer, args[0], InstrumentClass.default.FadeOutTime);
     }
 
     if(CommandChannel == class'YoshiPrivate_MusicalInstruments_Commands'.const.YoshiMusicSong && Settings.OnlineSongs) {
@@ -201,6 +214,11 @@ event OnOnlinePartyCommand(string Command, Name CommandChannel, Hat_GhostPartyPl
 
         //InstrumentShortName|ForceAnim
         InstrumentManager.AddInstrument(GhostPlayer, GhostPlayer.SkeletalMeshComponent, GetInstrumentClass(args[0]), GhostPlayer.CurrentSkin, bool(args[1]));
+    }
+
+    if(CommandChannel == class'YoshiPrivate_MusicalInstruments_Commands'.const.YoshiUpdateInstrument) {
+        //InstrumentShortName
+        InstrumentManager.UpdateInstrument(GhostPlayer, GhostPlayer.SkeletalMeshComponent, GetInstrumentClass(Command), GhostPlayer.CurrentSkin);
     }
 
     if(CommandChannel == class'YoshiPrivate_MusicalInstruments_Commands'.const.YoshiRemoveInstrument) {
@@ -267,7 +285,7 @@ function bool OnPressNoteKey(Hat_Player Ply, int Index, bool HoldingPitchDownKey
     InstrumentManager.PlayStrumAnim(ply.Mesh);
 
     if(Settings.OnlineNotes) {
-        Sync(KeyName $ "|" $ NoteName $ "|" $ CurrentInstrument.default.ShortName, class'YoshiPrivate_MusicalInstruments_Commands'.const.YoshiMusicNote);
+        Sync(KeyName $ "|" $ NoteName $ "|" $ CurrentInstrument.default.ShortName, class'YoshiPrivate_MusicalInstruments_Commands'.const.YoshiPlayNote);
     }
 
     NoteManager.PlayNote(ply, CurrentInstrument, KeyName, NoteName);
@@ -280,6 +298,10 @@ function bool OnReleaseNoteKey(Hat_Player Ply, int Index, string KeyName) {
 
     if(CurrentInstrument.default.CanReleaseNote) {
         NoteManager.StopNote(ply, KeyName, CurrentInstrument.default.FadeOutTime);
+
+        if(Settings.OnlineNotes) {
+            Sync(KeyName $ "|" $ CurrentInstrument.default.ShortName, class'YoshiPrivate_MusicalInstruments_Commands'.const.YoshiStopNote);
+        }
     }
 
     return false;
@@ -294,7 +316,7 @@ function bool OnPressToggleMenu(Hat_PlayerController PC) {
         MenuHUD = Yoshi_HUDMenu_MusicMenu(Hat_HUD(PC.MyHUD).OpenHUD(class'Yoshi_HUDMenu_MusicMenu'));
     }
     else {
-        Hat_HUD(PC.MyHUD).CloseHUD(class'Yoshi_HUDMenu_MusicMenu');
+        Hat_HUD(PC.MyHUD).CloseHUD(class'Yoshi_HUDMenu_MusicMenu', true);
         MenuHUD = None;
     }
 
@@ -406,6 +428,8 @@ function SetSongIndex(int NewIndex) {
     if(SongManager.IsPlayingPlayerSong()) return;
 
     Settings.SongIndex = NewIndex;
+
+    SongManager.SetSongIndex(NewIndex);
     SaveSettings();
 }
 

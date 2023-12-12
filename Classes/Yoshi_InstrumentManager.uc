@@ -108,6 +108,10 @@ function UpdateInstrument(Actor Player, SkeletalMeshComponent MeshComp, class<Yo
         Instruments[i].Skin = Skin;
         UpdateInstrumentColors(Player, Instruments[i].InstrMeshComp, Skin, Instrument);
     }
+
+    if(Hat_Player(Player) != None) {
+        GameMod.Sync(Instrument.default.ShortName, class'YoshiPrivate_MusicalInstruments_Commands'.const.YoshiUpdateInstrument);
+    }
 }
 
 function Tick(float delta) {

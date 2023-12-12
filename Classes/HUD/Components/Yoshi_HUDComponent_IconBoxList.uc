@@ -11,6 +11,11 @@ var float PulseScaleAmount;
 
 var Material IconMaterial;
 
+var bool ShowText;
+var Color TextColor;
+var float TextSize;
+var float TextBoxPercent;
+var array<string> Descriptions;
 var array<MaterialInstanceConstant> IconMaterials;
 
 var int HoverIndex;
@@ -21,11 +26,13 @@ var float ScrollOffset;
 var Yoshi_HUDComponent_Scrollbar Scrollbar;
 
 var delegate<GetArrayTextureDelegate> GetIcons;
+var delegate<GetArrayStringDelegate> GetDescriptions;
 var delegate<GetIntValueDelegate> GetValue;
 var delegate<SetIntValueDelegate> SetValue;
 
 //These delegates should be overridden with functions to link together external data
 delegate array<Texture2D> GetArrayTextureDelegate();
+delegate array<string> GetArrayStringDelegate();
 delegate int GetIntValueDelegate();
 delegate SetIntValueDelegate(int NewValue);
 
@@ -44,6 +51,10 @@ function Init(Yoshi_UkuleleInstrument_GameMod MyGameMod, Yoshi_HUDMenu_MusicMenu
     Super.Init(MyGameMod, MyMenu, MyOwner);
 
     AllIcons = GetIcons();
+
+    if(ShowText) {
+        Descriptions = GetDescriptions();
+    }
 
     IconMaterials.Length = 0;
 
@@ -98,7 +109,7 @@ function Render(HUD H) {
     NumRows = FCeil(float(IconMaterials.Length) / MaxPerRow);
 
     ScrollWindowSize = CurScaleY * H.Canvas.ClipY;
-    ContentSize = itemSize * NumRows + marginSize * (NumRows - 1);
+    ContentSize = itemSize * NumRows + marginSize * (NumRows);
 
     Super.Render(H);
 
@@ -118,7 +129,7 @@ function Render(HUD H) {
             posy += itemSize + marginSize;
         }
 
-        RenderIconBox(wi, H, i, rowIndex, posx + 0.5 * itemSize, posy + 0.5 * itemSize, itemSize);
+        RenderIconBox(wi, H, i, rowIndex, posx + 0.5 * itemSize, posy + 0.5 * itemSize, itemSize, marginSize);
 
         posx += itemSize + marginSize;
         rowIndex += 1;
@@ -128,7 +139,7 @@ function Render(HUD H) {
     H.Canvas.PopMaskRegion();
 }
 
-function RenderIconBox(WorldInfo wi, HUD H, int i, int rowIndex, float centerX, float centerY, float itemSize) {
+function RenderIconBox(WorldInfo wi, HUD H, int i, int rowIndex, float centerX, float centerY, float itemSize, float marginSize) {
     local float pulseItemSize;
     local float hoverSize;
 
@@ -152,6 +163,10 @@ function RenderIconBox(WorldInfo wi, HUD H, int i, int rowIndex, float centerX, 
     pulseItemSize = GetPulseSize(itemSize, wi.TimeSeconds, rowIndex);
 
     class'Hat_HUDMenu'.static.DrawCenter(H, centerX, centerY, pulseItemSize, pulseItemSize, IconMaterials[i]);
+
+    if(ShowText) {
+        DrawTextInBox(H, Descriptions[i], centerX - 0.5 * itemSize, centerY + (0.5 * itemSize), itemSize, marginSize, TextColor, ElementAlign_Center, TextSize);
+    }
 }
 
 function bool OnClick(EInputEvent EventType)
@@ -192,6 +207,11 @@ defaultproperties
     PulseScaleAmount=0.03
     ScrollbarSpace=0.06
     HoverIndex=INDEX_NONE
+
+    TextBoxPercent=0.15
+    TextSize=0.6
+    TextColor=(R=255,G=255,B=255,A=255)
+    ShowText=true
 
     ScrollOffset=0.0
 

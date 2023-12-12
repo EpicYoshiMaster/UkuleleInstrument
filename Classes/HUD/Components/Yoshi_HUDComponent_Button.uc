@@ -55,5 +55,4 @@ function bool OnClick(EInputEvent EventType)
 defaultproperties
 {
     MakeSquare=true
-    ButtonMaterial=Material'Yoshi_UkuleleMats_Content.Materials.Toggle_Component_Mat'
-}
+    ButtonMaterial=Material'Yoshi_UkuleleMats_Content.Materials.DropDown_Component_Mat'

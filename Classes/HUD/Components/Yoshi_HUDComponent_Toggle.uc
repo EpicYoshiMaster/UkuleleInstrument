@@ -67,6 +67,7 @@ function Render(HUD H) {
 function bool OnClick(EInputEvent EventType)
 {
     if(Super.OnClick(EventType)) return true;
+    if(Disabled) return true;
 
     if(EventType == IE_Pressed) {
         SetValue(!GetValue());

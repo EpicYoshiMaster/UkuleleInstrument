@@ -195,8 +195,8 @@ defaultproperties
     ButtonScale=0.05
     ButtonScrollAmount=0.1;
 
-    TopButtonMaterial=Material'Yoshi_UkuleleMats_Content.Materials.Toggle_Component_Mat'
-    BarMaterial=Material'Yoshi_UkuleleMats_Content.Materials.Toggle_Component_Mat'
+    TopButtonMaterial=Material'Yoshi_UkuleleMats_Content.Materials.DropDown_Component_Mat'
+    BarMaterial=Material'Yoshi_UkuleleMats_Content.Materials.DropDown_Component_Mat'
     TrackMaterial=Material'HatInTime_Levels.Materials.Black'
-    BottomButtonMaterial=Material'Yoshi_UkuleleMats_Content.Materials.Toggle_Component_Mat'
+    BottomButtonMaterial=Material'Yoshi_UkuleleMats_Content.Materials.DropDown_Component_Mat'
 }

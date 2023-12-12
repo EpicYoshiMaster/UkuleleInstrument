@@ -220,7 +220,7 @@ defaultproperties
         TopLeftY=0.35
         ScaleX=0.075
         ScaleY=0.275
-        Text="Shiftless"
+        Text="Two Row Mode"
         BaseTextSize=0.8
     End Object
     Components.Add(ShiftlessText)
@@ -228,7 +228,7 @@ defaultproperties
     Begin Object Class=Yoshi_HUDComponent_Toggle Name=ShiftlessToggle
         TopLeftX=0.075
         TopLeftY=0.4375 //0.35 + 0.1375 - 0.05
-        ScaleX=0.1
+        ScaleX=0.125
         ScaleY=0.1
     End Object
     TwoRow=ShiftlessToggle

@@ -5,6 +5,7 @@ var Yoshi_HUDComponent_DropDown Scales;
 
 function Init(Yoshi_UkuleleInstrument_GameMod MyGameMod, Yoshi_HUDMenu_MusicMenu MyMenu, optional Yoshi_HUDComponent MyOwner) {
     Instruments.GetIcons = GetInstrumentIcons;
+    Instruments.GetDescriptions = GetInstrumentNames;
     Instruments.GetValue = GetInstrumentIndex;
     Instruments.SetValue = MyGameMod.SetInstrumentIndex;
 
@@ -24,6 +25,17 @@ function array<Texture2D> GetInstrumentIcons() {
     }
 
     return AllIcons;
+}
+
+function array<string> GetInstrumentNames() {
+    local array<string> AllNames;
+    local int i;
+
+    for(i = 0; i < GameMod.AllInstruments.Length; i++) {
+        AllNames.AddItem(GameMod.AllInstruments[i].default.InstrumentName);
+    }
+
+    return AllNames;
 }
 
 function int GetInstrumentIndex() {

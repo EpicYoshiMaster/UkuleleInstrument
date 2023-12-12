@@ -113,6 +113,18 @@ function SaveRecordedLayer(SongLayer RecordLayer, int LayerIndex, int SongIndex)
     SaveSongs();
 }
 
+function SetSongIndex(int NewIndex) {
+    local SavedSong NewSong;
+
+    while(NewIndex >= SavedSongs.Length) {
+        NewSong.SongName = "Song " $ (NewIndex + 1);
+        SavedSongs.AddItem(NewSong);
+    }
+
+    PlayerSong.SongName = SavedSongs[NewIndex].SongName;
+    PlayerSong.Layers = SavedSongs[NewIndex].Layers;
+}
+
 function bool IsPlayingPlayerSong() {
     return PlayingPlayerSong;
 }
@@ -306,6 +318,11 @@ function LoadSongs() {
     class'Engine'.static.BasicLoadObject(SongsStorage, SavedSongsPath, false, SongFormatVersion);
 
     SavedSongs = SongsStorage.Songs;
+
+    if(GameMod.Settings.SongIndex < SavedSongs.Length) {
+        PlayerSong.SongName = SavedSongs[GameMod.Settings.SongIndex].SongName;
+        PlayerSong.Layers = SavedSongs[GameMod.Settings.SongIndex].Layers;
+    }
 }
 
 function SaveSongs() {
@@ -326,4 +343,9 @@ function DeleteSong(int RemoveSongIndex) {
     }
 
     SaveSongs();
+}
+
+defaultproperties
+{
+    PlayerSong=(SongName="Song 1")
 }

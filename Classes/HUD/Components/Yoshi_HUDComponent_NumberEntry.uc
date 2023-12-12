@@ -128,6 +128,6 @@ defaultproperties
     ChangeValue=1
     TextColor=(R=255,G=255,B=255,A=255)
 
-    LeftButtonMaterial=Material'Yoshi_UkuleleMats_Content.Materials.Toggle_Component_Mat'
-    RightButtonMaterial=Material'Yoshi_UkuleleMats_Content.Materials.Toggle_Component_Mat'
+    LeftButtonMaterial=Material'Yoshi_UkuleleMats_Content.Materials.DropDown_Component_Mat'
+    RightButtonMaterial=Material'Yoshi_UkuleleMats_Content.Materials.DropDown_Component_Mat'
 }
