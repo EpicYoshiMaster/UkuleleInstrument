@@ -345,6 +345,27 @@ function DeleteSong(int RemoveSongIndex) {
     SaveSongs();
 }
 
+function GetDebugStrings(out array<string> PrintStrings) {
+    local int i;
+    local string s;
+    
+    PrintStrings.AddItem("Playing Player Song:" @ PlayingPlayerSong $ ", Skip Layer:" @ SkipLayer $ ", # OP Songs:" @ OPSongs.Length);
+
+    s = "Songs:";
+
+    for(i = 0; i < SavedSongs.Length; i++) {
+
+        if(i > 0) {
+            s $= ",";
+        }
+
+        s @= SavedSongs[i].SongName;
+        s @= "-" @ SavedSongs[i].Layers.Length @ "Layers";
+    }
+
+    PrintStrings.AddItem(s);
+}
+
 defaultproperties
 {
     PlayerSong=(SongName="Song 1")

@@ -413,6 +413,20 @@ function MaterialInterface GetFullbodyMaterial(Actor a, class<Hat_Collectible_Sk
     return MatCounts[HighestIndex].Mat;
 }
 
+function GetDebugStrings(out array<string> PrintStrings) {
+    local int i;
+    local string s;
+    
+    for(i = 0; i < Instruments.Length; i++) {
+        s = "[" $ i $ "]" @ Instruments[i].Player;
+        s $= ": (Instrument:" @ Instruments[i].Instrument;
+        s $= ", Mesh:" @ Instruments[i].InstrMeshComp.Name;
+        s $= ", Skin:" @ Instruments[i].Skin $ ")";
+
+        PrintStrings.AddItem(s);
+    }
+}
+
 defaultproperties
 {
     Begin Object Class=SkeletalMeshComponent Name=InstrTemplate

@@ -154,3 +154,27 @@ function Tick(float delta) {
         }
     }
 }
+
+function GetDebugStrings(out array<string> PrintStrings) {
+    local int i, j;
+    local string s;
+
+    for(i = 0; i < NoteSets.Length; i++) {
+        s = "[" $ i $ "]" @ NoteSets[i].Player $ ": [";
+        
+        for(j = 0; j < NoteSets[i].Notes.Length; j++) {
+
+            if(j > 0) {
+                s $= ", ";
+            }
+
+            s $= "(" $ NoteSets[i].Notes[j].KeyName;
+            s $= "," @ NoteSets[i].Notes[j].Component;
+            s $= "," @ NoteSets[i].Notes[j].Component.IsPlaying() $ ")";
+        }
+
+        s $= "]";
+
+        PrintStrings.AddItem(s);
+    }
+}

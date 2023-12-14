@@ -170,3 +170,15 @@ function Tick(float delta) {
         RecordingHUD.Init(GameMod);
     }
 }
+
+function GetDebugStrings(out array<string> PrintStrings) {
+    local string s;
+
+    PrintStrings.AddItem("Recording Mode:" @ InRecordingMode $ ", Await Count In:" @ AwaitingCountIn $ ", Recording:" @ IsRecording);
+    PrintStrings.AddItem("Record Song Index:" @ RecordingSongIndex $ ", Recording Layer:" @ RecordingLayer);
+
+    s = "Record Layer:" @ RecordLayer.Instrument;
+    s $= "," @ RecordLayer.Notes.Length @ "Notes";
+
+    PrintStrings.AddItem(s);
+}

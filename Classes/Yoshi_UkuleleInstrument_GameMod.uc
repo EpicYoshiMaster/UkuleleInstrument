@@ -17,7 +17,6 @@ class Yoshi_UkuleleInstrument_GameMod extends GameMod
 // We need assets. Please.
 // Rebinding
 // Text Inputs
-// Step Shifting
 // Polish and cleanup to menu and panels
 // Solve the 250 notes problem
 // trailer
@@ -38,6 +37,7 @@ class Yoshi_UkuleleInstrument_GameMod extends GameMod
 
 var int Octave; //Certain instruments have more than one set of ranges
 var int PitchShift;
+var int StepShift;
 
 const JammingOutAnimName = "Ukulele_Play";
 const NumWesternNotes = 12;
@@ -275,7 +275,7 @@ function OnCountIn(Hat_Player Ply) {
 function bool OnPressNoteKey(Hat_Player Ply, int Index, bool HoldingPitchDownKey, string KeyName) {
     local string NoteName;
 
-    NoteName = GetNoteName(Scales[Settings.ScaleIndex].NoteOffsets[Index] + (HoldingPitchDownKey ? -1 : 0) + PitchShift);
+    NoteName = GetNote(Index, HoldingPitchDownKey);
 
     RecordManager.RecordPressNote(Ply, NoteName, KeyName);
 
@@ -343,7 +343,7 @@ function ChangePitchShift(int PitchShiftAmount) {
     OldOctave = Octave;
 
     if(NewPitchShift < 0) {
-        Octave = FClamp(Octave - 1, CurrentInstrument.default.MinOctave, CurrentInstrument.default.MaxOctave);
+        ChangeOctave(-1);
 
         if(OldOctave != Octave) {
             NewPitchShift += NumWesternNotes;
@@ -354,7 +354,7 @@ function ChangePitchShift(int PitchShiftAmount) {
     }
 
     if(NewPitchShift >= NumWesternNotes) {
-        Octave = FClamp(Octave + 1, CurrentInstrument.default.MinOctave, CurrentInstrument.default.MaxOctave);
+        ChangeOctave(1);
 
         if(OldOctave != Octave) {
             NewPitchShift -= NumWesternNotes;
@@ -372,6 +372,55 @@ function ChangeOctave(int OctaveShiftAmount) {
 
     NewOctave = Octave + OctaveShiftAmount;
     Octave = FClamp(NewOctave, CurrentInstrument.default.MinOctave, CurrentInstrument.default.MaxOctave);
+}
+
+function ChangeStepShift(int StepShiftAmount) {
+    local int OldOctave, NewStepShift;
+
+    NewStepShift = StepShift + StepShiftAmount;
+
+    OldOctave = Octave;
+
+    if(NewStepShift < 0) {
+        ChangeOctave(-1);
+
+        if(OldOctave != Octave) {
+            NewStepShift += Scales[Settings.ScaleIndex].NoteOffsets.Length;
+        }
+        else {
+            NewStepShift = StepShift;
+        }
+    }
+    else if(NewStepShift >= Scales[Settings.ScaleIndex].NoteOffsets.Length) {
+        ChangeOctave(1);
+
+        if(OldOctave != Octave) {
+            NewStepShift -= Scales[Settings.ScaleIndex].NoteOffsets.Length;
+        }
+        else {
+            NewStepShift = StepShift;
+        }
+    }
+
+    StepShift = NewStepShift;
+}
+
+function string GetNote(int KeyIndex, bool HoldingPitchDownKey) {
+    local int FinalNoteOffset;
+    local int OffsetIndex;
+    local int OctaveOffset;
+
+    OffsetIndex = (KeyIndex + StepShift);
+    OctaveOffset = 0;
+
+    while(OffsetIndex >= Scales[Settings.ScaleIndex].NoteOffsets.Length) {
+        OffsetIndex -= Scales[Settings.ScaleIndex].NoteOffsets.Length;
+        OctaveOffset += 1;
+    }
+
+    FinalNoteOffset = (OctaveOffset * NumWesternNotes) + Scales[Settings.ScaleIndex].NoteOffsets[OffsetIndex] + (HoldingPitchDownKey ? -1 : 0) + PitchShift;
+
+    return GetNoteName(FinalNoteOffset);
 }
 
 function string GetNoteName(int NoteOffset) {
@@ -539,19 +588,19 @@ defaultproperties
 {
     DebugMode=true
 
-    Scales.Add((ScaleName="Major",NoteOffsets=(0, 2, 4, 5, 7, 9, 11, 12, 14, 16))); //Major
-    Scales.Add((ScaleName="Major Pentatonic",NoteOffsets=(0, 2, 4, 7, 9, 12, 14, 16, 19, 21))); //Major Pentatonic
-    Scales.Add((ScaleName="Major Blues",NoteOffsets=(0, 2, 3, 4, 7, 9, 12, 14, 15, 16))); //Major Blues
-    Scales.Add((ScaleName="Mixolydian",NoteOffsets=(0, 2, 4, 5, 7, 9, 10, 12, 14, 16))); //Mixolydian
+    Scales.Add((ScaleName="Major",NoteOffsets=(0, 2, 4, 5, 7, 9, 11))); //Major
+    Scales.Add((ScaleName="Major Pentatonic",NoteOffsets=(0, 2, 4, 7, 9))); //Major Pentatonic
+    Scales.Add((ScaleName="Major Blues",NoteOffsets=(0, 2, 3, 4, 7, 9))); //Major Blues
+    Scales.Add((ScaleName="Mixolydian",NoteOffsets=(0, 2, 4, 5, 7, 9, 10))); //Mixolydian
     
-    Scales.Add((ScaleName="Minor",NoteOffsets=(0, 2, 3, 5, 7, 8, 10, 12, 14, 15))); //Minor
-    Scales.Add((ScaleName="Minor Pentatonic",NoteOffsets=(0, 3, 5, 7, 10, 12, 15, 17, 19, 22))); //Minor Pentatonic
-    Scales.Add((ScaleName="Minor Blues",NoteOffsets=(0, 3, 5, 6, 7, 10, 12, 15, 17, 18))); //Minor Blues
-    Scales.Add((ScaleName="Harmonic Minor",NoteOffsets=(0, 2, 3, 5, 7, 8, 11, 12, 14, 15))); //Harmonic Minor
+    Scales.Add((ScaleName="Minor",NoteOffsets=(0, 2, 3, 5, 7, 8, 10))); //Minor
+    Scales.Add((ScaleName="Minor Pentatonic",NoteOffsets=(0, 3, 5, 7, 10))); //Minor Pentatonic
+    Scales.Add((ScaleName="Minor Blues",NoteOffsets=(0, 3, 5, 6, 7, 10))); //Minor Blues
+    Scales.Add((ScaleName="Harmonic Minor",NoteOffsets=(0, 2, 3, 5, 7, 8, 11))); //Harmonic Minor
 
-    Scales.Add((ScaleName="Dorian",NoteOffsets=(0, 2, 3, 5, 7, 9, 10, 12, 14, 15))); //Dorian
-    Scales.Add((ScaleName="Klezmer",NoteOffsets=(0, 1, 4, 5, 7, 8, 10, 12, 13, 16))); //Klezmer
-    Scales.Add((ScaleName="Japanese",NoteOffsets=(0, 1, 5, 7, 8, 12, 13, 17, 19, 20))); //Japanese
-    Scales.Add((ScaleName="South-East Asian",NoteOffsets=(0, 1, 3, 7, 8, 12, 13, 15, 19, 20))); //South-East Asian
-    Scales.Add((ScaleName="Whole Tone",NoteOffsets=(0, 2, 4, 6, 8, 10, 12, 14, 16, 18))); //Whole Tone
+    Scales.Add((ScaleName="Dorian",NoteOffsets=(0, 2, 3, 5, 7, 9, 10))); //Dorian
+    Scales.Add((ScaleName="Klezmer",NoteOffsets=(0, 1, 4, 5, 7, 8, 10))); //Klezmer
+    Scales.Add((ScaleName="Japanese",NoteOffsets=(0, 1, 5, 7, 8))); //Japanese
+    Scales.Add((ScaleName="South-East Asian",NoteOffsets=(0, 1, 3, 7, 8))); //South-East Asian
+    Scales.Add((ScaleName="Whole Tone",NoteOffsets=(0, 2, 4, 6, 8, 10))); //Whole Tone
 }

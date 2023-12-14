@@ -15,7 +15,6 @@ enum KeybindType {
     Keybind_Note,
     Keybind_FlatNote,
     Keybind_Modifier,
-    Keybind_TwoRowModifier,
     Keybind_ToggleMenu,
     Keybind_ControlRecording,
     Keybind_HoldPitchDown
@@ -31,7 +30,6 @@ struct InstrumentKeyboardLayout {
 
     // 0: Octave Down, 1: Octave Up, 2: Pitch Down, 3: Pitch Up, 4: Step Down, 5: Step Up
     var array<string> Modifiers;
-    var array<string> TwoRowModifiers;
 };
 
 struct KeyAlias {
@@ -134,10 +132,6 @@ function bool SetKeybind(string NewValue, KeybindType KeyType, optional int Inde
             if(NewValue ~= CurrentLayout.Modifiers[Index]) return false;
             CurrentLayout.Modifiers[Index] = NewValue;
             break;
-        case Keybind_TwoRowModifier:
-            if(NewValue ~= CurrentLayout.TwoRowModifiers[Index]) return false;
-            CurrentLayout.TwoRowModifiers[Index] = NewValue;
-            break;
         case Keybind_ToggleMenu:
             if(NewValue ~= CurrentLayout.ToggleMenu) return false;
             CurrentLayout.ToggleMenu = NewValue;
@@ -208,7 +202,6 @@ function bool ReceivedNativeInputKey(int ControllerId, name Key, EInputEvent Eve
     local int i;
     local string KeyName;
     local InstrumentKeyboardLayout CurrentLayout;
-    local array<string> ModifierKeys;
     local delegate<OnInputKey> InputDelegate;
 
     PC = InputPack.PlyCon;
@@ -216,7 +209,9 @@ function bool ReceivedNativeInputKey(int ControllerId, name Key, EInputEvent Eve
 
     if(PC.IsPaused()) return false;
 
-    //Print(`ShowVar(Key) @ `ShowVar(EventType) @ `ShowVar(bGamepad));
+    if(EventType == IE_Pressed) {
+        GameMod.Print(`ShowVar(Key) @ `ShowVar(EventType) @ `ShowVar(bGamepad));
+    }
 
     KeyName = string(Key);
 
@@ -269,25 +264,23 @@ function bool ReceivedNativeInputKey(int ControllerId, name Key, EInputEvent Eve
         return GameMod.OnPressPlayerAttack(PC);
     }
 
-    ModifierKeys = (GameMod.Settings.TwoRowMode) ? CurrentLayout.TwoRowModifiers : CurrentLayout.Modifiers;
-
-    if(KeyName ~= ModifierKeys[OctaveDown]) {
+    if(KeyName ~= CurrentLayout.Modifiers[OctaveDown]) {
         GameMod.ChangeOctave(-1);
     }
-    else if(KeyName ~= ModifierKeys[OctaveUp]) {
+    else if(KeyName ~= CurrentLayout.Modifiers[OctaveUp]) {
         GameMod.ChangeOctave(1);
     }
-    else if(KeyName ~= ModifierKeys[PitchDown]) {
+    else if(KeyName ~= CurrentLayout.Modifiers[PitchDown]) {
         GameMod.ChangePitchShift(-1);
     }
-    else if(KeyName ~= ModifierKeys[PitchUp]) {
+    else if(KeyName ~= CurrentLayout.Modifiers[PitchUp]) {
         GameMod.ChangePitchShift(1);
     }
-    else if(KeyName ~= ModifierKeys[StepDown]) {
-
+    else if(KeyName ~= CurrentLayout.Modifiers[StepDown]) {
+        GameMod.ChangeStepShift(-1);
     }
-    else if(KeyName ~= ModifierKeys[StepUp]) {
-
+    else if(KeyName ~= CurrentLayout.Modifiers[StepUp]) {
+        GameMod.ChangeStepShift(1);
     }
 
     for(i = 0; i < CurrentLayout.Notes.Length; i++) {
@@ -324,6 +317,10 @@ static function Hat_PlayerController GetKeyboardPlayer(optional Controller Calli
 	return CallingController != None ? Hat_PlayerController(CallingController) : None;
 }
 
+function GetDebugStrings(out array<string> PrintStrings) {
+    PrintStrings.AddItem("PC:" @ InputPack.PlyCon $ ", Pitch Down:" @ IsHoldingPitchDownKey $ ", Layout Index:" @ GameMod.Settings.CurrentLayoutIndex);
+}
+
 defaultproperties
 {
     KeyAliases.Add((Aliases=("LeftShift", "RightShift"), KeyName="Shift"));
@@ -337,8 +334,7 @@ defaultproperties
         ToggleMenu="Y",
         HoldPitchDown="Shift",
         ControlRecording="Control",
-        Modifiers=("J","K","L","semicolon","",""),
-        TwoRowModifiers=("U","I","O","P","","")
+        Modifiers=("U","I","O","P","leftbracket","rightbracket")
     )}
 
     DefaultLayouts[1] = {(
@@ -348,8 +344,7 @@ defaultproperties
         ToggleMenu="Y",
         HoldPitchDown="Shift",
         ControlRecording="Control",
-        Modifiers=("J","K","L","semicolon","",""),
-        TwoRowModifiers=("U","I","O","P","","")
+        Modifiers=("U","I","O","P","leftbracket","rightbracket")
     )}
 
     DefaultLayouts[2] = {(
@@ -359,8 +354,7 @@ defaultproperties
         ToggleMenu="Y",
         HoldPitchDown="Shift",
         ControlRecording="Control",
-        Modifiers=("J","K","L","M","",""),
-        TwoRowModifiers=("U","I","O","P","","")
+        Modifiers=("U","I","O","P","rightbracket","semicolon")
     )}
 
     CustomLayout = {(
@@ -370,8 +364,7 @@ defaultproperties
         ToggleMenu="Y",
         HoldPitchDown="Shift",
         ControlRecording="Control",
-        Modifiers=("J","K","L","semicolon","",""),
-        TwoRowModifiers=("U","I","O","P","","")
+        Modifiers=("U","I","O","P","leftbracket","rightbracket")
     )}
 
     BannedKeys.Add("leftmousebutton")
