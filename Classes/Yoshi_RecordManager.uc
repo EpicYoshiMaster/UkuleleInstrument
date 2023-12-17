@@ -1,8 +1,6 @@
 class Yoshi_RecordManager extends Object
     dependsOn(Yoshi_SongManager);
 
-const MaxRecordingLength = 600; //10 minutes
-
 var Yoshi_UkuleleInstrument_GameMod GameMod;
 var Yoshi_SongManager SongManager;
 var Yoshi_Metronome Metronome;
@@ -152,12 +150,6 @@ function StopRecording() {
 
 function Tick(float delta) {
     local Hat_PlayerController PC;
-
-    if(IsRecording && SongManager.IsPlayingPlayerSong()) {
-        if(SongManager.PlayerSong.Time >= MaxRecordingLength) {
-            StopRecording();
-        }
-    }
 
     PC = GameMod.KeyManager.GetPC();
 

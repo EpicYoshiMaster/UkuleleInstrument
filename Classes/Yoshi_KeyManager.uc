@@ -209,9 +209,10 @@ function bool ReceivedNativeInputKey(int ControllerId, name Key, EInputEvent Eve
 
     if(PC.IsPaused()) return false;
 
+    /*
     if(EventType == IE_Pressed) {
         GameMod.Print(`ShowVar(Key) @ `ShowVar(EventType) @ `ShowVar(bGamepad));
-    }
+    }*/
 
     KeyName = string(Key);
 

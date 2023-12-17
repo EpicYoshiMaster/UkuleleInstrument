@@ -3,8 +3,6 @@ class Yoshi_UkuleleInstrument_GameMod extends GameMod
     dependsOn(Yoshi_MusicalInstrument)
     dependsOn(Yoshi_SongManager);
 
-//Playtest :D
-
 //
 // To Release And Beyond
 //
@@ -14,11 +12,11 @@ class Yoshi_UkuleleInstrument_GameMod extends GameMod
 // - Tooltips
 // - Change Tabs
 
+// Volume Settings
 // We need assets. Please.
 // Rebinding
 // Text Inputs
 // Polish and cleanup to menu and panels
-// Solve the 250 notes problem
 // trailer
 // Fix No Instrument -> Play Song -> Instrument Anim Post Song
 
@@ -205,7 +203,7 @@ event OnOnlinePartyCommand(string Command, Name CommandChannel, Hat_GhostPartyPl
     }
 
     if(CommandChannel == class'YoshiPrivate_MusicalInstruments_Commands'.const.YoshiMusicSong && Settings.OnlineSongs) {
-        SongManager.PlayOnlineSong(Command, GhostPlayer);
+        SongManager.ReceiveSongFragment(Command, GhostPlayer);
     }
 
     if(CommandChannel == class'YoshiPrivate_MusicalInstruments_Commands'.const.YoshiAddInstrument) {
@@ -530,6 +528,10 @@ function LoadSettings() {
         Settings.MetronomeBPM = class'Yoshi_Metronome'.default.BPM;
         Settings.MetronomeBeats = class'Yoshi_Metronome'.default.BeatsInMeasure;
         Settings.CustomLayout = class'Yoshi_KeyManager'.default.CustomLayout;
+        Settings.OnlineNotes = true;
+        Settings.OnlineSongs = true;
+        Settings.PlayerVolume = 1.0f;
+        Settings.OnlineVolume = 0.8f;
         return;
     }
 

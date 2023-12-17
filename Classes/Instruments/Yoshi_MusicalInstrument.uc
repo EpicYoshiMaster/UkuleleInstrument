@@ -1,4 +1,5 @@
 class Yoshi_MusicalInstrument extends Object
+    dependsOn(Yoshi_NoteManager)
     abstract;
 
 struct InstrumentPitchSet {
@@ -21,22 +22,31 @@ var int MinOctave;
 var int MaxOctave;
 var int DefaultOctave;
 
-static function AudioComponent PlayNote(Actor Player, String Note) {
+static function AudioComponent PlayNote(Actor Player, String Note, SoundSettings Settings) {
     local int i;
     local AudioComponent Component;
-    for(i = 0; i < default.Pitches.Length; i++) {
-        if(default.Pitches[i].Name ~= Note) {
-            Component = Player.CreateAudioComponent(default.Pitches[i].Sound,true,true);
+    local SoundCue InstrumentSound;
 
-            if(Component != None) {
-                Component.bAutoDestroy = true;
-            }
+    //Don't play sounds while paused
+    if(class'WorldInfo'.static.GetWorldInfo().Pauser != None) return None;
 
-            return Component;
-        }
+    i = default.Pitches.Find('Name', Note);
+
+    if(i == INDEX_NONE) return None;
+
+    InstrumentSound = default.Pitches[i].Sound;
+
+    if(SoundNodeAttenuation(InstrumentSound.FirstNode) != None) {
+        SoundNodeAttenuation(InstrumentSound.FirstNode).DistanceAlgorithm = Settings.DistanceAlgorithm;
     }
 
-    return None;
+    Component = Player.CreateAudioComponent(InstrumentSound,true,true);
+
+    if(Component != None) {
+        Component.bAutoDestroy = true;
+    }
+
+    return Component;
 }
 
 static function array< class<Yoshi_MusicalInstrument> > GetAllInstruments() {

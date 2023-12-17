@@ -18,13 +18,31 @@ struct SongNote {
     var AudioComponent Component;
 };
 
+struct SoundSettings {
+    var SoundDistanceModel DistanceAlgorithm;
+};
+
 var Yoshi_UkuleleInstrument_GameMod GameMod;
 
 var array<PlayerNoteSet> NoteSets;
 var array<SongNote> SongNotes;
 
+var SoundSettings Settings;
+
 function Init(Yoshi_UkuleleInstrument_GameMod MyGameMod) {
     GameMod = MyGameMod;
+}
+
+function AudioComponent PlayAudio(Actor Player, class<Yoshi_MusicalInstrument> Instrument, string NoteName) {
+    local AudioComponent AudioComp;
+
+    AudioComp = Instrument.static.PlayNote(Player, NoteName, Settings);
+
+    if(AudioComp != None) {
+        AudioComp.VolumeMultiplier = (Hat_Player(Player) != None) ? GameMod.Settings.PlayerVolume : GameMod.Settings.OnlineVolume;
+    }
+
+    return AudioComp;
 }
 
 function PlayNote(Actor Player, class<Yoshi_MusicalInstrument> Instrument, string KeyName, string NoteName) {
@@ -33,9 +51,10 @@ function PlayNote(Actor Player, class<Yoshi_MusicalInstrument> Instrument, strin
     local int i;
 
     NewNote.KeyName = KeyName;
-    NewNote.Component = Instrument.static.PlayNote(Player, NoteName);
+    NewNote.Component = PlayAudio(Player, Instrument, NoteName);
 
     if(!Instrument.default.CanReleaseNote) return;
+    if(NewNote.Component == None) return;
 
     for(i = 0; i < NoteSets.Length; i++) {
         if(NoteSets[i].Player == Player) {
@@ -95,7 +114,7 @@ function PlaySongNote(Actor Player, class<Yoshi_MusicalInstrument> Instrument, s
 
     NewNote.Duration = Duration;
     NewNote.FadeOutTime = Instrument.default.FadeOutTime;
-    NewNote.Component = Instrument.static.PlayNote(Player, NoteName);
+    NewNote.Component = PlayAudio(Player, Instrument, NoteName);
 
     if(Hold && NewNote.Component != None) {
         SongNotes.AddItem(NewNote);
@@ -177,4 +196,9 @@ function GetDebugStrings(out array<string> PrintStrings) {
 
         PrintStrings.AddItem(s);
     }
+}
+
+defaultproperties
+{
+    Settings=(DistanceAlgorithm=ATTENUATION_Logarithmic)
 }

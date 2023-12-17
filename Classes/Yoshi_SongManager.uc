@@ -1,12 +1,15 @@
 class Yoshi_SongManager extends Object;
 
 const MinimumSongTime = 1.5;
-const OnlineSongNotesLimit = 250;
+const MessageLimit = 32650;
+const PackageTimeout = 1.5f;
 
 const DelimiterLayer = "&";
 const DelimiterInstrument = "=";
 const DelimiterNote = "/";
 const DelimiterPitch = "|";
+const DelimiterMessage = "$";
+const DelimiterCount = "%";
 
 const SavedSongsPath = "MusicalInstruments/EmoteSong.Song";
 const SongFormatVersion = 3;
@@ -51,7 +54,23 @@ var int SkipLayer;
 var SongPlaybackStatus PlayerSong; //Holds the player's saved song
 var array<SongPlaybackStatus> OPSongs; //Holds all active Emote Songs being played
 
+struct SongFragment {
+    var int Index;
+    var string Message;
+};
+
+struct SongFragmentSet {
+    var array<SongFragment> Fragments;
+    var Actor Player;
+    var int MessageCount;
+    var float TimeRemaining;
+};
+
+var array<SongFragmentSet> SongFragments;
+
 var array<SavedSong> SavedSongs;
+
+var int NumDebugPackages;
 
 function Init(Yoshi_UkuleleInstrument_GameMod MyGameMod) {
     local int SongIndex;
@@ -154,6 +173,15 @@ function Tick(float delta) {
             i--;
         }
     }
+
+    for(i = 0; i < SongFragments.Length; i++) {
+        SongFragments[i].TimeRemaining -= delta;
+
+        if(SongFragments[i].TimeRemaining <= 0.0) {
+            SongFragments.Remove(i, 1);
+            i--;
+        }
+    }
 }
 
 //Updates for the current tick, plays all associated notes, and updates the last played index for each layer
@@ -222,41 +250,120 @@ function float GetFurthestSongTimestamp(SongPlaybackStatus Song) {
 }
 
 function SendOnlineSongPackage() {
-    local string SongPackage;
+    local array<string> Fragments;
     local int i, j, NoteCount;
 
     NoteCount = GetPlayerSongNoteCount();
 
     if(!GameMod.Settings.OnlineSongs) return;
-    if(NoteCount > OnlineSongNotesLimit || NoteCount <= 0) return;
+    if(NoteCount <= 0) return;
+
+    Fragments.AddItem("");
 
     for(i = 0; i < PlayerSong.Layers.Length; i++) {
         //Layer&Layer&...
         if(i > 0) {
-            SongPackage $= DelimiterLayer;
+            Concatenate(Fragments, DelimiterLayer);
         }
 
         //ShortName=Note/Note/Note/...
-
-        SongPackage $= PlayerSong.Layers[i].Instrument.default.ShortName $ DelimiterInstrument;
+        Concatenate(Fragments, PlayerSong.Layers[i].Instrument.default.ShortName $ DelimiterInstrument);
 
         for(j = 0; j < PlayerSong.Layers[i].Notes.Length; j++) {
             if(j > 0) {
-                SongPackage $= DelimiterNote;
+                Concatenate(Fragments, DelimiterNote);
             }
 
             //Pitch|Time|Duration
             //           (Optional)
 
-            SongPackage $= PlayerSong.Layers[i].Notes[j].Pitch $ DelimiterPitch $ int(PlayerSong.Layers[i].Notes[j].Timestamp * 1000);
+            Concatenate(Fragments, PlayerSong.Layers[i].Notes[j].Pitch $ DelimiterPitch $ int(PlayerSong.Layers[i].Notes[j].Timestamp * 1000));
 
             if(PlayerSong.Layers[i].Notes[j].Hold)  {
-                SongPackage $= DelimiterPitch $ int(PlayerSong.Layers[i].Notes[j].Duration * 1000);
+                Concatenate(Fragments, DelimiterPitch $ int(PlayerSong.Layers[i].Notes[j].Duration * 1000));
             }
         }
     }
 
-    GameMod.Sync(SongPackage, class'YoshiPrivate_MusicalInstruments_Commands'.const.YoshiMusicSong);
+    for(i = 0; i < Fragments.Length; i++) {
+        Fragments[i] = i $ DelimiterCount $ Fragments.Length $ DelimiterMessage $ Fragments[i];
+        GameMod.Print("Fragment " $ i $ DelimiterCount $ Fragments.Length $ ":" $ Len(Fragments[i]));
+        GameMod.Sync(Fragments[i], class'YoshiPrivate_MusicalInstruments_Commands'.const.YoshiMusicSong);
+    }
+}
+
+function Concatenate(out array<string> Fragments, coerce string NewMessage) {
+    if(Len(Fragments[Fragments.Length - 1]) + Len(NewMessage) > MessageLimit) {
+        Fragments.AddItem(NewMessage);
+    }
+    else {
+        Fragments[Fragments.Length - 1] $= NewMessage;
+    }
+}
+
+function ReceiveSongFragment(string Command, Actor Player) {
+    local SongFragment NewFragment;
+    local SongFragmentSet NewFragmentSet;
+    local string FinalMessage;
+    local array<string> OuterSplit, Capacity;
+    local int MessageIndex, MessageCount, i, j, CurrMessageIndex;
+
+    OuterSplit = SplitString(Command, DelimiterMessage);
+
+    if(OuterSplit.Length < 2) return;
+
+    Capacity = SplitString(OuterSplit[0], DelimiterCount);
+
+    if(Capacity.Length < 2) return;
+
+    MessageIndex = int(Capacity[0]);
+    MessageCount = int(Capacity[1]);
+
+    i = SongFragments.Find('Player', Player);
+
+    if(i == INDEX_NONE) {
+        NewFragmentSet.Player = Player;
+        NewFragmentSet.TimeRemaining = PackageTimeout;
+        NewFragmentSet.MessageCount = MessageCount;
+
+        SongFragments.AddItem(NewFragmentSet);
+
+        i = SongFragments.Length - 1;
+    }
+
+    if(SongFragments[i].MessageCount != MessageCount) return;
+
+    for(j = 0; j < SongFragments[i].Fragments.Length; j++) {
+        CurrMessageIndex = SongFragments[i].Fragments[j].Index;
+
+        if(MessageIndex < CurrMessageIndex) break;
+    }
+
+    NewFragment.Index = CurrMessageIndex;
+    NewFragment.Message = OuterSplit[1];
+
+    SongFragments[i].Fragments.InsertItem(j, NewFragment);
+
+    if(SongFragments[i].Fragments.Length >= SongFragments[i].MessageCount) {
+        FinalMessage = ProcessSongFragments(SongFragments[i]);
+        
+        PlayOnlineSong(FinalMessage, Player);
+
+        SongFragments.Remove(i, 1);
+    }
+}
+
+function string ProcessSongFragments(SongFragmentSet Message) {
+    local int i;
+    local string FinalString;
+
+    FinalString = "";
+
+    for(i = 0; i < Message.Fragments.Length; i++) {
+        FinalString $= Message.Fragments[i].Message;
+    }
+
+    return FinalString;
 }
 
 function SongPlaybackStatus DecodeOnlineSongPackage(string SongPackage, Actor Player) {
@@ -346,7 +453,7 @@ function DeleteSong(int RemoveSongIndex) {
 }
 
 function GetDebugStrings(out array<string> PrintStrings) {
-    local int i;
+    local int i, j;
     local string s;
     
     PrintStrings.AddItem("Playing Player Song:" @ PlayingPlayerSong $ ", Skip Layer:" @ SkipLayer $ ", # OP Songs:" @ OPSongs.Length);
@@ -364,9 +471,28 @@ function GetDebugStrings(out array<string> PrintStrings) {
     }
 
     PrintStrings.AddItem(s);
+
+    for(i = 0; i < SongFragments.Length; i++) {
+        s = "[" $ i $ "]" @ SongFragments[i].Player $ "(" $ SongFragments[i].MessageCount $ ", " $ SongFragments[i].TimeRemaining $ ")" $ ": [";
+        
+        for(j = 0; j < SongFragments[i].Fragments.Length; j++) {
+            if(j > 0) {
+                s $= ", ";
+            }
+
+            s $= "(" $ SongFragments[i].Fragments[j].Index;
+            s $= "," @ SongFragments[i].Fragments[j].Message $ ")";
+        }
+
+        s $= "]";
+
+        PrintStrings.AddItem(s);
+    }
 }
 
 defaultproperties
 {
     PlayerSong=(SongName="Song 1")
+
+    NumDebugPackages=20
 }

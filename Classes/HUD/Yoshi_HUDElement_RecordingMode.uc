@@ -36,12 +36,22 @@ function bool OnPressRight(HUD H, bool menu, bool release)
 }
 
 static function string FormatTime(int Seconds) {
+	local int Hours;
 	local int Minutes;
 
+	Hours = Seconds / 3600;
+	
+	Seconds = Seconds % 3600;
 	Minutes = Seconds / 60;
+
 	Seconds = Seconds % 60;
 
-	return Minutes $ ":" $ ((Seconds < 10) ? "0" : "") $ Seconds;
+	if(Hours > 0) {
+		return Hours $ ":" $ ((Minutes < 10) ? "0" : "") $ Minutes $ ":" $ ((Seconds < 10) ? "0" : "") $ Seconds;
+	}
+	else {
+		return Minutes $ ":" $ ((Seconds < 10) ? "0" : "") $ Seconds;
+	}	
 }
 
 function bool Render(HUD H)
@@ -99,7 +109,7 @@ function bool Render(HUD H)
 		s @= "(" $ RecordManager.RecordLayer.Instrument.default.InstrumentName @ "-" @ RecordManager.RecordLayer.Notes.Length @ "Notes)";
 
 		DisplayStrings.AddItem(s);
-		DisplayStrings.AddItem("Total Song Notes: " $ SongManager.GetPlayerSongNoteCount() $ " | Time Elapsed: " $ FormatTime(int(SongManager.PlayerSong.Time)) $ "/" $ FormatTime(RecordManager.MaxRecordingLength));
+		DisplayStrings.AddItem("Total Song Notes: " $ SongManager.GetPlayerSongNoteCount() $ " | Time Elapsed: " $ FormatTime(int(SongManager.PlayerSong.Time)));
 		DisplayStrings.AddItem("Press " $ CurrentLayout.ControlRecording $ " to End Recording");
 	}
 

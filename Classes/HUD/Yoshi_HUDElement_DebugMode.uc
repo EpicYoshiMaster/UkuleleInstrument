@@ -60,9 +60,9 @@ function bool Render(HUD H)
 
 defaultproperties
 {
-    NoteDebug=true
+    NoteDebug=false
     SongDebug=true
-    KeyDebug=true
-    RecordDebug=true
-    InstrumentDebug=true
+    KeyDebug=false
+    RecordDebug=false
+    InstrumentDebug=false
 }
