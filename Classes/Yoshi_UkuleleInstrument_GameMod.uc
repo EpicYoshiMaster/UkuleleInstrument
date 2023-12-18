@@ -23,7 +23,7 @@ class Yoshi_UkuleleInstrument_GameMod extends GameMod
 // The Awesome Soundfont Offerings:
 // Strings - Harp, Bass
 // Brass - French Horn
-// Woodwinds - Bassoon, Alto Sax, Bari Sax
+// Woodwinds - Alto Sax, Bari Sax
 
 // BONUS IDEAS (not required but if there's extra time)
 // Woodwinds - Clarinet, Flute
