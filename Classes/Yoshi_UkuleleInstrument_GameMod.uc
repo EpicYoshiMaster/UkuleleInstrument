@@ -23,8 +23,7 @@ class Yoshi_UkuleleInstrument_GameMod extends GameMod
 // The Awesome Soundfont Offerings:
 // Strings - Harp, Bass
 // Brass - French Horn
-// Woodwinds - Oboe, Bassoon, Alto Sax, Bari Sax
-// Percussion - Steel Drums
+// Woodwinds - Bassoon, Alto Sax, Bari Sax
 
 // BONUS IDEAS (not required but if there's extra time)
 // Woodwinds - Clarinet, Flute
@@ -98,7 +97,7 @@ event OnModLoaded() {
 }
 
 delegate int SortInstruments(class<Yoshi_MusicalInstrument> InstrumentA, class<Yoshi_MusicalInstrument> InstrumentB) {
-    return InstrumentA.default.InstrumentID < InstrumentB.default.InstrumentID ? 0 : -1;
+    return InstrumentA.default.InstrumentID <= InstrumentB.default.InstrumentID ? 0 : -1;
 }
 
 function class<Hat_Collectible_Skin> GetCurrentSkin(Hat_PlayerController PC) {
@@ -225,12 +224,30 @@ event OnOnlinePartyCommand(string Command, Name CommandChannel, Hat_GhostPartyPl
 }
 
 event Tick(float delta) {
-    RecordManager.Tick(delta);
-    InstrumentManager.Tick(delta);
-    KeyManager.Tick(delta);
-    NoteManager.Tick(delta);
-    SongManager.Tick(delta);
-    Metronome.Tick(delta);
+    if(RecordManager != None) {
+        RecordManager.Tick(delta);
+    }
+
+    if(InstrumentManager != None) {
+        InstrumentManager.Tick(delta);
+    }
+    
+    if(KeyManager != None) {
+        KeyManager.Tick(delta);
+    }
+    
+    if(NoteManager != None) {
+        NoteManager.Tick(delta);
+    }
+    
+    if(SongManager != None) {
+        SongManager.Tick(delta);
+    }
+
+
+    if(Metronome != None) {
+        Metronome.Tick(delta);
+    }
 }
 
 //
