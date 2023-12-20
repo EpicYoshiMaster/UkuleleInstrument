@@ -1,4 +1,4 @@
-//Credit to LMMS's NEScaline set to a 12.5%
+//Credit to LMMS's NEScaline, Pulse Wave set to 12.5%
 class Yoshi_MusicalInstrument_PulseWaveOneTwoFive extends Yoshi_MusicalInstrument;
 
 defaultproperties
