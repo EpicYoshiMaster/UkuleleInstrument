@@ -10,7 +10,10 @@ class Yoshi_UkuleleInstrument_GameMod extends GameMod
 // Menu :3
 // - Suitable Temporary Materials/Icons
 // - Tooltips
-// - Change Tabs
+
+//Visual Representation
+//Maybe similar to Garageband
+//Show Always, Show On Change, Show Never
 
 // Volume Settings
 // We need assets. Please.
@@ -20,17 +23,11 @@ class Yoshi_UkuleleInstrument_GameMod extends GameMod
 // trailer
 // Fix No Instrument -> Play Song -> Instrument Anim Post Song
 
-// The Awesome Soundfont Offerings:
-// Strings - Harp, Bass
-// Brass - French Horn
-// Woodwinds - Alto Sax, Bari Sax
-
-// BONUS IDEAS (not required but if there's extra time)
-// Woodwinds - Clarinet, Flute
-// Brass - Tuba
-// Keyboard - More Piano Flavors
-
-// Maybe more random chaotic ones
+// Remaining Instruments:
+// The Big Soundfont:
+// Harp, Bass, French Horn, Alto Sax, Bari Sax
+// Not Big Soundfont:
+// Clarinet, Flute, Tuba, ???, ???
 
 var int Octave; //Certain instruments have more than one set of ranges
 var int PitchShift;

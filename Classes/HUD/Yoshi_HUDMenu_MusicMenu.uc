@@ -1,11 +1,16 @@
 class Yoshi_HUDMenu_MusicMenu extends Hat_HUDMenu;
 
+const MainTabIndex = 0;
+const SettingsTabIndex = 1;
+
 var string TestText;
 var TextAlign TextAlignment;
 var Font TextFont;
 
 var array<string> PrintStrings;
 var Yoshi_UkuleleInstrument_GameMod GameMod;
+
+var int TabIndex;
 
 var array<Yoshi_HUDPanel> Panels;
 var Yoshi_HUDPanel HoveredPanel;
@@ -43,6 +48,10 @@ function OnCloseHUD(HUD H)
 	Super.OnCloseHUD(H);
 }
 
+function SetTabIndex(int NewTabIndex) {
+    TabIndex = NewTabIndex;
+}
+
 function bool Tick(HUD H, float delta)
 {
     local int i;
@@ -50,7 +59,9 @@ function bool Tick(HUD H, float delta)
     if (!Super.Tick(H, delta)) return false;
 
     for(i = 0; i < Panels.Length; i++) {
-        Panels[i].Tick(H, delta);
+        if(Panels[i].InCurrentTab(TabIndex)) {
+            Panels[i].Tick(H, delta);
+        }
     }
 	
     return true;
@@ -69,7 +80,7 @@ function bool Render(HUD H)
     MousePos = GetMousePos(H);
 
     if(HoveredPanel != None) {
-        if(HoveredPanel.IsPointContainedWithin(H, MousePos)) {
+        if(HoveredPanel.InCurrentTab(TabIndex) && HoveredPanel.IsPointContainedWithin(H, MousePos)) {
             HoveredPanel.RenderUpdateHover(H);
         }
         else {
@@ -79,6 +90,8 @@ function bool Render(HUD H)
     }
 
     for(i = 0; i < Panels.Length; i++) {
+        if(!Panels[i].InCurrentTab(TabIndex)) continue;
+
         if(HoveredPanel == None && Panels[i].IsPointContainedWithin(H, MousePos)) {
             HoveredPanel = Panels[i];
 
@@ -176,6 +189,7 @@ defaultproperties
         ScaleX=0.4
         ScaleY=0.4
         TextScale=0.0007
+        TabIndex=MainTabIndex
     End Object
     Panels.Add(SelectInstrumentPanel);
 
@@ -185,6 +199,7 @@ defaultproperties
         ScaleX=0.175
         ScaleY=0.2
         TextScale=0.0007
+        TabIndex=MainTabIndex
     End Object
     Panels.Add(MetronomePanel);
 
@@ -194,6 +209,7 @@ defaultproperties
         ScaleX=0.8
         ScaleY=0.3
         TextScale=0.0007
+        TabIndex=SettingsTabIndex
     End Object 
     Panels.Add(KeybindsPanel);
 
@@ -203,17 +219,29 @@ defaultproperties
         ScaleX=0.175
         ScaleY=0.15
         TextScale=0.0007
+        TabIndex=SettingsTabIndex
     End Object
     Panels.Add(SettingsPanel);
 
     Begin Object Class=Yoshi_HUDPanel_Songs Name=SongsPanel
         TopLeftX=0.725
-        TopLeftY=0.1
+        TopLeftY=0.35
         ScaleX=0.15
         ScaleY=0.15
         TextScale=0.0007
+        TabIndex=MainTabIndex
     End Object
     Panels.Add(SongsPanel);
+
+    Begin Object Class=Yoshi_HUDPanel_Tabs Name=TabsPanel
+        TopLeftX=0.725
+        TopLeftY=0.1
+        ScaleX=0.15
+        ScaleY=0.05
+        TextScale=0.0007
+        TabIndex=-1
+    End Object
+    Panels.Add(TabsPanel);
 
     TextAlignment=TextAlign_TopLeft
 
