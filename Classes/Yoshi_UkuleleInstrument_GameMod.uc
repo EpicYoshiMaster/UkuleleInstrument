@@ -22,10 +22,11 @@ class Yoshi_UkuleleInstrument_GameMod extends GameMod
 // Polish and cleanup to menu and panels
 // trailer
 // Fix No Instrument -> Play Song -> Instrument Anim Post Song
+// Fix Scrollbar giving up bug
 
 // Remaining Instruments:
 // The Big Soundfont:
-// Harp, Bass, French Horn, Alto Sax, Bari Sax
+// Harp, Bass, French Horn, Alto Sax
 // Not Big Soundfont:
 // Clarinet, Flute, Tuba, ???, ???
 
