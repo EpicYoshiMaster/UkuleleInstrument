@@ -95,6 +95,8 @@ function Render(HUD H) {
     local WorldInfo wi;
     local float posx, posy, marginSize, itemSize, ScrollbarSizeX;
 
+    HoverIndex = INDEX_NONE;
+
     wi = class'WorldInfo'.static.GetWorldInfo();
 
     posx = CurTopLeftX * H.Canvas.ClipX;
@@ -149,15 +151,10 @@ function RenderIconBox(WorldInfo wi, HUD H, int i, int rowIndex, float centerX, 
         hoverSize = itemSize * (1 + PulseScaleAmount);
 
         if(IsPointInSpace(H, Menu.GetMousePos(H), centerX, centerY, hoverSize, hoverSize, false)) {
-
-            if(HoverIndex != INDEX_NONE) {
-                IconMaterials[HoverIndex].SetScalarParameterValue('Hover', 0.0);
-            }
-
             HoverIndex = i;
-
-            IconMaterials[HoverIndex].SetScalarParameterValue('Hover', 1.0);
         }
+
+        IconMaterials[i].SetScalarParameterValue('Hover', (HoverIndex == i) ? 1.0 : 0.0);
     }
 
     pulseItemSize = GetPulseSize(itemSize, wi.TimeSeconds, rowIndex);

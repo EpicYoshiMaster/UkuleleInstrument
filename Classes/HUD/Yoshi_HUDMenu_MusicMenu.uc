@@ -1,7 +1,9 @@
-class Yoshi_HUDMenu_MusicMenu extends Hat_HUDMenu;
+class Yoshi_HUDMenu_MusicMenu extends Yoshi_HUDMenu_SharedCoop;
 
 const MainTabIndex = 0;
 const SettingsTabIndex = 1;
+
+var bool bEnabled;
 
 var string TestText;
 var TextAlign TextAlignment;
@@ -32,6 +34,23 @@ function OnOpenHUD(HUD H, optional String command)
     }
 }
 
+function SetEnabled(HUD H, bool bValue) {
+    local Hat_HUD MouseHUD;
+
+    bEnabled = bValue;
+    RequiresMouse = bEnabled;
+
+    MouseHUD = GetKeyboardHUD(H);
+
+    if(MouseHUD != None) {
+        SetMouseHidden(MouseHUD, !bEnabled);
+    }
+}
+
+function bool IsEnabled() {
+    return bEnabled;
+}
+
 function OnCloseHUD(HUD H)
 {
     local int i;
@@ -57,6 +76,7 @@ function bool Tick(HUD H, float delta)
     local int i;
 
     if (!Super.Tick(H, delta)) return false;
+    if(!bEnabled) return true;
 
     for(i = 0; i < Panels.Length; i++) {
         if(Panels[i].InCurrentTab(TabIndex)) {
@@ -76,6 +96,7 @@ function bool Render(HUD H)
     //local string s;
 
 	if (!Super.Render(H)) return false;
+    if(!bEnabled) return true;
 
     MousePos = GetMousePos(H);
 
@@ -100,7 +121,6 @@ function bool Render(HUD H)
 
         Panels[i].Render(H);
     }
-
 
     /*
 
@@ -159,6 +179,8 @@ function DrawTextTest(HUD H, string Text, float posx, float posy, float ScaleX, 
 }
 
 function bool OnInputKey(string KeyName, EInputEvent EventType) {
+    if(!bEnabled) return false;
+
     if(HoveredPanel != None) {
         return HoveredPanel.OnInputKey(KeyName, EventType);
     }
@@ -168,17 +190,17 @@ function bool OnInputKey(string KeyName, EInputEvent EventType) {
 
 function bool DisablesMovement(HUD H)
 {
-    return true;
+    return bEnabled;
 }
 
 function bool DisablesCameraMovement(HUD H)
 {
-    return true;
+    return bEnabled;
 }
 
 function bool DisablePause(HUD H)
 {
-	return true;
+	return bEnabled;
 }
 
 defaultproperties
@@ -205,7 +227,7 @@ defaultproperties
 
     Begin Object Class=Yoshi_HUDPanel_Keybinds Name=KeybindsPanel
         TopLeftX=0.05
-        TopLeftY=0.65
+        TopLeftY=0.6
         ScaleX=0.8
         ScaleY=0.3
         TextScale=0.0007
@@ -243,9 +265,20 @@ defaultproperties
     End Object
     Panels.Add(TabsPanel);
 
+    Begin Object Class=Yoshi_HUDPanel_PianoRoll Name=PianoRollPanel
+        TopLeftX=0.05
+        TopLeftY=0.65
+        ScaleX=0.8
+        ScaleY=0.3
+        TextScale=0.0007
+        TabIndex=MainTabIndex
+    End Object
+    Panels.Add(PianoRollPanel);
+
     TextAlignment=TextAlign_TopLeft
 
-    RequiresMouse=true
+    RequiresMouse=false
+    SharedInCoop=true
 
     TestText="{My Test Text} <3"
     TextFont = Font'Yoshi_UkuleleMats_Content.Fonts.LatoBlackStandard'

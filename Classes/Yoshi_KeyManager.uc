@@ -74,6 +74,7 @@ function Tick(float delta) {
 
         if(KeyboardPlayer != None) {
             class'Yoshi_InputPack'.static.AttachController(ReceivedNativeInputKey, KeyboardPlayer, InputPack);
+            GameMod.OnAssignPlayerController(KeyboardPlayer);
         }
     }
 
@@ -121,27 +122,27 @@ function bool SetKeybind(string NewValue, KeybindType KeyType, optional int Inde
     //Check if it's the same, if not, set the bind on our copy
     switch(KeyType) {
         case Keybind_Note:
-            if(NewValue ~= CurrentLayout.Notes[Index]) return false;
+            if(NewValue ~= CurrentLayout.Notes[Index]) return true;
             CurrentLayout.Notes[Index] = NewValue;
             break;
         case Keybind_FlatNote:
-            if(NewValue ~= CurrentLayout.FlatNotes[Index]) return false;
+            if(NewValue ~= CurrentLayout.FlatNotes[Index]) return true;
             CurrentLayout.FlatNotes[Index] = NewValue;
             break;
         case Keybind_Modifier:
-            if(NewValue ~= CurrentLayout.Modifiers[Index]) return false;
+            if(NewValue ~= CurrentLayout.Modifiers[Index]) return true;
             CurrentLayout.Modifiers[Index] = NewValue;
             break;
         case Keybind_ToggleMenu:
-            if(NewValue ~= CurrentLayout.ToggleMenu) return false;
+            if(NewValue ~= CurrentLayout.ToggleMenu) return true;
             CurrentLayout.ToggleMenu = NewValue;
             break;
         case Keybind_ControlRecording:
-            if(NewValue ~= CurrentLayout.ControlRecording) return false;
+            if(NewValue ~= CurrentLayout.ControlRecording) return true;
             CurrentLayout.ControlRecording = NewValue;
             break;
         case Keybind_HoldPitchDown:
-            if(NewValue ~= CurrentLayout.HoldPitchDown) return false;
+            if(NewValue ~= CurrentLayout.HoldPitchDown) return true;
             CurrentLayout.HoldPitchDown = NewValue;
             break;
     }
@@ -237,7 +238,7 @@ function bool ReceivedNativeInputKey(int ControllerId, name Key, EInputEvent Eve
     if(EventType == IE_Released) {
         for(i = 0; i < CurrentLayout.Notes.Length; i++) {
             if(CurrentLayout.Notes[i] ~= KeyName) {
-                return GameMod.OnReleaseNoteKey(Hat_Player(PC.Pawn), i, KeyName);
+                if(GameMod.OnReleaseNoteKey(Hat_Player(PC.Pawn), i, KeyName)) return true;
             }
         }
 
@@ -245,7 +246,7 @@ function bool ReceivedNativeInputKey(int ControllerId, name Key, EInputEvent Eve
 
         for(i = 0; i < CurrentLayout.FlatNotes.Length; i++) {
             if(CurrentLayout.FlatNotes[i] ~= KeyName) {
-                return GameMod.OnReleaseNoteKey(Hat_Player(PC.Pawn), i, KeyName);
+                if(GameMod.OnReleaseNoteKey(Hat_Player(PC.Pawn), i, KeyName)) return true;
             }
         }
     }
@@ -253,40 +254,45 @@ function bool ReceivedNativeInputKey(int ControllerId, name Key, EInputEvent Eve
     if(EventType != IE_Pressed) return false;
 
     if(KeyName ~= CurrentLayout.ToggleMenu) {
-        return GameMod.OnPressToggleMenu(PC);
+        if(GameMod.OnPressToggleMenu(PC)) return true;
     }
 
     if(KeyName ~= CurrentLayout.ControlRecording) {
-        return GameMod.OnPressControlRecording(PC);
+        if(GameMod.OnPressControlRecording(PC)) return true;
     }
 
     //Need a smarter solution here
     if(Key == 'Hat_Player_Attack') {
-        return GameMod.OnPressPlayerAttack(PC);
+        if(GameMod.OnPressPlayerAttack(PC)) return true;
     }
 
     if(KeyName ~= CurrentLayout.Modifiers[OctaveDown]) {
         GameMod.ChangeOctave(-1);
     }
-    else if(KeyName ~= CurrentLayout.Modifiers[OctaveUp]) {
+    
+    if(KeyName ~= CurrentLayout.Modifiers[OctaveUp]) {
         GameMod.ChangeOctave(1);
     }
-    else if(KeyName ~= CurrentLayout.Modifiers[PitchDown]) {
+    
+    if(KeyName ~= CurrentLayout.Modifiers[PitchDown]) {
         GameMod.ChangePitchShift(-1);
     }
-    else if(KeyName ~= CurrentLayout.Modifiers[PitchUp]) {
+    
+    if(KeyName ~= CurrentLayout.Modifiers[PitchUp]) {
         GameMod.ChangePitchShift(1);
     }
-    else if(KeyName ~= CurrentLayout.Modifiers[StepDown]) {
+    
+    if(KeyName ~= CurrentLayout.Modifiers[StepDown]) {
         GameMod.ChangeStepShift(-1);
     }
-    else if(KeyName ~= CurrentLayout.Modifiers[StepUp]) {
+    
+    if(KeyName ~= CurrentLayout.Modifiers[StepUp]) {
         GameMod.ChangeStepShift(1);
     }
 
     for(i = 0; i < CurrentLayout.Notes.Length; i++) {
         if(CurrentLayout.Notes[i] ~= KeyName) {
-            return GameMod.OnPressNoteKey(Hat_Player(PC.Pawn), i, IsHoldingPitchDownKey, KeyName);
+            if(GameMod.OnPressNoteKey(Hat_Player(PC.Pawn), i, IsHoldingPitchDownKey, KeyName)) return true;
         }
     }
 
@@ -294,7 +300,7 @@ function bool ReceivedNativeInputKey(int ControllerId, name Key, EInputEvent Eve
 
     for(i = 0; i < CurrentLayout.FlatNotes.Length; i++) {
         if(CurrentLayout.FlatNotes[i] ~= KeyName) {
-            return GameMod.OnPressNoteKey(Hat_Player(PC.Pawn), i, true, KeyName);
+            if(GameMod.OnPressNoteKey(Hat_Player(PC.Pawn), i, true, KeyName)) return true;
         }
     }
 

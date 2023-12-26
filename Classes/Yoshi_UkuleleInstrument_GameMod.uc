@@ -11,18 +11,18 @@ class Yoshi_UkuleleInstrument_GameMod extends GameMod
 // - Suitable Temporary Materials/Icons
 // - Tooltips
 
-//Visual Representation
-//Maybe similar to Garageband
+//Rework Keybinds Menu to be a Vertical Submenu (probably)
+
+//Make Piano Display Dynamic And Actually Do Stuff
 //Show Always, Show On Change, Show Never
 
 // Volume Settings
 // We need assets. Please.
-// Rebinding
 // Text Inputs
 // Polish and cleanup to menu and panels
 // trailer
 // Fix No Instrument -> Play Song -> Instrument Anim Post Song
-// Fix Scrollbar giving up bug
+// Find thy coop menu bugs
 
 // Remaining Instruments:
 // The Big Soundfont:
@@ -150,6 +150,12 @@ function HookOnlinePlayerSpawn(Hat_GhostPartyPlayer GPP) {
 }
 
 event OnModUnloaded() {
+    
+    if(MenuHUD != None) {
+        Hat_HUD(Hat_PlayerController(class'Hat_PlayerController'.static.GetPlayer1()).MyHUD).CloseHUD(class'Yoshi_HUDMenu_MusicMenu', true);
+        MenuHUD = None;
+    }
+
     KeyManager.Unload();
     Metronome.Stop();
 
@@ -284,6 +290,11 @@ function OnCountIn(Hat_Player Ply) {
 //
 // Key Manager Events
 //
+function OnAssignPlayerController(Hat_PlayerController PC) {
+    if(MenuHUD == None) {
+        MenuHUD = Yoshi_HUDMenu_MusicMenu(Hat_HUD(PC.MyHUD).OpenHUD(class'Yoshi_HUDMenu_MusicMenu'));
+    }
+}
 
 function bool OnPressNoteKey(Hat_Player Ply, int Index, bool HoldingPitchDownKey, string KeyName) {
     local string NoteName;
@@ -325,20 +336,16 @@ function bool OnPressControlRecording(Hat_PlayerController PC) {
 }
 
 function bool OnPressToggleMenu(Hat_PlayerController PC) {
-    if(MenuHUD == None) {
-        MenuHUD = Yoshi_HUDMenu_MusicMenu(Hat_HUD(PC.MyHUD).OpenHUD(class'Yoshi_HUDMenu_MusicMenu'));
-    }
-    else {
-        Hat_HUD(PC.MyHUD).CloseHUD(class'Yoshi_HUDMenu_MusicMenu', true);
-        MenuHUD = None;
-    }
+    if(MenuHUD == None) return false;
+
+    MenuHUD.SetEnabled(PC.MyHUD, !MenuHUD.IsEnabled());
 
     return false;
 }
 
 function bool OnPressPlayerAttack(Hat_PlayerController PC) {
     if(SongManager.IsPlayingPlayerSong()) return true;
-    if(MenuHUD != None) return false;
+    if(MenuHUD.IsEnabled()) return false;
 
     InstrumentManager.RemoveInstrument(PC.Pawn, PC.Pawn.Mesh);
 
@@ -433,10 +440,10 @@ function string GetNote(int KeyIndex, bool HoldingPitchDownKey) {
 
     FinalNoteOffset = (OctaveOffset * NumWesternNotes) + Scales[Settings.ScaleIndex].NoteOffsets[OffsetIndex] + (HoldingPitchDownKey ? -1 : 0) + PitchShift;
 
-    return GetNoteName(FinalNoteOffset);
+    return GetNoteName(FinalNoteOffset, Octave);
 }
 
-function string GetNoteName(int NoteOffset) {
+static function string GetNoteName(int NoteOffset, int CurrentOctave) {
     local string NoteName;
     local int OctaveOffset;
 
@@ -467,7 +474,7 @@ function string GetNoteName(int NoteOffset) {
         case 11: NoteName = "B"; break;
     }
 
-    return NoteName $ (Octave + OctaveOffset);
+    return NoteName $ (CurrentOctave + OctaveOffset);
 }
 
 //

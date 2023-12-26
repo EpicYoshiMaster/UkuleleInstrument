@@ -56,3 +56,4 @@ defaultproperties
 {
     MakeSquare=true
     ButtonMaterial=Material'Yoshi_UkuleleMats_Content.Materials.DropDown_Component_Mat'
+}

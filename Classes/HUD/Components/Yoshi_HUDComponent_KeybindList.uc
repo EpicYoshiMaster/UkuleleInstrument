@@ -1,15 +1,14 @@
-class Yoshi_HUDComponent_KeybindList extends Yoshi_HUDComponent_Parent;
+class Yoshi_HUDComponent_KeybindList extends Yoshi_HUDComponent_Parent
+    dependsOn(Yoshi_KeyManager);
 
 var Texture2D KeyboardButton;
 var Texture2D KeyboardButtonWide;
+var KeybindType KeybindListType;
+var int IndexOffset;
 
 var Color TextColor;
 
 var float MarginSpaceX;
-
-//Display a row of keybinds, pressing on one allows you to rebind that key to something else
-
-//Pulsate the row
 
 var array<string> KeyNames;
 
@@ -19,19 +18,23 @@ struct ShortKeyName {
 };
 
 var const array<ShortKeyName> ShortKeyNames;
-var const array<string> BannedKeys; //We should not bind to any of these
 var const array<string> ModifierKeys;
 
 var float PulseScaleAmount;
 var float PulsePeriod;
 var float MaximumOffset;
 
+var int HoverIndex;
+var bool RecordingKey;
+
 var delegate<GetStringArrayValueDelegate> GetValue;
-var delegate<SetStringArrayValueDelegate> SetValue;
+var delegate<SetKeybindValueDelegate> SetValue;
+var delegate<RemoveKeybindValueDelegate> RemoveValue;
 
 //These delegates should be overridden with functions to link together external data
 delegate array<string> GetStringArrayValueDelegate();
-delegate SetStringArrayValueDelegate(array<string> NewValue);
+delegate bool SetKeybindValueDelegate(string NewValue, KeybindType KeyType, optional int Index = -1);
+delegate bool RemoveKeybindValueDelegate(KeybindType KeyType, optional int Index = -1);
 
 function Init(Yoshi_UkuleleInstrument_GameMod MyGameMod, Yoshi_HUDMenu_MusicMenu MyMenu, optional Yoshi_HUDComponent MyOwner) {
     Super.Init(MyGameMod, MyMenu, MyOwner);
@@ -63,7 +66,9 @@ function RenderKeys(HUD H, float PosX, float PosY, float SpaceX, float SpaceY) {
     local int i;
     local WorldInfo wi;
 
-    
+    if(!RecordingKey) {
+        HoverIndex = INDEX_NONE;
+    }
 
     KeyNames = GetValue();
 
@@ -86,13 +91,17 @@ function RenderKeys(HUD H, float PosX, float PosY, float SpaceX, float SpaceY) {
     for(i = 0; i < KeyNames.Length; i++) {
         pulseKeySize = GetPulseSize(keySize, wi.TimeSeconds, i);
 
-        RenderButtonCenter(H, KeyNames[i], posx, posy, pulseKeySize);
+        if(!RecordingKey && IsPointInSpace(H, Menu.GetMousePos(H), posx, posy, keySize, keySize, false)) {
+            HoverIndex = i;
+        }
+
+        RenderButtonCenter(H, i, KeyNames[i], posx, posy, pulseKeySize);
 
         posx += keySize + marginSize;
     }
 }
 
-function RenderButtonCenter(HUD H, string ButtonName, float posx, float posy, float size) {
+function RenderButtonCenter(HUD H, int i, string ButtonName, float posx, float posy, float size) {
     local float TextSize, buttonscalemax;
 	local string KeyName;
 	local Texture2D KeyTexture;
@@ -106,6 +115,10 @@ function RenderButtonCenter(HUD H, string ButtonName, float posx, float posy, fl
 	KeyTexture = GetButtonIcon(ButtonName);
 
     buttonscale = (KeyTexture == default.KeyboardButton) ? vect(1.1,1.1,0) : vect(1.1,0.7359,0);
+
+    if(RecordingKey && i == HoverIndex) {
+        ButtonName = "[...]";
+    }
 
 	class'Hat_HUDElement'.static.DrawCenter(H, posx, posy, size*buttonscale.X, size*buttonscale.Y, KeyTexture);
 	buttonscalemax = FMax(buttonscale.X, buttonscale.Y);
@@ -162,6 +175,55 @@ static function float GetTextScale(string msg)
 	return s;
 }
 
+function bool OnClick(EInputEvent EventType)
+{
+    if(Super.OnClick(EventType)) return true;
+    if(EventType != IE_Pressed) return false;
+    if(HoverIndex == INDEX_NONE) return false;
+
+    if(RecordingKey) return false;
+
+    RecordingKey = true;
+
+    return true;
+}
+
+function bool OnAltClick(EInputEvent EventType) {
+    if(Super.OnAltClick(EventType)) return true;
+    if(EventType != IE_Pressed) return false;
+
+    if(RecordingKey) {
+        RecordingKey = false;
+        return true;
+    }
+    else if(HoverIndex != INDEX_NONE) {
+        RemoveValue(KeybindListType, HoverIndex + IndexOffset);
+        return true;
+    }
+
+    return false;
+}
+
+function bool OnInputKey(string KeyName, EInputEvent EventType) {
+    if(Super.OnInputKey(KeyName, EventType)) return true;
+    if(EventType != IE_Pressed) return false;
+    if(!RecordingKey) return false;
+
+    if(SetValue(KeyName, KeybindListType, HoverIndex + IndexOffset)) {
+        RecordingKey = false;
+        return true;
+    }
+
+    return false;
+}
+
+function bool IsPointContainedWithin(HUD H, Vector2D TargetPos) {
+    //Steal thine control
+    if(RecordingKey) return true;
+
+    return Super.IsPointContainedWithin(H, TargetPos);
+}
+
 defaultproperties
 {
     KeyboardButton=Texture2D'HatInTime_Hud.Buttons.Keyboard.button_keyboard';
@@ -198,7 +260,7 @@ defaultproperties
     ShortKeyNames.Add((Key="eight", ShortKey="8"))
     ShortKeyNames.Add((Key="nine", ShortKey="9"))
 
-    ModifierKeys=("Space", "BackSpace", "Control", "Shift", "CapsLock", "Tab", "Alt")
+    ModifierKeys=("Space", "BackSpace", "Control", "Shift", "CapsLock", "Tab", "Alt", "Enter")
 
     PulsePeriod=4.0
     MaximumOffset=6

@@ -28,27 +28,36 @@ function Init(Yoshi_UkuleleInstrument_GameMod MyGameMod, Yoshi_HUDMenu_MusicMenu
     KeyboardLayout.SetValue = MyGameMod.SetKeyboardLayoutIndex;
 
     KeyList.GetValue = GetKeyValues;
-    //KeyList.SetValue = SetKeyValues;
+    KeyList.SetValue = KeyManager.SetKeybind;
+    KeyList.RemoveValue = KeyManager.RemoveKeybind;
 
     FlatKeyList.GetValue = GetFlatKeyValues;
-    //FlatKeyList.SetValue = SetFlatKeyValues;
+    FlatKeyList.SetValue = KeyManager.SetKeybind;
+    FlatKeyList.RemoveValue = KeyManager.RemoveKeybind;
 
     MenuKeyList.GetValue = GetMenuKeyValues;
-    ///MenuKeyList.SetValue = SetMenuKeyValues;
+    MenuKeyList.SetValue = KeyManager.SetKeybind;
+    MenuKeyList.RemoveValue = KeyManager.RemoveKeybind;
 
     EndRecordingKeyList.GetValue = GetEndRecordingKeyValues;
+    EndRecordingKeyList.SetValue = KeyManager.SetKeybind;
+    EndRecordingKeyList.RemoveValue = KeyManager.RemoveKeybind;
 
     ShiftKeyList.GetValue = GetShiftKeyValues;
-    //ShiftKeyList.SetValue = SetShiftKeyValues;
+    ShiftKeyList.SetValue = KeyManager.SetKeybind;
+    ShiftKeyList.RemoveValue = KeyManager.RemoveKeybind;
 
     OctaveKeyList.GetValue = GetOctaveKeyValues;
-    //OctaveKeyList.SetValue = SetOctaveKeyValues;
+    OctaveKeyList.SetValue = KeyManager.SetKeybind;
+    OctaveKeyList.RemoveValue = KeyManager.RemoveKeybind;
 
     PitchKeyList.GetValue = GetPitchKeyValues;
-    //PitchKeyList.SetValue = SetPitchKeyValues;
+    PitchKeyList.SetValue = KeyManager.SetKeybind;
+    PitchKeyList.RemoveValue = KeyManager.RemoveKeybind;
 
     StepKeyList.GetValue = GetStepKeyValues;
-    //StepKeyList.SetValue = SetStepKeyValues;
+    StepKeyList.SetValue = KeyManager.SetKeybind;
+    StepKeyList.RemoveValue = KeyManager.RemoveKeybind;
 
     Super.Init(MyGameMod, MyMenu, MyOwner);
 }
@@ -79,15 +88,15 @@ function array<string> GetKeyValues() {
     return KeyManager.GetCurrentLayout().Notes;
 }
 
-function SetKeyValues(array<string> NewValues) {
-
+function bool SetKeyValues(string NewValue, optional int Index = -1) {
+    return KeyManager.SetKeybind(NewValue, Keybind_Note, Index);
 }
 
 function array<string> GetFlatKeyValues() {
     return KeyManager.GetCurrentLayout().FlatNotes;
 }
 
-function SetFlatKeyValues(array<string> NewValues) {
+function bool SetFlatKeyValues(array<string> NewValues) {
 
 }
 
@@ -161,6 +170,7 @@ defaultproperties
         ScaleX=0.13333
         ScaleY=0.275
         Text="Toggle Menu"
+        KeybindListType=Keybind_ToggleMenu
     End Object
     MenuKeyList=MenuKeybind
     Components.Add(MenuKeybind);
@@ -171,6 +181,7 @@ defaultproperties
         ScaleX=0.13333
         ScaleY=0.275
         Text="End Recording"
+        KeybindListType=Keybind_ControlRecording
     End Object
     EndRecordingKeyList=EndRecordingKeybind
     Components.Add(EndRecordingKeybind);
@@ -181,6 +192,7 @@ defaultproperties
         ScaleX=0.13333
         ScaleY=0.275
         Text="Hold Pitch Down"
+        KeybindListType=Keybind_HoldPitchDown
     End Object
     ShiftKeyList=ShiftKeybind
     Components.Add(ShiftKeybind);
@@ -191,6 +203,7 @@ defaultproperties
         ScaleX=0.2
         ScaleY=0.275
         Text="Octave Down/Up"
+        KeybindListType=Keybind_Modifier
     End Object
     OctaveKeyList=OctaveKeybind
     Components.Add(OctaveKeybind);
@@ -201,6 +214,8 @@ defaultproperties
         ScaleX=0.2
         ScaleY=0.275
         Text="Pitch Down/Up"
+        KeybindListType=Keybind_Modifier
+        IndexOffset=2
     End Object
     PitchKeyList=PitchKeybind
     Components.Add(PitchKeybind);
@@ -211,6 +226,8 @@ defaultproperties
         ScaleX=0.2
         ScaleY=0.275
         Text="Step Down/Up"
+        KeybindListType=Keybind_Modifier
+        IndexOffset=4
     End Object
     StepKeyList=StepKeybind
     Components.Add(StepKeybind);
@@ -258,6 +275,7 @@ defaultproperties
         TopLeftY=0.35
         ScaleX=0.8
         ScaleY=0.275
+        KeybindListType=Keybind_FlatNote
     End Object
     FlatKeyList=FlatKeybindList
     Components.Add(FlatKeybindList);
@@ -267,6 +285,7 @@ defaultproperties
         TopLeftY=0.65
         ScaleX=0.8
         ScaleY=0.275
+        KeybindListType=Keybind_Note
     End Object
     KeyList=KeybindList
     Components.Add(KeybindList);

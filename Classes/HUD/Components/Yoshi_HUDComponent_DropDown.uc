@@ -68,7 +68,7 @@ function Render(HUD H) {
     HoverOption = INDEX_NONE;
 
     //Currently Selected Item
-    OptionText = (SelectedOption != INDEX_NONE ? Options[SelectedOption] : "Null");
+    OptionText = ((SelectedOption != INDEX_NONE && SelectedOption < Options.Length) ? Options[SelectedOption] : "Null");
 
     class'Hat_HUDMenu'.static.DrawTopLeft(H, posx, posy, ItemSizeX, ItemSizeY, OptionMat);
     DrawTextInBox(H, OptionText, posx, posy, ItemSizeX, ItemSizeY, TextColor, ElementAlign_Center);
