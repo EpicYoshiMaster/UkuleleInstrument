@@ -21,6 +21,10 @@ var float SongStartTime;
 var bool bUpdating;
 var bool DidCountIn;
 
+var array< delegate<OnBeatDelegate> > BeatDelegates;
+
+delegate OnBeatDelegate(int CurrMeasureNumber, int CurrBeatNumber);
+
 function Init(Yoshi_UkuleleInstrument_GameMod MyGameMod) {
     GameMod = MyGameMod;
 }
@@ -73,6 +77,7 @@ function SetBeatLength(float NewBPM, float NewBeatsInMeasure) {
 
 function Tick(float delta) {
     local bool DidBeat;
+    local delegate<OnBeatDelegate> BeatDelegate;
 
     if(!bUpdating) return;
 
@@ -90,6 +95,10 @@ function Tick(float delta) {
             MeasureNumber++;
             BeatNumber -= BeatsInMeasure;
         }
+
+        foreach BeatDelegates(BeatDelegate) {
+            BeatDelegate(BeatNumber, MeasureNumber);
+        }
     }
 
     if(!DidCountIn && MeasureNumber > 1) {
@@ -102,6 +111,12 @@ function Tick(float delta) {
     }
 }
 
+function float GetBeatProgress() {
+    if(BeatLength == 0.0) return 0.0;
+
+    return (SongPosition - LastBeat) / BeatLength;
+}
+
 function PlayBeatSound(bool isBig) {
     if(Player == None) return;
     if(Hat_PlayerController(Player.Controller).IsPaused()) return;
@@ -111,6 +126,22 @@ function PlayBeatSound(bool isBig) {
     }
     else if(SmallBeat != None) {
         Player.PlaySound(SmallBeat);
+    }
+}
+
+function RegisterDelegate(delegate<OnBeatDelegate> NewBeatDelegate) {
+    if(BeatDelegates.Find(NewBeatDelegate) == INDEX_NONE) {
+        BeatDelegates.AddItem(NewBeatDelegate);
+    }
+}
+
+function RemoveDelegate(delegate<OnBeatDelegate> RemoveDelegate) {
+    local int Index;
+
+    Index = BeatDelegates.Find(RemoveDelegate);
+
+    if(Index != INDEX_NONE) {
+        BeatDelegates.Remove(Index, 1);
     }
 }
 

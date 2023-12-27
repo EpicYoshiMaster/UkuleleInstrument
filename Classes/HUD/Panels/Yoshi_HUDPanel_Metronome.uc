@@ -7,6 +7,14 @@ var Yoshi_HUDComponent_Toggle Toggle;
 var Yoshi_HUDComponent_NumberEntry BPMEntry;
 var Yoshi_HUDComponent_NumberEntry BeatsEntry;
 
+var Material MetronomeMaterial;
+var MaterialInstanceConstant MetronomeMat;
+
+var float MetronomeSize;
+var float MetronomeAngle;
+
+var bool ReverseBeat;
+
 function Init(Yoshi_UkuleleInstrument_GameMod MyGameMod, Yoshi_HUDMenu_MusicMenu MyMenu, optional Yoshi_HUDComponent MyOwner) {
     Metronome = MyGameMod.Metronome;
     KeyManager = MyGameMod.KeyManager;
@@ -18,7 +26,45 @@ function Init(Yoshi_UkuleleInstrument_GameMod MyGameMod, Yoshi_HUDMenu_MusicMenu
     BeatsEntry.GetValue = GetBeatsInMeasure;
     BeatsEntry.SetValue = MyGameMod.SetBeatsInMeasure;
 
+    Metronome.RegisterDelegate(OnBeat);
+
+    MetronomeMat = new class'MaterialInstanceConstant';
+    MetronomeMat.SetParent(MetronomeMaterial);
+
     Super.Init(MyGameMod, MyMenu, MyOwner);
+}
+
+function Close() {
+    Metronome.RemoveDelegate(OnBeat);
+
+    Super.Close();
+}
+
+function OnBeat(int MeasureNumber, int BeatNumber) {
+    ReverseBeat = !ReverseBeat;
+}
+
+function Render(HUD H) {
+    local float Alpha;
+
+    Super.Render(H);
+
+    H.Canvas.SetDrawColor(255,255,255,255);
+
+    if(Metronome.IsUpdating()) {
+        Alpha = Metronome.GetBeatProgress();
+        //Alpha = class'Hat_Math'.static.InterpolationAnticipate(0.0, 1.0, Alpha,,false);
+
+        MetronomeMat.SetScalarParameterValue('Value', ReverseBeat ? 1.0f - Alpha : Alpha);
+    }
+    else {
+        MetronomeMat.SetScalarParameterValue('Value', 0.0);
+        ReverseBeat = false;
+    }
+
+    MetronomeMat.SetScalarParameterValue('RotateAmount', MetronomeAngle);
+
+    class'Hat_HUDMenu'.static.DrawBottomCenter(H, CurTopLeftX * H.Canvas.ClipX + CurScaleX * H.Canvas.ClipX, CurTopLeftY * H.Canvas.ClipY, MetronomeSize * CurScaleX * H.Canvas.ClipX, MetronomeSize * CurScaleX * H.Canvas.ClipX, MetronomeMat);
 }
 
 delegate bool GetUpdating() {
@@ -137,4 +183,8 @@ defaultproperties
     End Object
     BPMEntry=MetronomeBPM
     Components.Add(MetronomeBPM);
+
+    MetronomeMaterial=Material'Yoshi_UkuleleMats_Content.Materials.Metronome_Pendulum_Mat'
+    MetronomeSize=0.5
+    MetronomeAngle=70
 }
