@@ -26,7 +26,7 @@ class Yoshi_UkuleleInstrument_GameMod extends GameMod
 
 // Remaining Instruments:
 // The Big Soundfont:
-// Harp, Bass, French Horn, Alto Sax
+// Bass, French Horn, Alto Sax
 // Not Big Soundfont:
 // Clarinet, Flute, Tuba, ???, ???
 
@@ -105,7 +105,9 @@ function class<Hat_Collectible_Skin> GetCurrentSkin(Hat_PlayerController PC) {
 function OnLoadoutChanged(PlayerController Controller, Object Loadout, Object BackpackItem) {
     if(Hat_PlayerController(Controller) != KeyManager.GetPC()) return;
 
-    InstrumentManager.UpdateInstrument(Controller.Pawn, Controller.Pawn.Mesh, CurrentInstrument, GetCurrentSkin(Hat_PlayerController(Controller)));
+    if(InstrumentManager.PlayerEquipped) {
+        InstrumentManager.UpdateInstrument(Controller.Pawn, Controller.Pawn.Mesh, CurrentInstrument, GetCurrentSkin(Hat_PlayerController(Controller)));
+    }
 }
 
 function AssignPlayerInstrument() {

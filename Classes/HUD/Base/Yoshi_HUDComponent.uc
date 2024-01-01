@@ -147,6 +147,10 @@ static function bool IsPointInSpaceTopLeft(HUD H, Vector2D TargetPos, float Star
     return true;
 }
 
+static function bool IsPointInSpaceTopCenter(HUD H, Vector2D TargetPos, float StartX, float StartY, float SizeX, float SizeY, bool applyclips) {
+    return IsPointInSpaceTopLeft(H, TargetPos, StartX - (0.5 * SizeX), StartY, SizeX, SizeY, applyclips);
+}
+
 static function bool IsPointInSpaceTopRight(HUD H, Vector2D TargetPos, float StartX, float StartY, float SizeX, float SizeY, bool applyclips) {
     return IsPointInSpaceTopLeft(H, TargetPos, StartX - SizeX, StartY, SizeX, SizeY, applyclips);
 }

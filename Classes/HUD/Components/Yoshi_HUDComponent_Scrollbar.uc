@@ -1,5 +1,7 @@
 class Yoshi_HUDComponent_Scrollbar extends Yoshi_HUDComponent;
 
+//Scroll Up/Down support
+
 enum ScrollbarState {
     Scrollbar_None,
     Scrollbar_Top,
@@ -25,6 +27,8 @@ var Material TopButtonMaterial;
 var Material BarMaterial;
 var Material TrackMaterial;
 var Material BottomButtonMaterial;
+
+var float BorderRatio; //X-dimensions
 
 var delegate<GetFloatValueDelegate> GetScrollWindowSize;
 var delegate<GetFloatValueDelegate> GetContentSize;
@@ -57,7 +61,7 @@ function RenderStopHover(HUD H) {
 }
 
 function Render(HUD H) {
-    local float posx, posy, sizeX, sizeY, ButtonSizeY, BarSize, RemainingSize, MaximumPosition;
+    local float posx, posy, sizeX, sizeY, ButtonSizeY, BarSize, RemainingSize, MaximumPosition, BorderSize;
     local float ScrollOffset;
 
     Super.Render(H);
@@ -77,49 +81,55 @@ function Render(HUD H) {
 
     H.Canvas.SetDrawColor(255,255,255,255);
 
-    posx = CurTopLeftX * H.Canvas.ClipX;
+    BorderSize = BorderRatio * CurScaleX * H.Canvas.ClipX;
+
+    posx = (CurTopLeftX + 0.5 * CurScaleX) * H.Canvas.ClipX;
     posy = CurTopLeftY * H.Canvas.ClipY;
     sizeX = CurScaleX * H.Canvas.ClipX;
     sizeY = CurScaleY * H.Canvas.ClipY;
     RemainingSize = sizeY;
-    ButtonSizeY = ButtonScale * sizeY;
+
+    ButtonSizeY = ButtonScale * sizeY - (2 * BorderSize);
+
+    //Render the Track (over the full space)
+    class'Hat_HUDMenu'.static.DrawTopCenter(H, posx, posy, sizeX, sizeY, Track);
 
     if(ScrollState != Scrollbar_Drag) {
         ScrollState = Scrollbar_None;
     }
 
+    posy += BorderSize;
+    sizeX -= 2 * BorderSize;
+
     //Render the Top Button
     if(ButtonSizeY > 0) {
-        if(ScrollState != Scrollbar_Drag && IsPointInSpaceTopLeft(H, Menu.GetMousePos(H), posx, posy, sizeX, ButtonSizeY, false)) {
+        if(ScrollState != Scrollbar_Drag && IsPointInSpaceTopCenter(H, Menu.GetMousePos(H), posx, posy, sizeX, ButtonSizeY, false)) {
             ScrollState = Scrollbar_Top;
         }
 
         TopButton.SetScalarParameterValue('Hover', (ScrollState == Scrollbar_Top ? 1.0 : 0.0));
 
-        class'Hat_HUDMenu'.static.DrawTopLeft(H, posx, posy, sizeX, ButtonSizeY, TopButton);
+        class'Hat_HUDMenu'.static.DrawTopCenter(H, posx, posy, sizeX, ButtonSizeY, TopButton);
 
-        RemainingSize -= ButtonSizeY;
+        RemainingSize -= ButtonSizeY + (2 * BorderSize);
     }
 
     //Render the Bottom Button
     if(ButtonSizeY > 0) {
-        posy += sizeY - ButtonSizeY;
+        posy = ((CurTopLeftY + CurScaleY) * H.Canvas.ClipY) - ButtonSizeY - (BorderSize);
 
-        if(ScrollState != Scrollbar_Drag && IsPointInSpaceTopLeft(H, Menu.GetMousePos(H), posx, posy, sizeX, ButtonSizeY, false)) {
+        if(ScrollState != Scrollbar_Drag && IsPointInSpaceTopCenter(H, Menu.GetMousePos(H), posx, posy, sizeX, ButtonSizeY, false)) {
             ScrollState = Scrollbar_Bottom;
         }
 
         BottomButton.SetScalarParameterValue('Hover', (ScrollState == Scrollbar_Bottom ? 1.0 : 0.0));
 
-        class'Hat_HUDMenu'.static.DrawTopLeft(H, posx, posy, sizeX, ButtonSizeY, BottomButton);
+        class'Hat_HUDMenu'.static.DrawTopCenter(H, posx, posy, sizeX, ButtonSizeY, BottomButton);
 
-        RemainingSize -= ButtonSizeY;
+        RemainingSize -= ButtonSizeY + (2 * BorderSize);
     }
 
-    posy = (CurTopLeftY * H.Canvas.ClipY) + ButtonSizeY;
-
-    //Render the Track
-    class'Hat_HUDMenu'.static.DrawTopLeft(H, posx, posy, sizeX, RemainingSize, Track);
+    posy = (CurTopLeftY * H.Canvas.ClipY) + ButtonSizeY + (2 * BorderSize);
 
     BarSize = (ScrollWindowSize / ContentSize) * RemainingSize;
 
@@ -142,14 +152,14 @@ function Render(HUD H) {
     if(ScrollState != Scrollbar_Drag) {
         MouseOffsetToBar = Menu.GetMousePos(H).Y - posy;
 
-        if(IsPointInSpaceTopLeft(H, Menu.GetMousePos(H), posx, posy, sizeX, BarSize, false)) {
+        if(IsPointInSpaceTopCenter(H, Menu.GetMousePos(H), posx, posy, sizeX, BarSize, false)) {
             ScrollState = Scrollbar_Hover;
         }
     }
 
     Bar.SetScalarParameterValue('Hover', ((ScrollState == Scrollbar_Hover || ScrollState == Scrollbar_Drag) ? 1.0 : 0.0));
 
-    class'Hat_HUDMenu'.static.DrawTopLeft(H, posx, posy, sizeX, BarSize, Bar);
+    class'Hat_HUDMenu'.static.DrawTopCenter(H, posx, posy, sizeX, BarSize, Bar);
 }
 
 function bool OnClick(EInputEvent EventType)
@@ -194,9 +204,10 @@ defaultproperties
 {
     ButtonScale=0.05
     ButtonScrollAmount=0.1;
+    BorderRatio=0.1
 
-    TopButtonMaterial=Material'Yoshi_UkuleleMats_Content.Materials.DropDown_Component_Mat'
-    BarMaterial=Material'Yoshi_UkuleleMats_Content.Materials.DropDown_Component_Mat'
-    TrackMaterial=Material'HatInTime_Levels.Materials.Black'
-    BottomButtonMaterial=Material'Yoshi_UkuleleMats_Content.Materials.DropDown_Component_Mat'
+    TopButtonMaterial=Material'Yoshi_UkuleleMats_Content.Materials.Scrollbar_Component_Thumb_Mat'
+    BarMaterial=Material'Yoshi_UkuleleMats_Content.Materials.Scrollbar_Component_Thumb_Mat'
+    TrackMaterial=Material'Yoshi_UkuleleMats_Content.Materials.Scrollbar_Component_Track_Mat'
+    BottomButtonMaterial=Material'Yoshi_UkuleleMats_Content.Materials.Scrollbar_Component_Thumb_Mat'
 }
