@@ -28,7 +28,7 @@ class Yoshi_UkuleleInstrument_GameMod extends GameMod
 // The Big Soundfont:
 // Bass, French Horn, Alto Sax
 // Not Big Soundfont:
-// Clarinet, Flute, Tuba, ???, ???
+// Clarinet, Flute, Tuba, ???
 
 var int Octave; //Certain instruments have more than one set of ranges
 var int PitchShift;
