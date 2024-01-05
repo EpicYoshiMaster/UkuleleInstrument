@@ -26,7 +26,7 @@ class Yoshi_UkuleleInstrument_GameMod extends GameMod
 
 // Remaining Instruments:
 // The Big Soundfont:
-// Bass, French Horn, Alto Sax
+// Bass, Alto Sax
 // Not Big Soundfont:
 // Clarinet, Flute, Tuba, ???
 
