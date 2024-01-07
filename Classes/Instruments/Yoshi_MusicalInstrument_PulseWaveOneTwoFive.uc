@@ -4,7 +4,7 @@ class Yoshi_MusicalInstrument_PulseWaveOneTwoFive extends Yoshi_MusicalInstrumen
 defaultproperties
 {
     InstrumentID=18
-    InstrumentName="12.5% Pulse Wave"
+    InstrumentName="Pulse Wave"
     ShortName="PW1"
 
     CanReleaseNote=true

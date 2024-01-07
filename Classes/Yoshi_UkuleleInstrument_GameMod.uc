@@ -26,9 +26,26 @@ class Yoshi_UkuleleInstrument_GameMod extends GameMod
 
 // Remaining Instruments:
 // The Big Soundfont:
-// Bass, Alto Sax
+// Bass
 // Not Big Soundfont:
-// Flute, Tuba, ???
+// Flute, Tuba, Cello/Viola
+
+// Piano, Synth Lead
+
+// Ukulele, Acoustic Guitar, Electric Guitar
+
+// Violin, Harp, (Cello/Viola), (Bass)
+
+// Clarinet, Bassoon, Oboe, Recorder, Bari Sax, Tenor Sax, Pan Flute, Alto Sax, (Flute)
+
+// Steel Drums, Drum Set, Marimba, Glockenspiel
+
+// Trumpet, Euphonium, French Horn, (Tuba)
+
+// Accordion
+
+// Theremin, Pulse Wave, Triangle Wave
+
 
 var int Octave; //Certain instruments have more than one set of ranges
 var int PitchShift;
