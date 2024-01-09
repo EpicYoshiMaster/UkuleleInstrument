@@ -1,3 +1,4 @@
+//Credit to the Symphonic Sounds Soundfont - Euphonium
 class Yoshi_MusicalInstrument_Euphonium extends Yoshi_MusicalInstrument;
 
 defaultproperties

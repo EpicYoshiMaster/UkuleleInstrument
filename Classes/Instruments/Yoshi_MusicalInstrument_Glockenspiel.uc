@@ -1,3 +1,4 @@
+//Credit to Ethan Winer
 class Yoshi_MusicalInstrument_Glockenspiel extends Yoshi_MusicalInstrument;
 
 defaultproperties

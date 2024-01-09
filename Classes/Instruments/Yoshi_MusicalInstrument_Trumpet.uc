@@ -1,4 +1,4 @@
-//
+//Credit to the Trumpet Collection Soundfont on Musical Artifacts - Trumpet (Tyrone)
 class Yoshi_MusicalInstrument_Trumpet extends Yoshi_MusicalInstrument;
 
 defaultproperties

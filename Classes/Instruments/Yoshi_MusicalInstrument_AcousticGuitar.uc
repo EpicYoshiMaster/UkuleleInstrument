@@ -1,3 +1,4 @@
+//Credit to roberto@zenvoid.org (FreePats) - Spanish Classic Guitar
 class Yoshi_MusicalInstrument_AcousticGuitar extends Yoshi_MusicalInstrument;
 
 defaultproperties

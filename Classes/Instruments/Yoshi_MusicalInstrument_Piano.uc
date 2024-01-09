@@ -1,4 +1,4 @@
-//Credit to Doka
+//Credit to Doka, sourced from the MuseScore Piano
 class Yoshi_MusicalInstrument_Piano extends Yoshi_MusicalInstrument;
 
 defaultproperties

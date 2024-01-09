@@ -1,3 +1,4 @@
+//Credit to FreePats - FSBS Electric Guitar Clean #2 (Jazz)
 class Yoshi_MusicalInstrument_ElectricGuitar extends Yoshi_MusicalInstrument;
 
 defaultproperties

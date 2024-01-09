@@ -1,3 +1,4 @@
+//Credit to Malton Paredes - Milton Pan Flute
 class Yoshi_MusicalInstrument_PanFlute extends Yoshi_MusicalInstrument;
 
 defaultproperties
