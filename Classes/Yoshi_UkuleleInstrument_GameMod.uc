@@ -25,22 +25,19 @@ class Yoshi_UkuleleInstrument_GameMod extends GameMod
 // Find thy coop menu bugs
 
 // Remaining Instruments:
-// The Big Soundfont:
-// Bass
-// Not Big Soundfont:
-// Flute, Cello/Viola
+// Flute, ???
 
 // Piano, Synth Lead
 
 // Ukulele, Acoustic Guitar, Electric Guitar
 
-// Violin, Harp, (Cello/Viola), (Bass)
+// Violin, Harp, Cello, (Bass)
 
 // Clarinet, Bassoon, Oboe, Recorder, Bari Sax, Tenor Sax, Pan Flute, Alto Sax, (Flute)
 
 // Steel Drums, Drum Set, Marimba, Glockenspiel
 
-// Trumpet, Euphonium, French Horn, (Tuba)
+// Trumpet, Euphonium, French Horn, Tuba
 
 // Accordion
 
@@ -145,6 +142,7 @@ function AssignPlayerInstrument() {
             CurrentInstrument = AllInstruments[i];
             Octave = CurrentInstrument.default.DefaultOctave;
             PitchShift = 0;
+            StepShift = 0;
 
             if(InstrumentManager.PlayerEquipped) {
                 InstrumentManager.UpdateInstrument(Player, Player.Mesh, CurrentInstrument, GetCurrentSkin(Hat_PlayerController(Player.Controller)));
