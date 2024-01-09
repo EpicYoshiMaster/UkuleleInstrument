@@ -28,7 +28,7 @@ class Yoshi_UkuleleInstrument_GameMod extends GameMod
 // The Big Soundfont:
 // Bass
 // Not Big Soundfont:
-// Flute, Tuba, Cello/Viola
+// Flute, Cello/Viola
 
 // Piano, Synth Lead
 

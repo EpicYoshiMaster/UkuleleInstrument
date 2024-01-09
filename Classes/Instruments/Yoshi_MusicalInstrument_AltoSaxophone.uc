@@ -1,3 +1,4 @@
+//Credit to Alex's GM Soundfont Version 1.3 on Musical Artifacts - Alto Sax
 class Yoshi_MusicalInstrument_AltoSaxophone extends Yoshi_MusicalInstrument;
 
 defaultproperties
