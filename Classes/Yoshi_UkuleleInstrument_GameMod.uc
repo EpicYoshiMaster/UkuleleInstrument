@@ -25,15 +25,15 @@ class Yoshi_UkuleleInstrument_GameMod extends GameMod
 // Find thy coop menu bugs
 
 // Remaining Instruments:
-// Flute, ???
+// ???
 
-// Piano, Synth Lead
+// Piano, Honky-Tonk Piano, Synth Lead
 
 // Ukulele, Acoustic Guitar, Electric Guitar
 
-// Violin, Harp, Cello, (Bass)
+// Violin, Harp, Cello
 
-// Clarinet, Bassoon, Oboe, Recorder, Bari Sax, Tenor Sax, Pan Flute, Alto Sax, (Flute)
+// Clarinet, Bassoon, Oboe, Recorder, Bari Sax, Tenor Sax, Pan Flute, Alto Sax
 
 // Steel Drums, Drum Set, Marimba, Glockenspiel
 

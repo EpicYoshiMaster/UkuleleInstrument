@@ -14,7 +14,7 @@ defaultproperties
 
     MinOctave=2 //C2
     MaxOctave=6 //E7
-    DefaultOctave=3
+    DefaultOctave=4
     
     Pitches.Add((Name = "C2", Sound = SoundCue'Yoshi_MusicalUkulele_Content.PianoSoundCues.Piano_c2'));
     Pitches.Add((Name = "Db2", Sound = SoundCue'Yoshi_MusicalUkulele_Content.PianoSoundCues.Piano_db2'));
