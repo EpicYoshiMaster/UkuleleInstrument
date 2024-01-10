@@ -24,9 +24,6 @@ class Yoshi_UkuleleInstrument_GameMod extends GameMod
 // Fix No Instrument -> Play Song -> Instrument Anim Post Song
 // Find thy coop menu bugs
 
-// Remaining Instruments:
-// ???
-
 // Piano, Honky-Tonk Piano, Synth Lead
 
 // Ukulele, Acoustic Guitar, Electric Guitar
@@ -39,7 +36,7 @@ class Yoshi_UkuleleInstrument_GameMod extends GameMod
 
 // Trumpet, Euphonium, French Horn, Tuba
 
-// Accordion
+// Accordion, Music Box
 
 // Theremin, Pulse Wave, Triangle Wave
 
