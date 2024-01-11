@@ -3,7 +3,7 @@ class Yoshi_MusicalInstrument_Oboe extends Yoshi_MusicalInstrument;
 
 defaultproperties
 {
-    InstrumentID=15
+    InstrumentID=14
     InstrumentName="Oboe"
     ShortName="Obe"
 

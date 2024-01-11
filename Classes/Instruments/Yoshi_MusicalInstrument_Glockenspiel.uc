@@ -3,7 +3,7 @@ class Yoshi_MusicalInstrument_Glockenspiel extends Yoshi_MusicalInstrument;
 
 defaultproperties
 {
-    InstrumentID=3
+    InstrumentID=21
     InstrumentName="Glockenspiel"
     ShortName="Gsp"
 

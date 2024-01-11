@@ -3,7 +3,7 @@ class Yoshi_MusicalInstrument_Tuba extends Yoshi_MusicalInstrument;
 
 defaultproperties
 {
-    InstrumentID=26
+    InstrumentID=8
     InstrumentName="Tuba"
     ShortName="Tba"
 

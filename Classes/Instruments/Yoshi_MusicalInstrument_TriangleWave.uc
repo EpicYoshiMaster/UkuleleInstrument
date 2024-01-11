@@ -3,7 +3,7 @@ class Yoshi_MusicalInstrument_TriangleWave extends Yoshi_MusicalInstrument;
 
 defaultproperties
 {
-    InstrumentID=19
+    InstrumentID=28
     InstrumentName="Triangle Wave"
     ShortName="TrW"
 

@@ -1,9 +1,9 @@
-//Credit to Malton Paredes - Milton Pan Flute
+//Credit to Malton Paredes (Musical Artifacts) - Milton Pan Flute
 class Yoshi_MusicalInstrument_PanFlute extends Yoshi_MusicalInstrument;
 
 defaultproperties
 {
-    InstrumentID=8
+    InstrumentID=10
     InstrumentName="Pan Flute"
     ShortName="PFl"
 

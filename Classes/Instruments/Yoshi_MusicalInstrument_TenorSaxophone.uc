@@ -3,7 +3,7 @@ class Yoshi_MusicalInstrument_TenorSaxophone extends Yoshi_MusicalInstrument;
 
 defaultproperties
 {
-    InstrumentID=11
+    InstrumentID=12
     InstrumentName="Tenor Saxophone"
     ShortName="TSx"
 

@@ -3,7 +3,7 @@ class Yoshi_MusicalInstrument_Accordion extends Yoshi_MusicalInstrument;
 
 defaultproperties
 {
-    InstrumentID=14
+    InstrumentID=24
     InstrumentName="Accordion"
     ShortName="Acd"
 

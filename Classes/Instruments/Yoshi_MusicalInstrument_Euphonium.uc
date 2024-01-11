@@ -3,7 +3,7 @@ class Yoshi_MusicalInstrument_Euphonium extends Yoshi_MusicalInstrument;
 
 defaultproperties
 {
-    InstrumentID=7
+    InstrumentID=6
     InstrumentName="Euphonium"
     ShortName="Epm"
 

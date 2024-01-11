@@ -3,7 +3,7 @@ class Yoshi_MusicalInstrument_Marimba extends Yoshi_MusicalInstrument;
 
 defaultproperties
 {
-    InstrumentID=5
+    InstrumentID=20
     InstrumentName="Marimba"
     ShortName="Mba"
 

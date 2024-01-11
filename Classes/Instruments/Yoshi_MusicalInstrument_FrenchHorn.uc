@@ -3,7 +3,7 @@ class Yoshi_MusicalInstrument_FrenchHorn extends Yoshi_MusicalInstrument;
 
 defaultproperties
 {
-    InstrumentID=23
+    InstrumentID=7
     InstrumentName="French Horn"
     ShortName="FHn"
 

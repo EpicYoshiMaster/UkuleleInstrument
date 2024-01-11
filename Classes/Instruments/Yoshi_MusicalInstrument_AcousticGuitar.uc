@@ -3,7 +3,7 @@ class Yoshi_MusicalInstrument_AcousticGuitar extends Yoshi_MusicalInstrument;
 
 defaultproperties
 {
-    InstrumentID=4
+    InstrumentID=1
     InstrumentName="Acoustic Guitar"
     ShortName="AcG"
 

@@ -3,7 +3,7 @@ class Yoshi_MusicalInstrument_Violin extends Yoshi_MusicalInstrument;
 
 defaultproperties
 {
-    InstrumentID=10
+    InstrumentID=17
     InstrumentName="Violin"
     ShortName="Vln"
 

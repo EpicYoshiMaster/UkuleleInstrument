@@ -3,7 +3,7 @@ class Yoshi_MusicalInstrument_SynthLead extends Yoshi_MusicalInstrument;
 
 defaultproperties
 {
-    InstrumentID=12
+    InstrumentID=26
     InstrumentName="Synth Lead"
     ShortName="SLd"
 

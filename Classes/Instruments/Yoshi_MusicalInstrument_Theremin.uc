@@ -3,7 +3,7 @@ class Yoshi_MusicalInstrument_Theremin extends Yoshi_MusicalInstrument;
 
 defaultproperties
 {
-    InstrumentID=22
+    InstrumentID=29
     InstrumentName="Theremin"
     ShortName="Thm"
 

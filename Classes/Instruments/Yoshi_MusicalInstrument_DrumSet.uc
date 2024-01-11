@@ -3,7 +3,7 @@ class Yoshi_MusicalInstrument_DrumSet extends Yoshi_MusicalInstrument;
 
 defaultproperties
 {
-    InstrumentID=13
+    InstrumentID=23
     InstrumentName="Drum Set"
     ShortName="Drm"
 

@@ -1,8 +1,9 @@
+//Credit to Eugene Vlaskin (FreePats) - Recorder
 class Yoshi_MusicalInstrument_Recorder extends Yoshi_MusicalInstrument;
 
 defaultproperties
 {
-    InstrumentID=2
+    InstrumentID=16
     InstrumentName="Recorder"
     ShortName="Rcd"
 

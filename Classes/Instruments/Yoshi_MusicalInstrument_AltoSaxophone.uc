@@ -3,7 +3,7 @@ class Yoshi_MusicalInstrument_AltoSaxophone extends Yoshi_MusicalInstrument;
 
 defaultproperties
 {
-    InstrumentID=25
+    InstrumentID=11
     InstrumentName="Alto Saxophone"
     ShortName="ASx"
 

@@ -3,7 +3,7 @@ class Yoshi_MusicalInstrument_Harp extends Yoshi_MusicalInstrument;
 
 defaultproperties
 {
-    InstrumentID=21
+    InstrumentID=19
     InstrumentName="Harp"
     ShortName="Hrp"
 
@@ -14,7 +14,7 @@ defaultproperties
 
     MinOctave=2 //B1
     MaxOctave=6 //E7
-    DefaultOctave=3
+    DefaultOctave=4
 
     Pitches.Add((Name = "B1", Sound = SoundCue'Yoshi_MusicalUkulele_Content12.HarpSoundCues.Harp_b1'));
     

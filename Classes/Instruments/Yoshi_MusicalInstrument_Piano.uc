@@ -3,7 +3,7 @@ class Yoshi_MusicalInstrument_Piano extends Yoshi_MusicalInstrument;
 
 defaultproperties
 {
-    InstrumentID=1
+    InstrumentID=3
     InstrumentName="Piano"
     ShortName="Pno"
 

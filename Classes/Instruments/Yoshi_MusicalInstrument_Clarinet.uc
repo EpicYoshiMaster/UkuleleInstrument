@@ -3,7 +3,7 @@ class Yoshi_MusicalInstrument_Clarinet extends Yoshi_MusicalInstrument;
 
 defaultproperties
 {
-    InstrumentID=24
+    InstrumentID=9
     InstrumentName="Clarinet"
     ShortName="Clt"
 

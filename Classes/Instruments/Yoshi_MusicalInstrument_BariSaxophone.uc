@@ -3,7 +3,7 @@ class Yoshi_MusicalInstrument_BariSaxophone extends Yoshi_MusicalInstrument;
 
 defaultproperties
 {
-    InstrumentID=20
+    InstrumentID=13
     InstrumentName="Bari Saxophone"
     ShortName="BSx"
 

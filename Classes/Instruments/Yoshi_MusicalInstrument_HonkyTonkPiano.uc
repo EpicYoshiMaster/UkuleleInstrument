@@ -3,7 +3,7 @@ class Yoshi_MusicalInstrument_HonkyTonkPiano extends Yoshi_MusicalInstrument;
 
 defaultproperties
 {
-    InstrumentID=28
+    InstrumentID=4
     InstrumentName="Honky-Tonk Piano"
     ShortName="HTP"
 

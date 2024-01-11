@@ -3,7 +3,7 @@ class Yoshi_MusicalInstrument_MusicBox extends Yoshi_MusicalInstrument;
 
 defaultproperties
 {
-    InstrumentID=29
+    InstrumentID=25
     InstrumentName="Music Box"
     ShortName="MBx"
 

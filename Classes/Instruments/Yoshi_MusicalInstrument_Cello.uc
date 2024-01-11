@@ -3,14 +3,14 @@ class Yoshi_MusicalInstrument_Cello extends Yoshi_MusicalInstrument;
 
 defaultproperties
 {
-    InstrumentID=27
+    InstrumentID=18
     InstrumentName="Cello"
     ShortName="Clo"
 
     Icon=Texture2D'HatInTime_Hud_Loadout.Item_Icons.itemicon_badge_sprint'
 
     CanReleaseNote=true
-    FadeOutTime=0.15
+    FadeOutTime=0.3
 
     MinOctave=1 //B0
     MaxOctave=3 //E4

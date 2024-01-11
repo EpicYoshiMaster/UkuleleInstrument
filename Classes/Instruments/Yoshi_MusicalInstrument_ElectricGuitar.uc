@@ -3,7 +3,7 @@ class Yoshi_MusicalInstrument_ElectricGuitar extends Yoshi_MusicalInstrument;
 
 defaultproperties
 {
-    InstrumentID=9
+    InstrumentID=2
     InstrumentName="Electric Guitar"
     ShortName="ElG"
 

@@ -24,21 +24,9 @@ class Yoshi_UkuleleInstrument_GameMod extends GameMod
 // Fix No Instrument -> Play Song -> Instrument Anim Post Song
 // Find thy coop menu bugs
 
-// Piano, Honky-Tonk Piano, Synth Lead
-
-// Ukulele, Acoustic Guitar, Electric Guitar
-
-// Violin, Harp, Cello
-
-// Clarinet, Bassoon, Oboe, Recorder, Bari Sax, Tenor Sax, Pan Flute, Alto Sax
-
-// Steel Drums, Drum Set, Marimba, Glockenspiel
-
-// Trumpet, Euphonium, French Horn, Tuba
-
-// Accordion, Music Box
-
-// Theremin, Pulse Wave, Triangle Wave
+//Instrument Adjustments:
+//Trumpet too quiet
+//Euphonium too quiet
 
 
 var int Octave; //Certain instruments have more than one set of ranges

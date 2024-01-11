@@ -3,7 +3,7 @@ class Yoshi_MusicalInstrument_SteelDrums extends Yoshi_MusicalInstrument;
 
 defaultproperties
 {
-    InstrumentID=16
+    InstrumentID=22
     InstrumentName="Steel Drums"
     ShortName="SDm"
 

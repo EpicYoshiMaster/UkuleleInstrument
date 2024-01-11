@@ -1,8 +1,9 @@
+//Credit to Alex's GM Soundfont Version 1.3 on Musical Artifacts - Bassoon
 class Yoshi_MusicalInstrument_Bassoon extends Yoshi_MusicalInstrument;
 
 defaultproperties
 {
-    InstrumentID=17
+    InstrumentID=15
     InstrumentName="Bassoon"
     ShortName="Bsn"
 
